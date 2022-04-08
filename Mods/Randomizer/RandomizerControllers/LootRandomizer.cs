@@ -326,12 +326,12 @@ namespace GRandomizer.RandomizerControllers
 
             static TechType[] Postfix(TechType[] __result)
             {
-                if (Mod.Config.RandomLoot)
+                if (Instance.IsEnabled())
                 {
                     TechType[] result = new TechType[Mathf.Max(__result.Length + UnityEngine.Random.Range(-2, 3), 1)];
                     for (int i = 0; i < result.Length; i++)
                     {
-                        result[i] = itemTypes.GetRandom();
+                        result[i] = i < __result.Length ? tryGetItemReplacement(__result[i]) : itemTypes.GetRandom();
                     }
 
                     return result;

@@ -83,7 +83,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 public static Dictionary<string, string> LoadStringsDict_Hook(Dictionary<string, string> strings)
                 {
-                    return Mod.Config.RandomLocalization && _randomizedLocalizationDict != null ? _randomizedLocalizationDict : strings;
+                    return Instance.IsEnabled() && _randomizedLocalizationDict != null ? _randomizedLocalizationDict : strings;
                 }
             }
         }
