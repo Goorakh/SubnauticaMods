@@ -87,6 +87,11 @@
   <ItemGroup>
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="RandomDialogueMode.cs" />
     <Compile Include="RandomizerConfig.cs" />
     <Compile Include="RandomizerControllers\ColorRandomizer.cs" />
@@ -101,12 +106,22 @@
     <Compile Include="Util\AutoSingleton.cs" />
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\GlobalObject.cs" />
+    <Compile Include="Util\SpeakerType.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\WeightedSet.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="mod.json" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Data\VOdata.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <PublicizeAll>true</PublicizeAll>

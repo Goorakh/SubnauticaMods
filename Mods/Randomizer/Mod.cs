@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using GRandomizer.Util;
+using HarmonyLib;
 using QModManager.API.ModLoading;
 using QModManager.Utility;
 using SMLHelper.V2.Handlers;
@@ -26,6 +27,8 @@ namespace GRandomizer
 
             Config = OptionsPanelHandler.Main.RegisterModOptions<RandomizerConfig>();
             ModFolder = new FileInfo(assembly.Location).Directory;
+
+            GlobalObject.CreateIfMissing();
 
             string modName = ($"gorakh_{assembly.GetName().Name}");
             Logger.Log(Logger.Level.Info, $"Patching {modName}");
