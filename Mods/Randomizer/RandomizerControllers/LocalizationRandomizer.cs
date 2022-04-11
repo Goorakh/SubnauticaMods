@@ -6,9 +6,9 @@ using System.Reflection.Emit;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class LocalizationRandomizer : AutoSingleton<LocalizationRandomizer>, IRandomizerController
+    static class LocalizationRandomizer
     {
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomLocalization;
         }
@@ -83,7 +83,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 public static Dictionary<string, string> LoadStringsDict_Hook(Dictionary<string, string> strings)
                 {
-                    return Instance.IsEnabled() && _randomizedLocalizationDict != null ? _randomizedLocalizationDict : strings;
+                    return IsEnabled() && _randomizedLocalizationDict != null ? _randomizedLocalizationDict : strings;
                 }
             }
         }

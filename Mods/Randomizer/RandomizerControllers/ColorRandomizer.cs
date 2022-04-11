@@ -15,9 +15,9 @@ using uSky;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class ColorRandomizer : AutoSingleton<ColorRandomizer>, IRandomizerController
+    static class ColorRandomizer
     {
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomColors;
         }
@@ -108,7 +108,7 @@ namespace GRandomizer.RandomizerControllers
                 public static MethodInfo ldarg0_Hook_MI = SymbolExtensions.GetMethodInfo(() => ldarg0_Hook(default));
                 static Color ldarg0_Hook(Color original)
                 {
-                    if (Instance.IsEnabled())
+                    if (IsEnabled())
                     {
                         return ColorReplacer.GetGlobalReplacement(original);
                     }
@@ -255,7 +255,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo getColor_Hook_MI = SymbolExtensions.GetMethodInfo(() => getColor_Hook(default, default));
                 static Color getColor_Hook(Color original, MonoBehaviour __instance)
                 {
-                    if (!Instance.IsEnabled())
+                    if (!IsEnabled())
                         return original;
 
                     if (__instance != null)
@@ -278,7 +278,7 @@ namespace GRandomizer.RandomizerControllers
 
         static void tryRandomizeGradient(Gradient gradient, MonoBehaviour instance)
         {
-            if (Instance.IsEnabled())
+            if (IsEnabled())
             {
                 GradientColorKey[] colorKeys = gradient.colorKeys;
                 for (int i = 0; i < colorKeys.Length; i++)
@@ -375,7 +375,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Prefix(WaterBiomeManager __instance)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     List<GameObject> skyPrefabs = (from biome in __instance.biomeSettings
                                                    where biome != null && biome.skyPrefab != null

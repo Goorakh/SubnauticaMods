@@ -35,18 +35,11 @@ namespace GRandomizer.Util
             {
                 if (Input.GetKeyDown(KeyCode.Keypad1))
                 {
-                    LootRandomizer.Instance.IncreaseDebugIndex();
+                    LootRandomizer.IncreaseDebugIndex();
                 }
                 else if (Input.GetKeyDown(KeyCode.Keypad2))
                 {
-                    LootRandomizer.Instance.DecreaseDebugIndex();
-                }
-                else if (Input.GetKeyDown(KeyCode.Keypad0))
-                {
-                    foreach (var s in GameObject.FindObjectsOfType<Stalker>())
-                    {
-                        s.LoseTooth();
-                    }
+                    LootRandomizer.DecreaseDebugIndex();
                 }
             }
         }

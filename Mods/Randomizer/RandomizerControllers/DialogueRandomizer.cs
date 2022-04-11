@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GRandomizer.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,10 @@ using System.Threading.Tasks;
 
 namespace GRandomizer.RandomizerControllers
 {
-    interface IRandomizerController
+    static class DialogueRandomizer
     {
-        bool IsEnabled();
+        static RandomDialogueMode mode => Mod.Config.RandomDialogue;
+
+
     }
 }

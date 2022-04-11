@@ -44,5 +44,8 @@ namespace GRandomizer
 
         [Toggle("Randomize Creatures")]
         public bool RandomCreatures = false;
+
+        [Choice("Randomize Dialogue", new string[] { "Off", "Same Speaker", "Random" })]
+        public RandomDialogueMode RandomDialogue = RandomDialogueMode.Random;
     }
 }

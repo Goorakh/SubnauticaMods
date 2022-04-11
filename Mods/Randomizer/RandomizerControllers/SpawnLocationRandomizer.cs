@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class SpawnLocationRandomizer : AutoSingleton<SpawnLocationRandomizer>, IRandomizerController
+    static class SpawnLocationRandomizer
     {
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomSpawnLocation;
         }
@@ -26,7 +26,7 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix(ref bool __result, Vector3 point)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     __result = point.magnitude < Mod.Config.MaxSpawnRadius;
                     return false;

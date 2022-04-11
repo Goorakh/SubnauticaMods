@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class LootRandomizer : AutoSingleton<LootRandomizer>, IRandomizerController
+    static class LootRandomizer
     {
         // WHY ARE THESE SEPARATE TECHTYPES????!?!??!?!?!?!?!!?!
         static readonly Dictionary<TechType, TechType> _eggToUndiscoveredEgg = new Dictionary<TechType, TechType>
@@ -133,14 +133,14 @@ namespace GRandomizer.RandomizerControllers
 
 #if DEBUG
         static int _debugIndex = 0;
-        public void IncreaseDebugIndex()
+        public static void IncreaseDebugIndex()
         {
             if (++_debugIndex >= itemTypes.Length)
                 _debugIndex = 0;
 
             Utils.DebugLog($"_debugIndex: {_debugIndex} ({itemTypes[_debugIndex]})", true);
         }
-        public void DecreaseDebugIndex()
+        public static void DecreaseDebugIndex()
         {
             if (--_debugIndex < 0)
                 _debugIndex = itemTypes.Length - 1;
@@ -151,11 +151,11 @@ namespace GRandomizer.RandomizerControllers
 
         static TechType tryGetItemReplacement(TechType techType, Predicate<TechType> condition)
         {
-            if (!Instance.IsEnabled())
+            if (!IsEnabled())
                 return techType;
 
 #if DEBUG
-            if (techType == TechType.BigFilteredWater)
+            if (false && techType == TechType.BigFilteredWater)
             {
                 return itemTypes[_debugIndex];
             }
@@ -188,7 +188,7 @@ namespace GRandomizer.RandomizerControllers
             techType = tryGetItemReplacement(techType);
         }
 
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomLoot;
         }
@@ -204,7 +204,7 @@ namespace GRandomizer.RandomizerControllers
 
             static TechType[] Postfix(TechType[] __result)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     TechType[] result = new TechType[Mathf.Max(__result.Length + UnityEngine.Random.Range(-2, 3), 1)];
                     for (int i = 0; i < result.Length; i++)
@@ -413,7 +413,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo replaceDrillableChunks_MI = SymbolExtensions.GetMethodInfo(() => replaceDrillableChunks(default, default));
                 static MeshRenderer[] replaceDrillableChunks(MeshRenderer[] renderers, Drillable __instance)
                 {
-                    if (!Instance.IsEnabled())
+                    if (!IsEnabled())
                         return renderers;
 
                     TechType techType = __instance.GetDominantResourceType();
@@ -469,7 +469,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static bool Prefix(ref bool __result, ref Pickupable prefab, FiltrationMachine __instance)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     ItemsContainer container = __instance.storageContainer.container;
                     int containerSizeX = container.sizeX;
@@ -498,7 +498,6 @@ namespace GRandomizer.RandomizerControllers
 
             [HarmonyPatch(typeof(FiltrationMachine), nameof(FiltrationMachine.Spawn))]
             [HarmonyReversePatch]
-            [HarmonyDebug]
             static bool SpawnNonPickupable(FiltrationMachine __instance, GameObject prefab)
             {
                 IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -589,13 +588,13 @@ namespace GRandomizer.RandomizerControllers
                     public static readonly MethodInfo Get_saltModel_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_saltModel_Hook(default));
                     static GameObject Get_saltModel_Hook(GameObject saltModel)
                     {
-                        return Instance.IsEnabled() ? overrideSaltModel : saltModel;
+                        return IsEnabled() ? overrideSaltModel : saltModel;
                     }
 
                     public static readonly MethodInfo Get_waterModel_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_waterModel_Hook(default));
                     static GameObject Get_waterModel_Hook(GameObject waterModel)
                     {
-                        return Instance.IsEnabled() ? overrideWaterModel : waterModel;
+                        return IsEnabled() ? overrideWaterModel : waterModel;
                     }
                 }
             }
@@ -663,7 +662,7 @@ namespace GRandomizer.RandomizerControllers
                     public static readonly MethodInfo tryGetUndiscoveredEggType_MI = SymbolExtensions.GetMethodInfo(() => tryGetUndiscoveredEggType(default));
                     static TechType tryGetUndiscoveredEggType(TechType eggType)
                     {
-                        if (Instance.IsEnabled() && _eggToUndiscoveredEgg.TryGetValue(eggType, out TechType undiscoveredType))
+                        if (IsEnabled() && _eggToUndiscoveredEgg.TryGetValue(eggType, out TechType undiscoveredType))
                             return undiscoveredType;
 
                         return eggType;
@@ -819,7 +818,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo Get_toothPrefab_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_toothPrefab_Hook(default));
                 static GameObject Get_toothPrefab_Hook(GameObject toothPrefab)
                 {
-                    return Instance.IsEnabled() ? CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StalkerTooth)) : toothPrefab;
+                    return IsEnabled() ? CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StalkerTooth)) : toothPrefab;
                 }
             }
         }
@@ -903,7 +902,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo IsLootRandomizerEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsLootRandomizerEnabled());
                 static bool IsLootRandomizerEnabled()
                 {
-                    return Instance.IsEnabled();
+                    return IsEnabled();
                 }
 
                 public static readonly MethodInfo GetReplacementItemPrefab_MI = SymbolExtensions.GetMethodInfo(() => GetReplacementItemPrefab());

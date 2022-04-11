@@ -9,9 +9,9 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class ItemSizeRandomizer : AutoSingleton<ItemSizeRandomizer>, IRandomizerController
+    static class ItemSizeRandomizer
     {
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomItemSize;
         }
@@ -39,7 +39,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static bool Prefix(ref Vector2int __result, TechType techType)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     __result = getOverrideItemSize(techType);
                     return false;

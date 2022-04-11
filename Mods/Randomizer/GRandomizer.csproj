@@ -87,11 +87,12 @@
   <ItemGroup>
     <Compile Include="Mod.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomDialogueMode.cs" />
     <Compile Include="RandomizerConfig.cs" />
     <Compile Include="RandomizerControllers\ColorRandomizer.cs" />
     <Compile Include="RandomizerControllers\CraftSpeedRandomizer.cs" />
     <Compile Include="RandomizerControllers\CreatureRandomizer.cs" />
-    <Compile Include="RandomizerControllers\IRandomizerController.cs" />
+    <Compile Include="RandomizerControllers\DialogueRandomizer.cs" />
     <Compile Include="RandomizerControllers\ItemSizeRandomizer.cs" />
     <Compile Include="RandomizerControllers\LocalizationRandomizer.cs" />
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />

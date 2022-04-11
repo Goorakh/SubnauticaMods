@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class CreatureRandomizer : AutoSingleton<CreatureRandomizer>, IRandomizerController
+    static class CreatureRandomizer
     {
         static TechType[] _creatureTypes;
         static TechType[] creatures
@@ -67,7 +67,7 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomCreatures;
         }
@@ -81,7 +81,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Prefix(Creature __instance)
             {
-                if (Instance.IsEnabled() && __instance.GetComponent<RandomizedCreature>() == null)
+                if (IsEnabled() && __instance.GetComponent<RandomizedCreature>() == null)
                 {
                     TechType oldCreatureType = CraftData.GetTechType(__instance.gameObject);
 

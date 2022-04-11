@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
-    class CraftSpeedRandomizer : AutoSingleton<CraftSpeedRandomizer>, IRandomizerController
+    static class CraftSpeedRandomizer
     {
-        public bool IsEnabled()
+        static bool IsEnabled()
         {
             return Mod.Config.RandomCraftDuration;
         }
@@ -30,7 +30,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Prefix(TechType techType, ref float duration)
             {
-                if (Instance.IsEnabled())
+                if (IsEnabled())
                 {
                     duration = getCraftTime(techType);
                 }
