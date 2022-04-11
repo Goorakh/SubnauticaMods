@@ -10,7 +10,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
-using static VFXParticlesPool;
 
 namespace GRandomizer
 {
@@ -116,6 +115,8 @@ namespace GRandomizer
 
         public static void PrepareStaticItem(GameObject obj)
         {
+            obj.SetActive(true);
+
             if (obj.GetComponent<FlashLight>() != null)
             {
                 Transform cone = obj.transform.Find("lights_parent/x_flashlightCone");

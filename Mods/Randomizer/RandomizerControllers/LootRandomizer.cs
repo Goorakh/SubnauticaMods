@@ -155,7 +155,7 @@ namespace GRandomizer.RandomizerControllers
                 return techType;
 
 #if DEBUG
-            if (false && techType == TechType.Lithium)
+            if (techType == TechType.BigFilteredWater)
             {
                 return itemTypes[_debugIndex];
             }
@@ -421,7 +421,6 @@ namespace GRandomizer.RandomizerControllers
                     for (int i = 0; i < renderers.Length; i++)
                     {
                         GameObject itemModel = CraftData.InstantiateFromPrefab(techType);
-                        itemModel.SetActive(true);
                         Utils.PrepareStaticItem(itemModel);
                         itemModel.RemoveAllComponentsNotIn(renderers[i].gameObject);
 
@@ -490,47 +489,46 @@ namespace GRandomizer.RandomizerControllers
                         return true;
                     }
 
-                    // TODO: This is a bad way to do this, replace with a proper patch at some point :]
-                    Vector2int itemSize = CraftData.GetItemSize(CraftData.GetTechType(newPrefab));
-                    if (!__instance.storageContainer.container.HasRoomFor(itemSize.x, itemSize.y))
-                    {
-                        Debug.Log("no room in filtration machine!");
-                        __result = false;
-                    }
-                    else
-                    {
-                        InventoryItem item = new InventoryItem(UnityEngine.Object.Instantiate<GameObject>(newPrefab).AddComponent<Pickupable>().Pickup(false));
-                        __instance.storageContainer.container.UnsafeAdd(item);
-                        __result = true;
-                    }
-
+                    __result = SpawnNonPickupable(__instance, newPrefab);
                     return false;
                 }
 
                 return true;
             }
 
-            //[HarmonyReversePatch(HarmonyReversePatchType.Snapshot)]
-            //[HarmonyPatch(typeof(FiltrationMachine), nameof(FiltrationMachine.Spawn))]
-            //static bool SpawnNonPickupable(FiltrationMachine __instance, GameObject prefab)
-            //{
-            //    IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-            //    {
-            //        MethodInfo Pickupable_GetComponent_Pickupable_MI = SymbolExtensions.GetMethodInfo<Pickupable>(_ => _.GetComponent<Pickupable>());
-            //
-            //        foreach (CodeInstruction instruction in instructions)
-            //        {
-            //            yield return instruction;
-            //        }
-            //    }
-            //
-            //    Transpiler(null);
-            //    return default;
-            //}
+            [HarmonyPatch(typeof(FiltrationMachine), nameof(FiltrationMachine.Spawn))]
+            [HarmonyReversePatch]
+            [HarmonyDebug]
+            static bool SpawnNonPickupable(FiltrationMachine __instance, GameObject prefab)
+            {
+                IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    MethodInfo Pickupable_GetComponent_Pickupable_MI = SymbolExtensions.GetMethodInfo<Pickupable>(_ => _.GetComponent<Pickupable>());
+                    MethodInfo GameObject_GetComponent_Pickupable_MI = SymbolExtensions.GetMethodInfo<GameObject>(_ => _.GetComponent<Pickupable>());
+                    MethodInfo GameObject_AddComponent_Pickupable_MI = SymbolExtensions.GetMethodInfo<GameObject>(_ => _.AddComponent<Pickupable>());
+                    MethodInfo Pickupable_GetTechType_MI = SymbolExtensions.GetMethodInfo<Pickupable>(_ => _.GetTechType());
+                    MethodInfo CraftData_GetTechType_MI = SymbolExtensions.GetMethodInfo(() => CraftData.GetTechType(default));
+                    MethodInfo Component_gameObject_get_MI = AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject));
+
+                    foreach (CodeInstruction instruction in instructions.MethodReplacer(Pickupable_GetTechType_MI, CraftData_GetTechType_MI)
+                                                                        .MethodReplacer(GameObject_GetComponent_Pickupable_MI, GameObject_AddComponent_Pickupable_MI))
+                    {
+                        if (instruction.Calls(Pickupable_GetComponent_Pickupable_MI) || instruction.Calls(Component_gameObject_get_MI))
+                        {
+                            // skip instruction
+                        }
+                        else
+                        {
+                            yield return instruction;
+                        }
+                    }
+                }
+            
+                Transpiler(null);
+                return default;
+            }
         }
 
-        // Spawn egg -> spawn non-egg, filtrationmachine gets confused and displays the model when empty, and no model when there is an item inside (but only sometimes?????)
-        // Not specific to eggs, but probably related to the egg patch, model seems to become the last item removed from the filtration machine
         static class FiltrationMachine_ItemModelReplacer
         {
             static GameObject _overrideSaltModel;
