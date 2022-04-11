@@ -12,7 +12,7 @@ namespace GRandomizer
         [Toggle("Randomize Lifepod Spawn Location")]
         public bool RandomSpawnLocation = true;
 
-        [Slider("Random Spawn Location Intensity", 0f, 1f)]
+        [Slider("Random Spawn Location Intensity", 0f, 1f, Step = 0.01f, Format = "{0}")]
         public float RandomSpawnIntensity = 0.6f;
 
         [IgnoreMember]
@@ -35,6 +35,9 @@ namespace GRandomizer
 
         [Toggle("Randomize Loot")]
         public bool RandomLoot = true;
+
+        [Toggle("Randomize Item Inventory Size")]
+        public bool RandomItemSize = true;
 
         [Toggle("Randomize Colors")]
         public bool RandomColors = true;

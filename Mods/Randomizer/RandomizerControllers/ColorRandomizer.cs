@@ -189,7 +189,6 @@ namespace GRandomizer.RandomizerControllers
                 yield return SymbolExtensions.GetMethodInfo<UWE.FrameTimeOverlay>(_ => _.OnPostRender());
 
                 yield return SymbolExtensions.GetMethodInfo<VFXAnimator>(_ => _.UpdateColor(default));
-                yield return SymbolExtensions.GetMethodInfo<VFXConstructing>(_ => _.Construct());
                 yield return SymbolExtensions.GetMethodInfo<VFXLerpColor>(_ => _.ManagedUpdate());
                 yield return SymbolExtensions.GetMethodInfo<VFXPrecursorGunElevator>(_ => _.UpdateWallLights());
                 yield return SymbolExtensions.GetMethodInfo<VFXVolumetricLight>(_ => _.UpdateMaterial(default));
@@ -320,16 +319,6 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        [HarmonyPatch(typeof(SeaMoth), "Awake")]
-        static class SeaMoth_Awake_Patch
-        {
-            static void Prefix(Seaglide __instance)
-            {
-                tryRandomizeGradient(__instance.gradientInner, __instance);
-                tryRandomizeGradient(__instance.gradientOuter, __instance);
-            }
-        }
-
         [HarmonyPatch(typeof(uFogGradient), "Start")]
         static class uFogGradient_Start_Patch
         {
@@ -400,7 +389,7 @@ namespace GRandomizer.RandomizerControllers
                             {
                                 int skyIndex = UnityEngine.Random.Range(0, skyPrefabs.Count);
 #if DEBUG
-                                Utils.DebugLog($"Replace {biome.name} skyPrefab: {biome.skyPrefab.name}->{skyPrefabs[skyIndex].name}");
+                                Utils.DebugLog($"Replace {biome.name} skyPrefab: {biome.skyPrefab.name}->{skyPrefabs[skyIndex].name}", false);
 #endif
                                 biome.skyPrefab = skyPrefabs[skyIndex];
                                 skyPrefabs.RemoveAt(skyIndex);
@@ -419,7 +408,7 @@ namespace GRandomizer.RandomizerControllers
                             biome.settings.emissiveScale *= UnityEngine.Random.Range(-3f, 3f);
                             biome.settings.startDistance *= UnityEngine.Random.Range(0.5f, 3f);
                             biome.settings.sunlightScale *= UnityEngine.Random.Range(-2f, 2f);
-                            biome.settings.ambientScale *= UnityEngine.Random.Range(-2f, 2f);
+                            biome.settings.ambientScale *= UnityEngine.Random.Range(0f, 2f);
                             
                             if (UnityEngine.Random.value < 0.4f)
                                 biome.settings.temperature = UnityEngine.Random.Range(0f, 70f);
@@ -432,7 +421,7 @@ namespace GRandomizer.RandomizerControllers
 
                                 if (!oldValue.Equals(newValue))
                                 {
-                                    Utils.DebugLog($"Replace {biome.name} WaterscapeVolume.Settings.{field.Name}: {oldValue}->{newValue}");
+                                    Utils.DebugLog($"Replace {biome.name} WaterscapeVolume.Settings.{field.Name}: {oldValue}->{newValue}", false);
                                 }
                             }
 #endif

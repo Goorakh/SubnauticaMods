@@ -90,7 +90,7 @@ namespace GRandomizer.RandomizerControllers
 
         public static class SetCurrentLanguage_Patch
         {
-            [HarmonyReversePatch]
+            [HarmonyReversePatch(HarmonyReversePatchType.Snapshot)]
             [HarmonyPatch(typeof(Language), nameof(Language.SetCurrentLanguage))]
             public static void InvokeOnLanguageChanged()
             {

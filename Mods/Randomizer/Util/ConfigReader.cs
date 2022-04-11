@@ -15,6 +15,10 @@ namespace GRandomizer.Util
 
         static JObject getJSONObject(string path)
         {
+            const string FILE_EXTENSION = ".json";
+            if (!path.EndsWith(FILE_EXTENSION))
+                path += FILE_EXTENSION;
+
             if (_configCache.TryGetValue(path, out JObject cached))
                 return cached;
 

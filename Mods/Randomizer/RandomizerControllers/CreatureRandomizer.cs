@@ -23,7 +23,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     List<TechType> creatureTypesList = new List<TechType>();
 
-                    string[] blacklistStrings = ConfigReader.ReadFromFile<string[]>("Randomizers/CreatureRandomizer.json::Blacklist");
+                    string[] blacklistStrings = ConfigReader.ReadFromFile<string[]>("Randomizers/CreatureRandomizer::Blacklist");
 
                     foreach (TechType type in Utils.GetAllDefinedTechTypes())
                     {
@@ -43,14 +43,6 @@ namespace GRandomizer.RandomizerControllers
                     }
 
                     _creatureTypes = creatureTypesList.ToArray();
-
-#if DEBUG
-                    Utils.DebugLog($"Found {_creatureTypes.Length} creatures:");
-                    foreach (TechType creature in _creatureTypes)
-                    {
-                        Utils.DebugLog($"    {creature}");
-                    }
-#endif
                 }
 
                 return _creatureTypes;
@@ -64,29 +56,9 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (_weightedCreaturesSet == null)
                 {
-                    Dictionary<TechType, float> creatureWeights = new Dictionary<TechType, float>();
-
-                    JObject jObject = ConfigReader.ReadFromFile<JObject>("Randomizers/CreatureRandomizer.json::CreatureWeights");
-                    foreach (JToken token in jObject.ChildrenTokens)
-                    {
-                        JProperty property = (JProperty)token;
-                        if (TechTypeExtensions.FromString(property.Name, out TechType techType, true))
-                        {
-                            if (creatureWeights.ContainsKey(techType))
-                            {
-                                Utils.LogError($"Duplicate key ({property.Name}: {techType}) in Randomizers/CreatureRandomizer.json CreatureWeights!");
-                            }
-                            else
-                            {
-                                creatureWeights.Add(techType, property.Value.ToObject<float>());
-                            }
-                        }
-                        else
-                        {
-                            Utils.LogWarning($"Unable to convert {property.Name} to TechType (missing mod?)");
-                        }
-                    }
-
+                    JObject jObject = ConfigReader.ReadFromFile<JObject>("Randomizers/CreatureRandomizer::CreatureWeights");
+                    Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Randomizers/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
+                    
                     _weightedCreaturesSet = new WeightedSet<TechType>((from weightKvp in creatureWeights
                                                                        select new WeightedSet<TechType>.WeightedItem(weightKvp.Key, weightKvp.Value)).ToArray());
                 }
@@ -131,10 +103,6 @@ namespace GRandomizer.RandomizerControllers
 
                     newCreatureObj.AddComponent<RandomizedCreature>();
                     GameObject.Destroy(__instance.gameObject);
-
-#if DEBUG
-                    Utils.DebugLog($"Replace creature: {oldCreatureType}->{newCreatureType}");
-#endif
                 }
             }
         }

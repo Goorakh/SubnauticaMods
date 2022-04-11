@@ -68,6 +68,18 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\SteamLibrary\steamapps\common\Subnautica\Subnautica_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\SteamLibrary\steamapps\common\Subnautica\Subnautica_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\SteamLibrary\steamapps\common\Subnautica\Subnautica_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\SteamLibrary\steamapps\common\Subnautica\Subnautica_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\..\SteamLibrary\steamapps\common\Subnautica\Subnautica_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
@@ -80,6 +92,7 @@
     <Compile Include="RandomizerControllers\CraftSpeedRandomizer.cs" />
     <Compile Include="RandomizerControllers\CreatureRandomizer.cs" />
     <Compile Include="RandomizerControllers\IRandomizerController.cs" />
+    <Compile Include="RandomizerControllers\ItemSizeRandomizer.cs" />
     <Compile Include="RandomizerControllers\LocalizationRandomizer.cs" />
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
@@ -87,6 +100,7 @@
     <Compile Include="Util\AutoSingleton.cs" />
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\GlobalObject.cs" />
+    <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\WeightedSet.cs" />
   </ItemGroup>
   <ItemGroup>
