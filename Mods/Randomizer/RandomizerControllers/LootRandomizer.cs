@@ -707,8 +707,9 @@ namespace GRandomizer.RandomizerControllers
                         {
                             Vector3 center = modelBounds.center;
 
-                            Vector3 bottomCenter = center - new Vector3(0f, modelBounds.size.y / 2f, 0f);
-                            Vector3 topCenter = center + new Vector3(0f, modelBounds.size.y / 2f, 0f);
+                            Vector3 halfHeight = new Vector3(0f, modelBounds.size.y / 2f, 0f);
+                            Vector3 bottomCenter = center - halfHeight;
+                            Vector3 topCenter = center + halfHeight;
 
                             fabricating.localMinY = fabricating.transform.InverseTransformPoint(bottomCenter).y;
                             fabricating.localMaxY = fabricating.transform.InverseTransformPoint(topCenter).y;
