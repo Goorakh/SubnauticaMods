@@ -42,6 +42,7 @@ event:/sub/cyclops/AI_cavitate
 event:/sub/cyclops/AI_welcome
 event:/sub/cyclops/AI_depth_warning_2
 event:/sub/cyclops/AI_no_power
+event:/sub/cyclops/explode_countdown
 
 SPEAKER=Rocket
 event:/sub/rocket/computer_on
@@ -197,6 +198,22 @@ event:/player/food_critical
 event:/player/story/Goal_CookedGarryfish
 event:/player/Precursor_LostRiverBase_Log_2
 event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog5
+event:/player/gun_disabled_pda
+event:/player/oxygen_30_sec
+event:/player/goal_BiomePrecursorGunUpper
+event:/player/goal_BiomePrecursorGunUpper2
+event:/player/goal_BiomePrecursorGunUpper3
+event:/player/water_critical
+event:/player/depth_200
+event:/player/aurora_warning_1
+event:/player/aurora_warning_2
+event:/player/aurora_warning_3
+event:/player/oxygen_10
+event:/player/stillsuit_equipped
+event:/player/blood_loss
+event:/player/depth_100
+event:/player/batterly_low
+event:/player/Precursor_Gun_ControlRoom
 
 SPEAKER=SeaEmperor
 event:/creature/magistrate/encounter_1
@@ -218,6 +235,7 @@ event:/sub/seamoth/hull_breach_warning
 event:/sub/seamoth/torpedo_armed
 event:/sub/seamoth/AI_no_power
 event:/sub/seamoth/hull_fix
+event:/sub/seamoth/welcome
 
 SPEAKER=Sunbeam
 event:/sub/pod/radio/radioSunbeamEvent01
@@ -237,6 +255,7 @@ event:/player/drink_stillsuit
 event:/player/drink
 event:/player/Pain_no_tank
 event:/player/coughing
+event:/player/Pain_surface
 
 SPEAKER=Misc
 event:/player/story/Ency_Aurora_RingRoom_Terminal3
@@ -292,3 +311,22 @@ event:/main_menu/intro
 event:/creature/warper/idle
 event:/player/story/Deepgrandreef
 event:/sub/exo/welcome
+event:/sub/base/coffeemachine_idle
+event:/sub/pod/radio/radio_generic
+event:/sub/pod/radio/radioRadiationSuit
+event:/sub/pod/radio/radioKoosh26
+event:/sub/base/make_coffee
+event:/tools/dolls/mark
+event:/tools/dolls/jack
+event:/sub/pod/radio/radio_lifepod_17
+event:/sub/pod/radio/radio_lifepod_bounceback
+event:/player/enzyme_cure
+event:/player/aurora_last_transmission
+event:/player/enzyme_cure
+event:/player/gun_disabled
+event:/player/story/RadioPrecursor1
+event:/player/gun_door_open
+event:/player/sick_reveal
+event:/player/gunterminal_access_granted
+event:/player/blast_off
+event:/player/sunbeam_rescue
