@@ -72,8 +72,14 @@ namespace GRandomizer.RandomizerControllers
                 else if (!string.IsNullOrWhiteSpace(lines[i]))
                 {
                     string id = lines[i].Trim();
-                    currentLines.Add(id);
-                    _soundCache.Add(id, new SoundEntry(id, string.Empty));
+                    if (!currentLines.Add(id))
+                    {
+                        Utils.LogWarning($"Duplicate line data for {id}", true);
+                    }
+                    else
+                    {
+                        _soundCache.Add(id, new SoundEntry(id, string.Empty));
+                    }
                 }
             }
 

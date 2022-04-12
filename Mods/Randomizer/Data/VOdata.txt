@@ -322,7 +322,6 @@ event:/sub/pod/radio/radio_lifepod_17
 event:/sub/pod/radio/radio_lifepod_bounceback
 event:/player/enzyme_cure
 event:/player/aurora_last_transmission
-event:/player/enzyme_cure
 event:/player/gun_disabled
 event:/player/story/RadioPrecursor1
 event:/player/gun_door_open
