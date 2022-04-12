@@ -188,6 +188,7 @@ namespace GRandomizer.RandomizerControllers
             techType = tryGetItemReplacement(techType);
         }
 
+        static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
         static bool IsEnabled()
         {
             return Mod.Config.RandomLoot;
@@ -834,7 +835,7 @@ namespace GRandomizer.RandomizerControllers
                 MethodInfo Component_gameObject_get_MI = AccessTools.PropertyGetter(typeof(Component), nameof(Component.gameObject));
 
                 LocalBuilder isLootRandomizerEnabled = generator.DeclareLocal(typeof(bool));
-                yield return new CodeInstruction(OpCodes.Call, Hooks.IsLootRandomizerEnabled_MI);
+                yield return new CodeInstruction(OpCodes.Call, IsEnabled_MI);
                 yield return new CodeInstruction(OpCodes.Stloc, isLootRandomizerEnabled);
 
                 LocalBuilder replacementItemObj = generator.DeclareLocal(typeof(GameObject));
@@ -900,19 +901,10 @@ namespace GRandomizer.RandomizerControllers
 
             static class Hooks
             {
-                public static readonly MethodInfo IsLootRandomizerEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsLootRandomizerEnabled());
-                static bool IsLootRandomizerEnabled()
-                {
-                    return IsEnabled();
-                }
-
                 public static readonly MethodInfo GetReplacementItemPrefab_MI = SymbolExtensions.GetMethodInfo(() => GetReplacementItemPrefab());
                 static GameObject GetReplacementItemPrefab()
                 {
-                    if (!IsLootRandomizerEnabled())
-                        return null;
-
-                    return CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StillsuitWater));
+                    return IsEnabled() ? CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StillsuitWater)) : null;
                 }
             }
         }
