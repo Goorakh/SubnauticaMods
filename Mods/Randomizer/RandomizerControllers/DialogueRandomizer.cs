@@ -1,4 +1,5 @@
-﻿using FMODUnity;
+﻿using FMOD;
+using FMODUnity;
 using GRandomizer.Util;
 using HarmonyLib;
 using System;
@@ -52,7 +53,7 @@ namespace GRandomizer.RandomizerControllers
 
             string[] lines = Properties.Resources.VOdata.Split('\n');
 
-            List<string> currentLines = new List<string>();
+            HashSet<string> currentLines = new HashSet<string>();
             SpeakerType currentType = SpeakerType.None;
             for (int i = 0; i < lines.Length; i++)
             {
@@ -62,13 +63,13 @@ namespace GRandomizer.RandomizerControllers
                     if (currentType != SpeakerType.None)
                     {
                         _speakerEntries.Add(currentType, currentLines.ToArray());
+                        currentLines.Clear();
                     }
 
                     string speakerTypeString = lines[i].Substring(SPEAKER_PREFIX.Length).Trim();
                     currentType = (SpeakerType)Enum.Parse(typeof(SpeakerType), speakerTypeString);
                 }
-
-                if (!string.IsNullOrWhiteSpace(lines[i]))
+                else if (!string.IsNullOrWhiteSpace(lines[i]))
                 {
                     string id = lines[i].Trim();
                     currentLines.Add(id);
@@ -79,10 +80,19 @@ namespace GRandomizer.RandomizerControllers
             _speakerEntries.Add(currentType, currentLines.ToArray());
         }
 
+        static string tryGetReplacementLine(string ID)
+        {
+            if (_soundCache.TryGetValue(ID, out SoundEntry entry))
+            {
+                return tryGetReplacementLine(entry).SoundID;
+            }
+            else
+            {
+                return ID;
+            }
+        }
         static SoundEntry tryGetReplacementLine(SoundEntry entry)
         {
-            _soundCache[entry.SoundID] = entry;
-
             if (mode == RandomDialogueMode.Off)
                 return entry;
 
@@ -103,30 +113,21 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        [HarmonyPatch(typeof(SoundQueue), nameof(SoundQueue.Update))]
-        static class SoundQueue_Update_Patch
+        [HarmonyPatch(typeof(FMOD.Studio.System), nameof(FMOD.Studio.System.getEventByID))]
+        static class FMOD_Studio_System_getEventByID_Patch
         {
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            static void Prefix(FMOD.Studio.System __instance, ref Guid guid)
             {
-                MethodInfo List_SoundQueue_Entry_get_Item_MI = SymbolExtensions.GetMethodInfo<List<SoundQueue.Entry>, SoundQueue.Entry>(_ => _[default]);
-
-                foreach (CodeInstruction instruction in instructions)
+                if (mode > RandomDialogueMode.Off)
                 {
-                    yield return instruction;
-
-                    if (instruction.Calls(List_SoundQueue_Entry_get_Item_MI))
+                    if (__instance.lookupPath(guid, out string path) == RESULT.OK)
                     {
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.Get_Entry_MI);
+                        string replacementPath = tryGetReplacementLine(path);
+                        if (replacementPath != path && __instance.lookupID(replacementPath, out Guid replacementGuid) == RESULT.OK)
+                        {
+                            guid = replacementGuid;
+                        }
                     }
-                }
-            }
-
-            static class Hooks
-            {
-                public static readonly MethodInfo Get_Entry_MI = SymbolExtensions.GetMethodInfo(() => Get_Entry(default));
-                static SoundQueue.Entry Get_Entry(SoundQueue.Entry original)
-                {
-                    return tryGetReplacementLine(original);
                 }
             }
         }
