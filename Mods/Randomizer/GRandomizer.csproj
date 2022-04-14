@@ -105,7 +105,9 @@
     <Compile Include="Utils.cs" />
     <Compile Include="Util\AutoSingleton.cs" />
     <Compile Include="Util\ConfigReader.cs" />
+    <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
+    <Compile Include="Util\SoundPatcher.cs" />
     <Compile Include="Util\SpeakerType.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\WeightedSet.cs" />

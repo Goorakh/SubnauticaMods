@@ -13,11 +13,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Schema;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GRandomizer.Util
 {
-    public static class GlobalObject
+    public class GlobalObject : MonoBehaviour
     {
+        struct ScheduledAction
+        {
+            public readonly Action Callback;
+            public readonly float ExecuteTime;
+
+            public ScheduledAction(Action callback, float executeTime)
+            {
+                Callback = callback;
+                ExecuteTime = executeTime;
+            }
+        }
+        static List<ScheduledAction> _schedulesActions = new List<ScheduledAction>();
+
         static GameObject _instance;
         public static GameObject Instance
         {
@@ -40,17 +54,36 @@ namespace GRandomizer.Util
             }
         }
 
+        public static void RunNextFrame(Action callback)
+        {
+            Schedule(callback, 0f);
+        }
+
+        public static void Schedule(Action callback, float waitTime)
+        {
+            CreateIfMissing();
+            _schedulesActions.Add(new ScheduledAction(callback, Time.time + waitTime));
+        }
+
+        void Update()
+        {
+            for (int i = _schedulesActions.Count - 1; i >= 0; i--)
+            {
+                if (Time.time >= _schedulesActions[i].ExecuteTime)
+                {
+                    _schedulesActions[i].Callback();
+                    _schedulesActions.RemoveAt(i);
+                }
+            }
+        }
+
 #if DEBUG
         class DebugController : MonoBehaviour
         {
-            void Awake()
-            {
-                DevConsole.RegisterConsoleCommand(this, "r_play", true);
-            }
-
             private void OnConsoleCommand_r_play(NotificationCenter.Notification n)
             {
                 string arg = (string)n.data[0];
+                Utils.DebugLog(arg, true);
                 foreach (var item in RuntimeManager.Instance.loadedBanks)
                 {
                     if (completedBanks.Contains(item.Key))
@@ -81,7 +114,7 @@ namespace GRandomizer.Util
                             }
                             else
                             {
-                                Utils.DebugLog($"Error: EventDescription.getPath returned {result}", true);
+                                Utils.DebugLog($"Error: EventDescription.getPath returned {pathres}", true);
                             }
                         }
                     }
@@ -96,6 +129,11 @@ namespace GRandomizer.Util
 
             void Update()
             {
+                if (Input.GetKeyDown(KeyCode.Keypad5))
+                {
+                    DevConsole.RegisterConsoleCommand(this, "r_play", true, true);
+                }
+
                 if (Input.GetKeyDown(KeyCode.Keypad1))
                 {
                     LootRandomizer.IncreaseDebugIndex();
