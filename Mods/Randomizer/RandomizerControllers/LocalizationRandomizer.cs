@@ -44,12 +44,7 @@ namespace GRandomizer.RandomizerControllers
                     {
                         int formatCount = Utils.GetStringFormatCount(item.Value);
 
-                        List<string> possibleStrings = formatCountToStrings[formatCount];
-
-                        int index = random.Next(0, possibleStrings.Count);
-
-                        newLocalizationDictionary.Add(item.Key, possibleStrings[index]);
-                        possibleStrings.RemoveAt(index);
+                        newLocalizationDictionary.Add(item.Key, formatCountToStrings[formatCount].GetAndRemoveRandom());
                     }
 
                     _randomizedLocalizationDict = newLocalizationDictionary;

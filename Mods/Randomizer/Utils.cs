@@ -160,6 +160,18 @@ namespace GRandomizer
             return dictionary;
         }
 
+        public static T GetAndRemoveRandom<T>(this IList<T> list)
+        {
+            return list.GetAndRemove(UnityEngine.Random.Range(0, list.Count));
+        }
+
+        public static T GetAndRemove<T>(this IList<T> list, int index)
+        {
+            T result = list[index];
+            list.RemoveAt(index);
+            return result;
+        }
+
         public static class Random
         {
             public static Color Color(float a = 1f)

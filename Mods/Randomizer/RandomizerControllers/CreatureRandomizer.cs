@@ -23,7 +23,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     List<TechType> creatureTypesList = new List<TechType>();
 
-                    string[] blacklistStrings = ConfigReader.ReadFromFile<string[]>("Randomizers/CreatureRandomizer::Blacklist");
+                    string[] blacklistStrings = ConfigReader.ReadFromFile<string[]>("Configs/CreatureRandomizer::Blacklist");
 
                     foreach (TechType type in Utils.GetAllDefinedTechTypes())
                     {
@@ -56,8 +56,8 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (_weightedCreaturesSet == null)
                 {
-                    JObject jObject = ConfigReader.ReadFromFile<JObject>("Randomizers/CreatureRandomizer::CreatureWeights");
-                    Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Randomizers/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
+                    JObject jObject = ConfigReader.ReadFromFile<JObject>("Configs/CreatureRandomizer::CreatureWeights");
+                    Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
                     
                     _weightedCreaturesSet = new WeightedSet<TechType>((from weightKvp in creatureWeights
                                                                        select new WeightedSet<TechType>.WeightedItem(weightKvp.Key, weightKvp.Value)).ToArray());

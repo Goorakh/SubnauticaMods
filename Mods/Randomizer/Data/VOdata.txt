@@ -308,7 +308,6 @@ event:/player/story/RadioWarper1|RadioWarper1
 event:/sub/pod/radio/radioMushroom24
 event:/sub/pod/radio/radio_power_on|RadioPowerOn
 event:/main_menu/intro
-event:/creature/warper/idle
 event:/player/story/Deepgrandreef
 event:/sub/exo/welcome|ExosuitWelcomeAboard
 event:/sub/base/coffeemachine_idle

@@ -11,23 +11,10 @@ namespace GRandomizer.Util
 {
     public static class SoundPatcher
     {
-        static string _lastSoundPlayed;
-        static int _lastSoundPlayFrame;
-        public static bool GetLastPlayedSound(out string eventPath, out int startFrame)
-        {
-            if (_lastSoundPlayed != null)
-            {
-                eventPath = _lastSoundPlayed;
-                startFrame = _lastSoundPlayFrame;
-                return true;
-            }
-
-            eventPath = default;
-            startFrame = default;
-            return false;
-        }
+        public delegate void SoundPlayedDelegate(string path);
 
         static List<Mutator<string>> _eventPathMutators;
+        public static event SoundPlayedDelegate OnSoundPlayed;
 
         public static void AddMutator(Mutator<string> pathMutator)
         {
@@ -47,28 +34,38 @@ namespace GRandomizer.Util
         {
             static void Prefix(FMOD.Studio.System __instance, ref Guid guid)
             {
-                if (__instance.lookupPath(guid, out string path) == RESULT.OK)
+                if (__instance.lookupPath(guid, out string originalPath) == RESULT.OK)
                 {
-                    string replacementPath = mutatePath(path);
-                    if (replacementPath != path && __instance.lookupID(replacementPath, out Guid replacementGuid) == RESULT.OK)
+                    string replacementPath = mutatePath(originalPath);
+                    if (replacementPath != originalPath && __instance.lookupID(replacementPath, out Guid replacementGuid) == RESULT.OK)
                     {
                         guid = replacementGuid;
                     }
-
-                    _lastSoundPlayed = replacementPath;
-                    _lastSoundPlayFrame = Time.frameCount;
                 }
             }
         }
 
-        [HarmonyPatch(typeof(FMOD_CustomEmitter), nameof(FMOD_CustomEmitter.Awake))]
-        static class FMOD_CustomEmitter_Awake_Patch
+        [HarmonyPatch(typeof(FMOD.Studio.EventInstance), nameof(FMOD.Studio.EventInstance.start))]
+        static class EventInstance_start_Patch
         {
-            static void Prefix(FMOD_CustomEmitter __instance)
+            static void Prefix(FMOD.Studio.EventInstance __instance)
             {
-                __instance.asset.path = mutatePath(__instance.asset.path);
-                _lastSoundPlayed = __instance.asset.path;
-                _lastSoundPlayFrame = Time.frameCount;
+                RESULT result;
+                if ((result = __instance.getDescription(out FMOD.Studio.EventDescription description)) == RESULT.OK)
+                {
+                    if ((result = description.getPath(out string path)) == RESULT.OK)
+                    {
+                        OnSoundPlayed?.Invoke(path);
+                    }
+                    else
+                    {
+                        Utils.LogWarning($"EventInstance.start() Prefix: description.getPath returned {result}", true);
+                    }
+                }
+                else
+                {
+                    Utils.LogWarning($"EventInstance.start() Prefix: __instance.getDescription returned {result}", true);
+                }
             }
         }
     }

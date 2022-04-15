@@ -17,26 +17,30 @@ namespace GRandomizer.RandomizerControllers
     {
         static RandomDialogueMode mode => Mod.Config.RandomDialogue;
 
-        static readonly string[] _allLines;
-        static readonly Dictionary<SpeakerType, string[]> _speakerEntries;
-        static readonly Dictionary<string, SpeakerType> _lineToSpeaker;
-
-        static readonly Dictionary<string, string> _lineReplacements = new Dictionary<string, string>();
-
-        // TODO: Make some kind of two-way dictionary type instead of using 2 variables
-        static readonly Dictionary<string, string> _lineToSubtitle = new Dictionary<string, string>();
-        static readonly Dictionary<string, string[]> _subtitleToLine = new Dictionary<string, string[]>();
-
-        static DialogueRandomizer()
+        struct SpeechSequence
         {
-            _speakerEntries = new Dictionary<SpeakerType, string[]>();
-            _lineToSpeaker = new Dictionary<string, SpeakerType>();
+            public SpeakerType Speaker;
+            public string SoundEventPath;
+            public string SubtitleKey;
 
-            string[] lines = Properties.Resources.VOdata.Split('\n');
+            public bool HasSubtitles => !string.IsNullOrEmpty(SubtitleKey);
 
-            HashSet<string> allLines = new HashSet<string>();
-            HashSet<string> currentLines = new HashSet<string>();
+            public SpeechSequence(SpeakerType speaker, string soundEventPath, string subtitleKey)
+            {
+                Speaker = speaker;
+                SoundEventPath = soundEventPath;
+                SubtitleKey = subtitleKey;
+            }
+        }
+        static Dictionary<string, SpeechSequence> _sequences;
+
+        static bool _isInitialized = false;
+        public static void Initialize()
+        {
+            _sequences = new Dictionary<string, SpeechSequence>();
+
             SpeakerType currentSpeaker = SpeakerType.None;
+            string[] lines = Properties.Resources.VOdata.Split('\n');
             for (int i = 0; i < lines.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(lines[i]))
@@ -45,12 +49,6 @@ namespace GRandomizer.RandomizerControllers
                 const string SPEAKER_PREFIX = "SPEAKER=";
                 if (lines[i].StartsWith(SPEAKER_PREFIX))
                 {
-                    if (currentSpeaker != SpeakerType.None)
-                    {
-                        _speakerEntries.Add(currentSpeaker, currentLines.ToArray());
-                        currentLines.Clear();
-                    }
-
                     string speakerTypeString = lines[i].Substring(8 /*SPEAKER_PREFIX.Length*/).Trim();
                     currentSpeaker = (SpeakerType)Enum.Parse(typeof(SpeakerType), speakerTypeString);
                 }
@@ -64,120 +62,148 @@ namespace GRandomizer.RandomizerControllers
                     {
                         subtitleID = soundID.Substring(subtitleSeparatorIndex + 1);
                         soundID = soundID.Remove(subtitleSeparatorIndex);
-
-                        _lineToSubtitle.Add(soundID, subtitleID);
-
-                        if (!_subtitleToLine.TryGetValue(subtitleID, out string[] sounds))
-                            sounds = Array.Empty<string>();
-
-                        _subtitleToLine[subtitleID] = sounds.AddToArray(soundID);
                     }
 
-                    if (!currentLines.Add(soundID))
+                    if (_sequences.ContainsKey(soundID))
                     {
-                        Utils.LogWarning($"Duplicate line data for {soundID}", true);
+                        Utils.LogError($"Duplicate sound event path in VOdata.txt: {soundID}", true);
                     }
                     else
                     {
-                        _lineToSpeaker.Add(soundID, currentSpeaker);
+                        _sequences.Add(soundID, new SpeechSequence(currentSpeaker, soundID, subtitleID));
                     }
-
-                    allLines.Add(soundID);
                 }
             }
 
-            _speakerEntries.Add(currentSpeaker, currentLines.ToArray());
-            _allLines = allLines.ToArray();
-
             SoundPatcher.AddMutator(tryGetReplacementLine);
+            SoundPatcher.OnSoundPlayed += onSoundPlayed;
+
+            _isInitialized = true;
         }
+
+        static Dictionary<string, string> _lineReplacements;
 
         static string tryGetReplacementLine(string original)
         {
-            if (mode == RandomDialogueMode.Off)
+            if (!_isInitialized || mode == RandomDialogueMode.Off) // Deliberately including the events that activate during the loading screen, since they might get cached, it could be the only chance to replace them
                 return original;
 
-            if (_lineReplacements.TryGetValue(original, out string replacement))
+            if (_lineReplacements == null)
             {
-                return replacement;
-            }
-            else if (_lineToSpeaker.TryGetValue(original, out SpeakerType speaker)) // If there isn't a speaker for this event then it is not one we should replace
-            {
-                string replacementSoundPath;
+                string[] excludeSpeakersStr = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
+                SpeakerType[] excludeSpeakers = new SpeakerType[excludeSpeakersStr.Length];
+                for (int i = 0; i < excludeSpeakers.Length; i++)
+                {
+                    if (!Enum.TryParse(excludeSpeakersStr[i], true, out excludeSpeakers[i]))
+                    {
+                        Utils.LogError($"Error parsing Configs/DialogueRandomizer.json: Unknown SpeakerType {excludeSpeakersStr[i]}", true);
+                    }
+                }
+
+                string[] excludeLines = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeLines");
+
                 switch (mode)
                 {
                     case RandomDialogueMode.SameSpeaker:
-                        replacementSoundPath = _speakerEntries[speaker].GetRandom();
+                        _lineReplacements = new Dictionary<string, string>();
+
+                        Dictionary<SpeakerType, List<string>> speakerLines = new Dictionary<SpeakerType, List<string>>();
+                        foreach (SpeechSequence sequence in _sequences.Values)
+                        {
+                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
+                                continue;
+
+                            if (speakerLines.TryGetValue(sequence.Speaker, out List<string> lines))
+                            {
+                                lines.Add(sequence.SoundEventPath);
+                            }
+                            else
+                            {
+                                speakerLines.Add(sequence.Speaker, new List<string> { sequence.SoundEventPath });
+                            }
+                        }
+
+                        foreach (SpeechSequence sequence in _sequences.Values)
+                        {
+                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
+                                continue;
+
+                            _lineReplacements.Add(sequence.SoundEventPath, speakerLines[sequence.Speaker].GetAndRemoveRandom());
+                        }
                         break;
                     case RandomDialogueMode.Random:
-                        replacementSoundPath = _allLines.GetRandom();
+                        _lineReplacements = new Dictionary<string, string>();
+
+                        List<string> sequenceKeys = (from sequence in _sequences.Values
+                                                     where !excludeSpeakers.Contains(sequence.Speaker)
+                                                     where !excludeLines.Contains(value: sequence.SoundEventPath)
+                                                     select sequence.SoundEventPath).ToList();
+
+                        foreach (SpeechSequence sequence in _sequences.Values)
+                        {
+                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
+                                continue;
+
+                            _lineReplacements.Add(sequence.SoundEventPath, sequenceKeys.GetAndRemoveRandom());
+                        }
                         break;
                     default:
                         throw new NotImplementedException($"{mode} is not implemented");
                 }
+            }
+
+            if (_lineReplacements.TryGetValue(original, out string replacement))
+                return replacement;
+
+            return original;
+        }
+
+        static void onSoundPlayed(string playedPath)
+        {
+            if (!_isInitialized || mode == RandomDialogueMode.Off || uGUI.isLoading) // For some reason certain audio events are triggered during the loading screen, ignore these.
+                return;
+
+            if (_lineReplacements.ContainsValue(playedPath))
+            {
+                if (_sequences.TryGetValue(playedPath, out SpeechSequence playedSequence) && playedSequence.HasSubtitles)
+                {
+                    Subtitles_Add_Patch.IsCorrectedSubtitle = true;
+                    Subtitles.main.Add(playedSequence.SubtitleKey);
+                    Subtitles_Add_Patch.IsCorrectedSubtitle = false;
+                }
 
 #if DEBUG
-                Utils.DebugLog($"Replace sequence {original} -> {replacementSoundPath}", true);
+                Utils.DebugLog($"onSoundPlayed {_lineReplacements.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}", false);
 #endif
-
-                return _lineReplacements[original] = replacementSoundPath;
-            }
-            else
-            {
-                return original;
             }
         }
 
         [HarmonyPatch]
         static class Subtitles_Add_Patch
         {
+            // TODO: This patch isn't great, rewrite it at some point
+
+            public static bool IsCorrectedSubtitle;
+
             static IEnumerable<MethodInfo> TargetMethods()
             {
                 yield return SymbolExtensions.GetMethodInfo<Subtitles>(_ => _.Add(default));
                 yield return SymbolExtensions.GetMethodInfo<Subtitles>(_ => _.Add(default, default));
             }
 
-            // TODO: Ensure subtitles shown for lines that normally wouldn't have subtitles
-            static bool Prefix(ref string key)
+            static bool Prefix(string key)
             {
-                if (_subtitleToLine != null && _subtitleToLine.TryGetValue(key, out string[] lines))
+                if (_isInitialized && mode > RandomDialogueMode.Off && _lineReplacements.Keys.Any(line => _sequences[line].SubtitleKey == key))
                 {
-                    string originalLine;
-                    if (lines.Length == 1)
-                    {
-                        originalLine = lines[0];
-                    }
-                    else
-                    {
-                        // TODO: Fix this somehow
-                        originalLine = lines.GetRandom();
-                        /*
-                        int subtitleLineStartFrame = Time.frameCount;
-
-                        // Wait until next update to read which audio event was played
-                        GlobalObject.RunNextFrame(() =>
-                        {
-                            if (SoundPatcher.GetLastPlayedSound(out string originalLine, out int lineStartFrame) && lineStartFrame == subtitleLineStartFrame)
-                            {
-                                __instance.popup.phase = uGUI_PopupMessage.Phase.Zero;
-                            }
-                        });
-                        */
-                    }
-
-                    string replacementLine = tryGetReplacementLine(originalLine);
-                    if (_lineToSubtitle.TryGetValue(replacementLine, out string replacementSubtitle))
-                    {
-                        key = replacementSubtitle;
-                    }
-                    else
-                    {
-                        // No subtitle for replacement line -> Don't show subtitle
-                        return false;
-                    }
+#if DEBUG
+                    Utils.DebugLog($"Subtitles_Add_Patch.Prefix key: {key}, IsCorrectedSubtitle: {IsCorrectedSubtitle}", false);
+#endif
+                    return IsCorrectedSubtitle;
                 }
-
-                return true;
+                else
+                {
+                    return true;
+                }
             }
         }
     }

@@ -83,7 +83,7 @@ namespace GRandomizer.RandomizerControllers
                         }
                     }
 
-                    foreach (string includeStr in ConfigReader.ReadFromFile<string[]>("Randomizers/ItemRandomizer::Include"))
+                    foreach (string includeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Include"))
                     {
                         if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
                         {
@@ -95,7 +95,7 @@ namespace GRandomizer.RandomizerControllers
                         }
                     }
 
-                    foreach (string excludeStr in ConfigReader.ReadFromFile<string[]>("Randomizers/ItemRandomizer::Blacklist"))
+                    foreach (string excludeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Blacklist"))
                     {
                         if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
                         {

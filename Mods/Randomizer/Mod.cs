@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers;
+using GRandomizer.Util;
 using HarmonyLib;
 using QModManager.API.ModLoading;
 using QModManager.Utility;
@@ -29,6 +30,7 @@ namespace GRandomizer
             ModFolder = new FileInfo(assembly.Location).Directory;
 
             GlobalObject.CreateIfMissing();
+            DialogueRandomizer.Initialize();
 
             string modName = ($"gorakh_{assembly.GetName().Name}");
             Logger.Log(Logger.Level.Info, $"Patching {modName}");
