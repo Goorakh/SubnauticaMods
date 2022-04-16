@@ -38,7 +38,7 @@ namespace GRandomizer
 
         public static void LogError(string log, bool showOnScreen)
         {
-            logLevel(QModManager.Utility.Logger.Level.Error, log, false);
+            logLevel(QModManager.Utility.Logger.Level.Error, log, showOnScreen);
         }
 
         public static void LogWarning(string log, bool showOnScreen)

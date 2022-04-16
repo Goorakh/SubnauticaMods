@@ -57,7 +57,6 @@ event:/sub/rocket/time_pod_open_first_use_VO|Rocket_PreflightCheck4
 SPEAKER=PDA
 event:/env/background/ship_explode|Story_AuroraWarning4
 event:/player/data_terminal_use|Precursor_Gun_DataDownload1
-event:/creature/mesmer/mesmerize_loop
 event:/loot/new_PDA_data
 event:/player/story/Goal_FarmingTray|Goal_FarmingTray
 event:/player/story/Goal_BiomeGrassyPlateaus|Goal_BiomeGrassyPlateaus

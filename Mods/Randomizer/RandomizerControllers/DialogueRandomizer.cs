@@ -206,5 +206,47 @@ namespace GRandomizer.RandomizerControllers
                 }
             }
         }
+
+        [HarmonyPatch(typeof(uGUI_LogEntry), nameof(uGUI_LogEntry.Initialize))]
+        static class uGUI_LogEntry_Initialize_Patch
+        {
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                FieldInfo EntryData_key_FI = AccessTools.Field(typeof(PDALog.EntryData), nameof(PDALog.EntryData.key));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.LoadsField(EntryData_key_FI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Dup); // Dup instance
+
+                        yield return instruction;
+
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.EntryData_getkey_Hook_MI);
+                    }
+                    else
+                    {
+                        yield return instruction;
+                    }
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo EntryData_getkey_Hook_MI = SymbolExtensions.GetMethodInfo(() => EntryData_getkey_Hook(default, default));
+                static string EntryData_getkey_Hook(PDALog.EntryData entryData, string key)
+                {
+                    if (_isInitialized && entryData != null && entryData.sound != null)
+                    {
+                        if (_lineReplacements.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.TryGetValue(replacementPath, out SpeechSequence sequence))
+                        {
+                            return sequence.SubtitleKey;
+                        }
+                    }
+
+                    return key;
+                }
+            }
+        }
     }
 }

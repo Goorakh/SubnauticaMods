@@ -22,7 +22,7 @@ namespace GRandomizer
         public bool RandomCraftDuration = true;
 
         [Toggle("Randomize Text"), OnChange(nameof(RandomLocalization_OnChange))]
-        public bool RandomLocalization;
+        public bool RandomLocalization = false;
 
         void RandomLocalization_OnChange(ToggleChangedEventArgs e)
         {
