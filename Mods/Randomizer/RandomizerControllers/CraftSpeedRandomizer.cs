@@ -12,18 +12,10 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.RandomCraftDuration;
         }
 
-        static readonly Dictionary<TechType, float> _craftTimes = new Dictionary<TechType, float>();
-        static float getCraftTime(TechType type)
+        static readonly InitializeOnAccessDictionary<TechType, float> _craftTimes = new InitializeOnAccessDictionary<TechType, float>(key =>
         {
-            if (_craftTimes.TryGetValue(type, out float craftTime))
-            {
-                return craftTime;
-            }
-            else
-            {
-                return _craftTimes[type] = Mathf.Pow(UnityEngine.Random.value, 5f) * 60f;
-            }
-        }
+            return Mathf.Pow(UnityEngine.Random.value, 5f) * 60f;
+        });
 
         [HarmonyPatch(typeof(Crafter), nameof(Crafter.Craft))]
         static class Crafter_Craft_Patch
@@ -32,7 +24,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    duration = getCraftTime(techType);
+                    duration = _craftTimes[techType];
                 }
             }
         }

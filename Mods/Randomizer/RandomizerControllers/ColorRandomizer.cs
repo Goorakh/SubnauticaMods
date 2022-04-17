@@ -24,8 +24,13 @@ namespace GRandomizer.RandomizerControllers
 
         class ColorReplacer : MonoBehaviour
         {
-            static readonly Dictionary<Color, Color> _globalReplacements = new Dictionary<Color, Color>();
-            readonly Dictionary<Color, Color> _specificReplacements = new Dictionary<Color, Color>();
+            static Color selectColorReplacement(Color key)
+            {
+                return Utils.Random.Color(key.a);
+            }
+
+            static readonly InitializeOnAccessDictionary<Color, Color> _globalReplacements = new InitializeOnAccessDictionary<Color, Color>(selectColorReplacement);
+            readonly InitializeOnAccessDictionary<Color, Color> _specificReplacements = new InitializeOnAccessDictionary<Color, Color>(selectColorReplacement);
 
             MonoBehaviour _component;
             bool _isInitialized;
@@ -46,16 +51,19 @@ namespace GRandomizer.RandomizerControllers
 
             static ColorReplacer getOrAddComponent(MonoBehaviour component)
             {
-                ColorReplacer colorReplacer = component.GetOrAddComponent<ColorReplacer>();
-                if (!colorReplacer._isInitialized)
+                ColorReplacer colorReplacer = component.GetComponent<ColorReplacer>();
+                if (!colorReplacer || colorReplacer == null)
+                {
+                    colorReplacer = component.gameObject.AddComponent<ColorReplacer>();
                     colorReplacer.Initialize(component);
+                }
 
                 return colorReplacer;
             }
 
             public Color GetReplacement(Color original)
             {
-                return getReplacement(original, _specificReplacements);
+                return _specificReplacements[original];
             }
 
             public static Color GetReplacement(Color original, MonoBehaviour component)
@@ -65,19 +73,7 @@ namespace GRandomizer.RandomizerControllers
 
             public static Color GetGlobalReplacement(Color original)
             {
-                return getReplacement(original, _globalReplacements);
-            }
-
-            static Color getReplacement(Color original, Dictionary<Color, Color> replacementDict)
-            {
-                if (replacementDict.TryGetValue(original, out Color replacement))
-                {
-                    return replacement;
-                }
-                else
-                {
-                    return replacementDict[original] = Utils.Random.Color(original.a);
-                }
+                return _globalReplacements[original];
             }
         }
 
@@ -258,14 +254,7 @@ namespace GRandomizer.RandomizerControllers
                     if (!IsEnabled())
                         return original;
 
-                    if (__instance != null)
-                    {
-                        return ColorReplacer.GetReplacement(original, __instance);
-                    }
-                    else
-                    {
-                        return ColorReplacer.GetGlobalReplacement(original);
-                    }
+                    return ColorReplacer.GetReplacement(original, __instance);
                 }
 
                 public static readonly MethodInfo getColor32_Hook_MI = SymbolExtensions.GetMethodInfo(() => getColor32_Hook(default, default));
@@ -387,12 +376,14 @@ namespace GRandomizer.RandomizerControllers
                         {
                             if (biome.skyPrefab != null)
                             {
-                                int skyIndex = UnityEngine.Random.Range(0, skyPrefabs.Count);
 #if DEBUG
+                                int skyIndex = UnityEngine.Random.Range(0, skyPrefabs.Count);
                                 Utils.DebugLog($"Replace {biome.name} skyPrefab: {biome.skyPrefab.name}->{skyPrefabs[skyIndex].name}", false);
-#endif
                                 biome.skyPrefab = skyPrefabs[skyIndex];
                                 skyPrefabs.RemoveAt(skyIndex);
+#else
+                                biome.skyPrefab = skyPrefabs.GetAndRemoveRandom();
+#endif
                             }
 
 #if DEBUG
@@ -410,8 +401,8 @@ namespace GRandomizer.RandomizerControllers
                             biome.settings.sunlightScale *= UnityEngine.Random.Range(-2f, 2f);
                             biome.settings.ambientScale *= UnityEngine.Random.Range(0f, 2f);
                             
-                            if (UnityEngine.Random.value < 0.4f)
-                                biome.settings.temperature = UnityEngine.Random.Range(0f, 70f);
+                            if (UnityEngine.Random.value < 0.2f)
+                                biome.settings.temperature *= UnityEngine.Random.Range(0f, 3f);
 
 #if DEBUG
                             foreach (FieldInfo field in AccessTools.GetDeclaredFields(typeof(WaterscapeVolume.Settings)))

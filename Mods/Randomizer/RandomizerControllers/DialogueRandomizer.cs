@@ -32,12 +32,9 @@ namespace GRandomizer.RandomizerControllers
                 SubtitleKey = subtitleKey;
             }
         }
-        static Dictionary<string, SpeechSequence> _sequences;
-
-        static bool _isInitialized = false;
-        public static void Initialize()
+        static readonly InitializeOnAccess<Dictionary<string, SpeechSequence>> _sequences = new InitializeOnAccess<Dictionary<string, SpeechSequence>>(() =>
         {
-            _sequences = new Dictionary<string, SpeechSequence>();
+            Dictionary<string, SpeechSequence> sequences = new Dictionary<string, SpeechSequence>();
 
             SpeakerType currentSpeaker = SpeakerType.None;
             string[] lines = Properties.Resources.VOdata.Split('\n');
@@ -64,95 +61,96 @@ namespace GRandomizer.RandomizerControllers
                         soundID = soundID.Remove(subtitleSeparatorIndex);
                     }
 
-                    if (_sequences.ContainsKey(soundID))
+                    if (sequences.ContainsKey(soundID))
                     {
                         Utils.LogError($"Duplicate sound event path in VOdata.txt: {soundID}", true);
                     }
                     else
                     {
-                        _sequences.Add(soundID, new SpeechSequence(currentSpeaker, soundID, subtitleID));
+                        sequences.Add(soundID, new SpeechSequence(currentSpeaker, soundID, subtitleID));
                     }
                 }
             }
 
+            return sequences;
+        });
+
+        static readonly InitializeOnAccess<Dictionary<string, string>> _lineReplacements = new InitializeOnAccess<Dictionary<string, string>>(() =>
+        {
+            string[] excludeSpeakersStr = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
+            SpeakerType[] excludeSpeakers = new SpeakerType[excludeSpeakersStr.Length];
+            for (int i = 0; i < excludeSpeakers.Length; i++)
+            {
+                if (!Enum.TryParse(excludeSpeakersStr[i], true, out excludeSpeakers[i]))
+                {
+                    Utils.LogError($"Error parsing Configs/DialogueRandomizer.json: Unknown SpeakerType {excludeSpeakersStr[i]} in DontRandomizeSpeakers", true);
+                }
+            }
+
+            string[] excludeLines = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeLines");
+
+            Dictionary<string, SpeechSequence> filteredSequences = new Dictionary<string, SpeechSequence>();
+            foreach (KeyValuePair<string, SpeechSequence> kvp in _sequences.Get)
+            {
+                if (excludeSpeakers.Contains(kvp.Value.Speaker) || excludeLines.Contains(value: kvp.Key))
+                    continue;
+
+                filteredSequences.Add(kvp.Key, kvp.Value);
+            }
+
+            Dictionary<string, string> replacements = new Dictionary<string, string>();
+            switch (mode)
+            {
+                case RandomDialogueMode.SameSpeaker:
+                    Dictionary<SpeakerType, List<string>> speakerLines = new Dictionary<SpeakerType, List<string>>();
+
+                    foreach (SpeechSequence sequence in filteredSequences.Values)
+                    {
+                        if (speakerLines.TryGetValue(sequence.Speaker, out List<string> lines))
+                        {
+                            lines.Add(sequence.SoundEventPath);
+                        }
+                        else
+                        {
+                            speakerLines.Add(sequence.Speaker, new List<string> { sequence.SoundEventPath });
+                        }
+                    }
+
+                    foreach (SpeechSequence sequence in filteredSequences.Values)
+                    {
+                        replacements.Add(sequence.SoundEventPath, speakerLines[sequence.Speaker].GetAndRemoveRandom());
+                    }
+                    break;
+                case RandomDialogueMode.Random:
+                    List<string> sequenceKeys = filteredSequences.Keys.ToList();
+
+                    foreach (SpeechSequence sequence in filteredSequences.Values)
+                    {
+                        replacements.Add(sequence.SoundEventPath, sequenceKeys.GetAndRemoveRandom());
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException($"{mode} is not implemented");
+            }
+
+            return replacements;
+        });
+
+        static bool _isInitialized = false;
+        public static void Initialize()
+        {
             SoundPatcher.AddMutator(tryGetReplacementLine);
             SoundPatcher.OnSoundPlayed += onSoundPlayed;
 
             _isInitialized = true;
         }
 
-        static Dictionary<string, string> _lineReplacements;
-
         static string tryGetReplacementLine(string original)
         {
             if (!_isInitialized || mode == RandomDialogueMode.Off) // Deliberately including the events that activate during the loading screen, since they might get cached, it could be the only chance to replace them
                 return original;
 
-            if (_lineReplacements == null)
-            {
-                string[] excludeSpeakersStr = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
-                SpeakerType[] excludeSpeakers = new SpeakerType[excludeSpeakersStr.Length];
-                for (int i = 0; i < excludeSpeakers.Length; i++)
-                {
-                    if (!Enum.TryParse(excludeSpeakersStr[i], true, out excludeSpeakers[i]))
-                    {
-                        Utils.LogError($"Error parsing Configs/DialogueRandomizer.json: Unknown SpeakerType {excludeSpeakersStr[i]}", true);
-                    }
-                }
-
-                string[] excludeLines = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeLines");
-
-                switch (mode)
-                {
-                    case RandomDialogueMode.SameSpeaker:
-                        _lineReplacements = new Dictionary<string, string>();
-
-                        Dictionary<SpeakerType, List<string>> speakerLines = new Dictionary<SpeakerType, List<string>>();
-                        foreach (SpeechSequence sequence in _sequences.Values)
-                        {
-                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
-                                continue;
-
-                            if (speakerLines.TryGetValue(sequence.Speaker, out List<string> lines))
-                            {
-                                lines.Add(sequence.SoundEventPath);
-                            }
-                            else
-                            {
-                                speakerLines.Add(sequence.Speaker, new List<string> { sequence.SoundEventPath });
-                            }
-                        }
-
-                        foreach (SpeechSequence sequence in _sequences.Values)
-                        {
-                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
-                                continue;
-
-                            _lineReplacements.Add(sequence.SoundEventPath, speakerLines[sequence.Speaker].GetAndRemoveRandom());
-                        }
-                        break;
-                    case RandomDialogueMode.Random:
-                        _lineReplacements = new Dictionary<string, string>();
-
-                        List<string> sequenceKeys = (from sequence in _sequences.Values
-                                                     where !excludeSpeakers.Contains(sequence.Speaker)
-                                                     where !excludeLines.Contains(value: sequence.SoundEventPath)
-                                                     select sequence.SoundEventPath).ToList();
-
-                        foreach (SpeechSequence sequence in _sequences.Values)
-                        {
-                            if (excludeSpeakers.Contains(sequence.Speaker) || excludeLines.Contains(value: sequence.SoundEventPath))
-                                continue;
-
-                            _lineReplacements.Add(sequence.SoundEventPath, sequenceKeys.GetAndRemoveRandom());
-                        }
-                        break;
-                    default:
-                        throw new NotImplementedException($"{mode} is not implemented");
-                }
-            }
-
-            if (_lineReplacements.TryGetValue(original, out string replacement))
+            if (_lineReplacements.Get.TryGetValue(original, out string replacement))
                 return replacement;
 
             return original;
@@ -163,9 +161,9 @@ namespace GRandomizer.RandomizerControllers
             if (!_isInitialized || mode == RandomDialogueMode.Off || uGUI.isLoading) // For some reason certain audio events are triggered during the loading screen, ignore these.
                 return;
 
-            if (_lineReplacements.ContainsValue(playedPath))
+            if (_lineReplacements.Get.ContainsValue(playedPath))
             {
-                if (_sequences.TryGetValue(playedPath, out SpeechSequence playedSequence) && playedSequence.HasSubtitles)
+                if (_sequences.Get.TryGetValue(playedPath, out SpeechSequence playedSequence) && playedSequence.HasSubtitles)
                 {
                     Subtitles_Add_Patch.IsCorrectedSubtitle = true;
                     Subtitles.main.Add(playedSequence.SubtitleKey);
@@ -173,7 +171,7 @@ namespace GRandomizer.RandomizerControllers
                 }
 
 #if DEBUG
-                Utils.DebugLog($"onSoundPlayed {_lineReplacements.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}", false);
+                Utils.DebugLog($"onSoundPlayed {_lineReplacements.Get.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}", false);
 #endif
             }
         }
@@ -193,7 +191,7 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix(string key)
             {
-                if (_isInitialized && mode > RandomDialogueMode.Off && _lineReplacements.Keys.Any(line => _sequences[line].SubtitleKey == key))
+                if (_isInitialized && mode > RandomDialogueMode.Off && _lineReplacements.Get.Keys.Any(line => _sequences.Get[line].SubtitleKey == key))
                 {
 #if DEBUG
                     Utils.DebugLog($"Subtitles_Add_Patch.Prefix key: {key}, IsCorrectedSubtitle: {IsCorrectedSubtitle}", false);
@@ -238,7 +236,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     if (_isInitialized && entryData != null && entryData.sound != null)
                     {
-                        if (_lineReplacements.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.TryGetValue(replacementPath, out SpeechSequence sequence))
+                        if (_lineReplacements.Get.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
                         {
                             return sequence.SubtitleKey;
                         }

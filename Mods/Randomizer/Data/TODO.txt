@@ -1,0 +1,7 @@
+﻿Not done:
+	Make a config tool instead of making users edit json files (possibly in-game? SML is great but unfortunately doesn't seem to have all the functionaliy needed)
+	Make randomization seed-based, save seed in the save slots, read it back upon loading, also give users the option to specify a seed when starting a new game
+	Rework creature randomizer to hook the deserialization process instead of Creature.Start
+
+Done/Ready to test:
+	Correct some recipes when resources are randomized (creepvine seed cluster, things from outcrops, seeds, etc), make sure this is compatible with recipe randomizers

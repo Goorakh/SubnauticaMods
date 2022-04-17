@@ -16,23 +16,15 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.RandomItemSize;
         }
 
-        static readonly Dictionary<TechType, Vector2int> _itemSizes = new Dictionary<TechType, Vector2int>();
-        static Vector2int getOverrideItemSize(TechType type)
+        static readonly InitializeOnAccessDictionary<TechType, Vector2int> _itemSizes = new InitializeOnAccessDictionary<TechType, Vector2int>(type =>
         {
-            if (_itemSizes.TryGetValue(type, out Vector2int size))
+            int randomSize()
             {
-                return size;
+                return Mathf.FloorToInt((3f * Mathf.Pow(UnityEngine.Random.value, 3f)) + 1f);
             }
-            else
-            {
-                int randomSize()
-                {
-                    return Mathf.FloorToInt((3f * Mathf.Pow(UnityEngine.Random.value, 3f)) + 1f);
-                }
 
-                return _itemSizes[type] = new Vector2int(randomSize(), randomSize());
-            }
-        }
+            return new Vector2int(randomSize(), randomSize());
+        });
 
         [HarmonyPatch(typeof(CraftData), nameof(CraftData.GetItemSize))]
         static class CraftData_GetItemSize_Prefix
@@ -41,7 +33,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    __result = getOverrideItemSize(techType);
+                    __result = _itemSizes[techType];
                     return false;
                 }
 

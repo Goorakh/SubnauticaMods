@@ -14,58 +14,14 @@ namespace GRandomizer.RandomizerControllers
 {
     static class CreatureRandomizer
     {
-        static TechType[] _creatureTypes;
-        static TechType[] creatures
+        static readonly InitializeOnAccess<WeightedSet<TechType>> _weightedCreaturesSet = new InitializeOnAccess<WeightedSet<TechType>>(() =>
         {
-            get
-            {
-                if (_creatureTypes == null)
-                {
-                    List<TechType> creatureTypesList = new List<TechType>();
+            JObject jObject = ConfigReader.ReadFromFile<JObject>("Configs/CreatureRandomizer::CreatureWeights");
+            Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
 
-                    string[] blacklistStrings = ConfigReader.ReadFromFile<string[]>("Configs/CreatureRandomizer::Blacklist");
-
-                    foreach (TechType type in Utils.GetAllDefinedTechTypes())
-                    {
-                        string typeString = type.AsString(true);
-                        if (blacklistStrings.Any(bl => string.Equals(typeString, bl, StringComparison.OrdinalIgnoreCase)))
-                            continue;
-
-                        GameObject prefab = CraftData.GetPrefabForTechType(type);
-                        if (prefab != null)
-                        {
-                            Creature creature = prefab.GetComponent<Creature>();
-                            if (creature != null)
-                            {
-                                creatureTypesList.Add(type);
-                            }
-                        }
-                    }
-
-                    _creatureTypes = creatureTypesList.ToArray();
-                }
-
-                return _creatureTypes;
-            }
-        }
-
-        static WeightedSet<TechType> _weightedCreaturesSet;
-        static WeightedSet<TechType> weightedCreaturesSet
-        {
-            get
-            {
-                if (_weightedCreaturesSet == null)
-                {
-                    JObject jObject = ConfigReader.ReadFromFile<JObject>("Configs/CreatureRandomizer::CreatureWeights");
-                    Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
-                    
-                    _weightedCreaturesSet = new WeightedSet<TechType>((from weightKvp in creatureWeights
-                                                                       select new WeightedSet<TechType>.WeightedItem(weightKvp.Key, weightKvp.Value)).ToArray());
-                }
-
-                return _weightedCreaturesSet;
-            }
-        }
+            return new WeightedSet<TechType>((from weightKvp in creatureWeights
+                                              select new WeightedSet<TechType>.WeightedItem(weightKvp.Key, weightKvp.Value)).ToArray());
+        });
 
         static bool IsEnabled()
         {
@@ -88,7 +44,7 @@ namespace GRandomizer.RandomizerControllers
                     TechType newCreatureType;
                     do
                     {
-                        newCreatureType = weightedCreaturesSet.SelectRandom();
+                        newCreatureType = _weightedCreaturesSet.Get.SelectRandom();
                     } while (newCreatureType == oldCreatureType);
 
                     GameObject newCreatureObj = CraftData.InstantiateFromPrefab(newCreatureType);

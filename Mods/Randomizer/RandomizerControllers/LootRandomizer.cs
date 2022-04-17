@@ -37,119 +37,110 @@ namespace GRandomizer.RandomizerControllers
             { TechType.StalkerEgg, TechType.StalkerEggUndiscovered }
         };
 
-        static TechType[] _currentItemTypes;
-        static TechType[] itemTypes
+        static readonly InitializeOnAccess<TechType[]> _itemTypes = new InitializeOnAccess<TechType[]>(() =>
         {
-            get
+            HashSet<TechType> obtainableTypes = (from TechType groupType in
+                                                     from itemGroup in CraftData.groups
+                                                     where itemGroup.key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
+                                                     where itemGroup.key != TechGroup.BasePieces // Exclude base pieces
+                                                     where itemGroup.key != TechGroup.ExteriorModules // Exclude base pieces
+                                                     where itemGroup.key != TechGroup.InteriorPieces // Exclude base pieces
+                                                     where itemGroup.key != TechGroup.InteriorModules // Exclude base pieces
+                                                     where itemGroup.key != TechGroup.Miscellaneous // Exclude base pieces
+                                                     from subGroup in itemGroup.Value
+                                                     where subGroup.key != TechCategory.Cyclops // Exclude cyclops blueprints
+                                                     from techType in subGroup.Value
+                                                     select techType
+                                                 select groupType).ToHashSet();
+
+            foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
             {
-                if (_currentItemTypes == null)
+                if (CraftData.techData.TryGetValue(type, out CraftData.TechData data))
                 {
-                    HashSet<TechType> obtainableTypes = (from TechType groupType in
-                                                         from itemGroup in CraftData.groups
-                                                         where itemGroup.key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
-                                                         where itemGroup.key != TechGroup.BasePieces // Exclude base pieces
-                                                         where itemGroup.key != TechGroup.ExteriorModules // Exclude base pieces
-                                                         where itemGroup.key != TechGroup.InteriorPieces // Exclude base pieces
-                                                         where itemGroup.key != TechGroup.InteriorModules // Exclude base pieces
-                                                         where itemGroup.key != TechGroup.Miscellaneous // Exclude base pieces
-                                                         from subGroup in itemGroup.Value
-                                                         where subGroup.key != TechCategory.Cyclops // Exclude cyclops blueprints
-                                                         from techType in subGroup.Value
-                                                         select techType
-                                                         select groupType).ToHashSet();
-
-                    foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
+                    if (data._linkedItems != null)
                     {
-                        if (CraftData.techData.TryGetValue(type, out CraftData.TechData data))
+                        foreach (TechType linked in data._linkedItems)
                         {
-                            if (data._linkedItems != null)
-                            {
-                                foreach (TechType linked in data._linkedItems)
-                                {
-                                    obtainableTypes.Add(linked);
-                                }
-                            }
+                            obtainableTypes.Add(linked);
+                        }
+                    }
 
-                            if (data._ingredients != null)
+                    if (data._ingredients != null)
+                    {
+                        foreach (CraftData.Ingredient ingredient in data._ingredients)
+                        {
+                            if (ingredient != null)
                             {
-                                foreach (CraftData.Ingredient ingredient in data._ingredients)
-                                {
-                                    if (ingredient != null)
-                                    {
-                                        obtainableTypes.Add(ingredient._techType);
-                                    }
-                                }
+                                obtainableTypes.Add(ingredient._techType);
                             }
                         }
                     }
-
-                    foreach (string includeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Include"))
-                    {
-                        if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
-                        {
-                            obtainableTypes.Add(includeType);
-                        }
-                        else
-                        {
-                            Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)", false);
-                        }
-                    }
-
-                    foreach (string excludeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Blacklist"))
-                    {
-                        if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
-                        {
-                            obtainableTypes.Remove(excludeType);
-                        }
-                        else
-                        {
-                            Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)", false);
-                        }
-                    }
-
-                    foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
-                    {
-                        if (CraftData.GetPrefabForTechType(type) == null)
-                        {
-                            Utils.LogWarning($"Removing item type {type} due to no prefab defined in CraftData", true);
-                            obtainableTypes.Remove(type);
-                        }
-                    }
-
-                    _currentItemTypes = obtainableTypes.ToArray();
                 }
-
-                return _currentItemTypes;
             }
-        }
+
+            foreach (string includeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Include"))
+            {
+                if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
+                {
+                    obtainableTypes.Add(includeType);
+                }
+                else
+                {
+                    Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)", false);
+                }
+            }
+
+            foreach (string excludeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Blacklist"))
+            {
+                if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
+                {
+                    obtainableTypes.Remove(excludeType);
+                }
+                else
+                {
+                    Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)", false);
+                }
+            }
+
+            foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
+            {
+                if (CraftData.GetPrefabForTechType(type) == null)
+                {
+                    Utils.LogWarning($"Removing item type {type} due to no prefab defined in CraftData", true);
+                    obtainableTypes.Remove(type);
+                }
+            }
+
+            return obtainableTypes.ToArray();
+        });
 
         static readonly Dictionary<TechType, TechType> _itemReplacementsDictionary = new Dictionary<TechType, TechType>();
 
-        static readonly MethodInfo tryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => tryGetItemReplacement(default));
-        static TechType tryGetItemReplacement(TechType techType)
+        static readonly MethodInfo tryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
+        public static TechType TryGetItemReplacement(TechType techType)
         {
-            return tryGetItemReplacement(techType, null);
+            return TryGetItemReplacement(techType, null);
         }
 
 #if DEBUG
         static int _debugIndex = 0;
         public static void IncreaseDebugIndex()
         {
-            if (++_debugIndex >= itemTypes.Length)
+            if (++_debugIndex >= _itemTypes.Get.Length)
                 _debugIndex = 0;
 
-            Utils.DebugLog($"_debugIndex: {_debugIndex} ({itemTypes[_debugIndex]})", true);
+            Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
         }
         public static void DecreaseDebugIndex()
         {
             if (--_debugIndex < 0)
-                _debugIndex = itemTypes.Length - 1;
+                _debugIndex = _itemTypes.Get.Length - 1;
 
-            Utils.DebugLog($"_debugIndex: {_debugIndex} ({itemTypes[_debugIndex]})", true);
+            Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
         }
 #endif
 
-        static TechType tryGetItemReplacement(TechType techType, Predicate<TechType> condition)
+        public static TechType TryGetItemReplacement(TechType techType, Predicate<TechType> condition)
         {
             if (!IsEnabled())
                 return techType;
@@ -157,7 +148,7 @@ namespace GRandomizer.RandomizerControllers
 #if DEBUG
             if (false && techType == TechType.BigFilteredWater)
             {
-                return itemTypes[_debugIndex];
+                return _itemTypes.Get[_debugIndex];
             }
 #endif
 
@@ -167,13 +158,13 @@ namespace GRandomizer.RandomizerControllers
             }
             else
             {
-                if (!itemTypes.Contains(techType))
+                if (!_itemTypes.Get.Contains(techType))
                     return _itemReplacementsDictionary[techType] = techType;
 
                 TechType replacementType;
                 do
                 {
-                    replacementType = itemTypes.GetRandom();
+                    replacementType = _itemTypes.Get.GetRandom();
                 } while (replacementType == techType || (condition != null && !condition(replacementType)));
 
 #if DEBUG
@@ -185,11 +176,11 @@ namespace GRandomizer.RandomizerControllers
         }
         static void tryReplaceItem(ref TechType techType)
         {
-            techType = tryGetItemReplacement(techType);
+            techType = TryGetItemReplacement(techType);
         }
 
         static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
-        static bool IsEnabled()
+        public static bool IsEnabled()
         {
             return Mod.Config.RandomLoot;
         }
@@ -210,7 +201,7 @@ namespace GRandomizer.RandomizerControllers
                     TechType[] result = new TechType[Mathf.Max(__result.Length + UnityEngine.Random.Range(-2, 3), 1)];
                     for (int i = 0; i < result.Length; i++)
                     {
-                        result[i] = i < __result.Length ? tryGetItemReplacement(__result[i]) : itemTypes.GetRandom();
+                        result[i] = i < __result.Length ? TryGetItemReplacement(__result[i]) : _itemTypes.Get.GetRandom();
                     }
 
                     return result;
@@ -386,7 +377,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static TechType Postfix(TechType __result)
             {
-                return tryGetItemReplacement(__result);
+                return TryGetItemReplacement(__result);
             }
         }
 
@@ -476,7 +467,7 @@ namespace GRandomizer.RandomizerControllers
                     int containerSizeX = container.sizeX;
                     int containerSizeY = container.sizeY;
 
-                    TechType newType = tryGetItemReplacement(prefab.GetTechType(), t =>
+                    TechType newType = TryGetItemReplacement(prefab.GetTechType(), t =>
                     {
                         Vector2int size = CraftData.GetItemSize(t);
                         return size.x <= containerSizeX && size.y <= containerSizeY;
@@ -537,7 +528,7 @@ namespace GRandomizer.RandomizerControllers
                 get
                 {
                     if (_overrideSaltModel == null)
-                        _overrideSaltModel = CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.Salt));
+                        _overrideSaltModel = CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.Salt));
 
                     return _overrideSaltModel;
                 }
@@ -549,7 +540,7 @@ namespace GRandomizer.RandomizerControllers
                 get
                 {
                     if (_overrideWaterModel == null)
-                        _overrideWaterModel = CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.BigFilteredWater));
+                        _overrideWaterModel = CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.BigFilteredWater));
 
                     return _overrideWaterModel;
                 }
@@ -820,7 +811,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo Get_toothPrefab_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_toothPrefab_Hook(default));
                 static GameObject Get_toothPrefab_Hook(GameObject toothPrefab)
                 {
-                    return IsEnabled() ? CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StalkerTooth)) : toothPrefab;
+                    return IsEnabled() ? CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.StalkerTooth)) : toothPrefab;
                 }
             }
         }
@@ -904,7 +895,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo GetReplacementItemPrefab_MI = SymbolExtensions.GetMethodInfo(() => GetReplacementItemPrefab());
                 static GameObject GetReplacementItemPrefab()
                 {
-                    return IsEnabled() ? CraftData.GetPrefabForTechType(tryGetItemReplacement(TechType.StillsuitWater)) : null;
+                    return IsEnabled() ? CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.StillsuitWater)) : null;
                 }
             }
         }
