@@ -104,7 +104,6 @@
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="Util\AutoSingleton.cs" />
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />

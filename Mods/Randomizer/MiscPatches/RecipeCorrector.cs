@@ -12,34 +12,30 @@ namespace GRandomizer.MiscPatches
 {
     static class RecipeCorrector
     {
-        static readonly InitializeOnAccess<TechType[]> _ingredientsToCorrect = new InitializeOnAccess<TechType[]>(() =>
+        static readonly InitializeOnAccess<HashSet<TechType>> _ingredientsToCorrect = new InitializeOnAccess<HashSet<TechType>>(() =>
         {
             return CraftData.harvestOutputList.Values
                             .AddItem(TechType.CreepvineSeedCluster) // TODO: Don't hardcode these
                             .AddItem(TechType.StalkerTooth)
-                            .ToArray();
+                            .ToHashSet();
         });
 
         // Note: Null value is used as a 'use original' sign, instead of using a separate dictionary/collection for tracking that
-        static readonly Dictionary<IIngredient, RandomizedIngredient> _ingredientReplacements = new Dictionary<IIngredient, RandomizedIngredient>();
-
-        static IIngredient tryGetCorrectedIngredient(IIngredient original)
+        static readonly InitializeOnAccessDictionary<IIngredient, RandomizedIngredient> _ingredientReplacements = new InitializeOnAccessDictionary<IIngredient, RandomizedIngredient>(key =>
         {
-            if (!LootRandomizer.IsEnabled())
-                return original;
-
-            if (_ingredientReplacements.TryGetValue(original, out RandomizedIngredient replacement))
-                return replacement ?? original;
-
-            if (_ingredientsToCorrect.Get.Contains(original.techType))
+            if (_ingredientsToCorrect.Get.Contains(key.techType))
             {
-                return _ingredientReplacements[original] = new RandomizedIngredient(original.techType, original.amount);
+                return new RandomizedIngredient(key.techType, key.amount);
             }
             else
             {
-                _ingredientReplacements[original] = null;
-                return original;
+                return null;
             }
+        });
+
+        static IIngredient tryGetCorrectedIngredient(IIngredient original)
+        {
+            return LootRandomizer.IsEnabled() ? _ingredientReplacements[original] ?? original : original;
         }
 
         [HarmonyPatch]

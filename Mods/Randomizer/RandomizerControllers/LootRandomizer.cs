@@ -39,19 +39,17 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccess<TechType[]> _itemTypes = new InitializeOnAccess<TechType[]>(() =>
         {
-            HashSet<TechType> obtainableTypes = (from TechType groupType in
-                                                     from itemGroup in CraftData.groups
-                                                     where itemGroup.key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
-                                                     where itemGroup.key != TechGroup.BasePieces // Exclude base pieces
-                                                     where itemGroup.key != TechGroup.ExteriorModules // Exclude base pieces
-                                                     where itemGroup.key != TechGroup.InteriorPieces // Exclude base pieces
-                                                     where itemGroup.key != TechGroup.InteriorModules // Exclude base pieces
-                                                     where itemGroup.key != TechGroup.Miscellaneous // Exclude base pieces
-                                                     from subGroup in itemGroup.Value
-                                                     where subGroup.key != TechCategory.Cyclops // Exclude cyclops blueprints
-                                                     from techType in subGroup.Value
-                                                     select techType
-                                                 select groupType).ToHashSet();
+            HashSet<TechType> obtainableTypes = (from itemGroup in CraftData.groups
+                                                 where itemGroup.key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
+                                                 where itemGroup.key != TechGroup.BasePieces // Exclude base pieces
+                                                 where itemGroup.key != TechGroup.ExteriorModules // Exclude base pieces
+                                                 where itemGroup.key != TechGroup.InteriorPieces // Exclude base pieces
+                                                 where itemGroup.key != TechGroup.InteriorModules // Exclude base pieces
+                                                 where itemGroup.key != TechGroup.Miscellaneous // Exclude base pieces
+                                                 from subGroup in itemGroup.Value
+                                                 where subGroup.key != TechCategory.Cyclops // Exclude cyclops blueprints
+                                                 from techType in subGroup.Value
+                                                 select techType).ToHashSet();
 
             foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
             {

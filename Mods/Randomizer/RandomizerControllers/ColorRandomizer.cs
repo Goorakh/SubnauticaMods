@@ -389,9 +389,7 @@ namespace GRandomizer.RandomizerControllers
 #if DEBUG
                             WaterscapeVolume.Settings oldSettings = (WaterscapeVolume.Settings)biome.settings.MemberwiseClone();
 #endif
-                            Vector3 rotatedAbsorption = Quaternion.Euler(UnityEngine.Random.value * 360f, UnityEngine.Random.value * 360f, UnityEngine.Random.value * 360f) * biome.settings.absorption;
-                            biome.settings.absorption = Utils.Abs(rotatedAbsorption) * UnityEngine.Random.Range(0.3f, 2f);
-
+                            biome.settings.absorption = Utils.Abs(Utils.Random.Rotation * biome.settings.absorption) * UnityEngine.Random.Range(0.3f, 2f);
                             biome.settings.scattering *= UnityEngine.Random.Range(-2f, 2f);
                             biome.settings.scatteringColor = ColorReplacer.GetReplacement(biome.settings.scatteringColor, __instance);
                             biome.settings.murkiness *= UnityEngine.Random.Range(0f, 2f);

@@ -7,23 +7,18 @@ namespace GRandomizer.Util
     public class InitializeOnAccessDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         public delegate bool ValueSelectorTryGet(TKey key, out TValue value);
-        public delegate TValue ValueSelectorGet(TKey key);
-
-        readonly ValueSelectorTryGet _valueSelectorTryGet;
-        readonly ValueSelectorGet _valueSelectorGet;
 
         readonly Dictionary<TKey, TValue> _internalDict;
+        readonly ValueSelectorTryGet _valueSelector;
 
         public InitializeOnAccessDictionary(ValueSelectorTryGet selector)
         {
-            _valueSelectorTryGet = selector;
+            _valueSelector = selector;
             _internalDict = new Dictionary<TKey, TValue>();
         }
 
-        public InitializeOnAccessDictionary(ValueSelectorGet selector)
+        public InitializeOnAccessDictionary(Func<TKey, TValue> selector) : this((TKey key, out TValue value) => { value = selector(key); return true; })
         {
-            _valueSelectorGet = selector;
-            _internalDict = new Dictionary<TKey, TValue>();
         }
 
         public TValue this[TKey key]
@@ -76,14 +71,9 @@ namespace GRandomizer.Util
             if (_internalDict.TryGetValue(key, out value))
                 return true;
 
-            if (_valueSelectorTryGet != null && _valueSelectorTryGet(key, out value))
+            if (_valueSelector(key, out value))
             {
                 _internalDict[key] = value;
-                return true;
-            }
-            else if (_valueSelectorGet != null)
-            {
-                value = _internalDict[key] = _valueSelectorGet(key);
                 return true;
             }
 
