@@ -1,10 +1,5 @@
-﻿using GRandomizer.Util;
-using HarmonyLib;
-using System;
-using System.Linq;
+﻿using HarmonyLib;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers

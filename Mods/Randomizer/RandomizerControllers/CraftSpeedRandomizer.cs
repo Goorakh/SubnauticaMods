@@ -1,7 +1,6 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers

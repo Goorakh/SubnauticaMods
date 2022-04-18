@@ -1,12 +1,9 @@
 ﻿using GRandomizer.RandomizerControllers;
 using GRandomizer.Util;
 using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GRandomizer.MiscPatches
 {

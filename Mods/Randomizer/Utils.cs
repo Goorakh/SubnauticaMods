@@ -2,13 +2,7 @@
 using Oculus.Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace GRandomizer
@@ -52,7 +46,7 @@ namespace GRandomizer
             logLevel(QModManager.Utility.Logger.Level.Debug, log, showOnScreen);
         }
 #endif
-        
+
         static void logLevel(QModManager.Utility.Logger.Level level, string log, bool showOnScreen)
         {
             QModManager.Utility.Logger.Log(level, $"[GRandomizer]: {log}", null, showOnScreen);
@@ -179,13 +173,7 @@ namespace GRandomizer
                 return new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value, a);
             }
 
-            public static Quaternion Rotation
-            {
-                get
-                {
-                    return Quaternion.Euler(UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f));
-                }
-            }
+            public static Quaternion Rotation => Quaternion.Euler(UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f));
         }
     }
 }

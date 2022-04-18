@@ -1,14 +1,9 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
-using QModManager.Utility;
-using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using uSky;
@@ -398,7 +393,7 @@ namespace GRandomizer.RandomizerControllers
                             biome.settings.startDistance *= UnityEngine.Random.Range(0.5f, 3f);
                             biome.settings.sunlightScale *= UnityEngine.Random.Range(-2f, 2f);
                             biome.settings.ambientScale *= UnityEngine.Random.Range(0f, 2f);
-                            
+
                             if (UnityEngine.Random.value < 0.2f)
                                 biome.settings.temperature *= UnityEngine.Random.Range(0f, 3f);
 

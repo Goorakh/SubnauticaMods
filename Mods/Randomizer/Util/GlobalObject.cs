@@ -2,18 +2,9 @@
 using FMOD.Studio;
 using FMODUnity;
 using GRandomizer.RandomizerControllers;
-using RootMotion.FinalIK;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace GRandomizer.Util
 {
@@ -30,7 +21,7 @@ namespace GRandomizer.Util
                 ExecuteTime = executeTime;
             }
         }
-        static List<ScheduledAction> _schedulesActions = new List<ScheduledAction>();
+        static readonly List<ScheduledAction> _schedulesActions = new List<ScheduledAction>();
 
         static GameObject _instance;
         public static GameObject Instance
@@ -84,7 +75,7 @@ namespace GRandomizer.Util
             {
                 string arg = (string)n.data[0];
                 Utils.DebugLog(arg, true);
-                foreach (var item in RuntimeManager.Instance.loadedBanks)
+                foreach (KeyValuePair<string, RuntimeManager.LoadedBank> item in RuntimeManager.Instance.loadedBanks)
                 {
                     if (completedBanks.Contains(item.Key))
                         continue;
@@ -144,7 +135,7 @@ namespace GRandomizer.Util
                 }
                 else if (Input.GetKeyDown(KeyCode.Keypad0))
                 {
-                    var settings = FMODUnity.Settings.Instance;
+                    Settings settings = FMODUnity.Settings.Instance;
                     foreach (string text in settings.MasterBanks)
                     {
                         RuntimeManager.LoadBank(text + ".strings", settings.AutomaticSampleLoading);
@@ -172,7 +163,7 @@ namespace GRandomizer.Util
                 }
                 else if (Input.GetKeyDown(KeyCode.KeypadMinus))
                 {
-                    foreach (var sound in playedSounds)
+                    foreach (EventInstance sound in playedSounds)
                     {
                         sound.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
                         sound.release();
@@ -182,7 +173,7 @@ namespace GRandomizer.Util
                 }
                 else if (Input.GetKeyDown(KeyCode.KeypadPlus))
                 {
-                    foreach (var item in RuntimeManager.Instance.loadedBanks)
+                    foreach (KeyValuePair<string, RuntimeManager.LoadedBank> item in RuntimeManager.Instance.loadedBanks)
                     {
                         if (completedBanks.Contains(item.Key))
                             continue;
@@ -242,8 +233,8 @@ namespace GRandomizer.Util
 
             string lastPath;
             string lastBank;
-            List<string> completedBanks = new List<string>();
-            List<EventInstance> playedSounds = new List<EventInstance>();
+            readonly List<string> completedBanks = new List<string>();
+            readonly List<EventInstance> playedSounds = new List<EventInstance>();
         }
 #endif
     }
