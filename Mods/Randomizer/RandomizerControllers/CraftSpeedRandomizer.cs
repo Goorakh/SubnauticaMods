@@ -1,5 +1,6 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccessDictionary<TechType, float> _craftTimes = new InitializeOnAccessDictionary<TechType, float>(key =>
         {
-            return Mathf.Pow(UnityEngine.Random.value, 5f) * 60f;
+            return (float)Math.Round(Mathf.Pow(UnityEngine.Random.value, 6f) * 60f, 1);
         });
 
         [HarmonyPatch(typeof(Crafter), nameof(Crafter.Craft))]
