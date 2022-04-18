@@ -149,6 +149,6 @@
 
 mkdir "%25gamePath%25QMods\$(TargetName)"
 copy /Y "$(TargetPath)" "%25gamePath%25QMods\$(TargetName)"
-copy /Y "$(ProjectDir)\mod.json" "%25gamePath%25QMods\$(TargetName)\mod.json"</PostBuildEvent>
+copy /Y "$(ProjectDir)\Build\mod.json" "%25gamePath%25QMods\$(TargetName)\mod.json"</PostBuildEvent>
   </PropertyGroup>
 </Project>
