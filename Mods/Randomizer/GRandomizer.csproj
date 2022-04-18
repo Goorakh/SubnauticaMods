@@ -115,7 +115,11 @@
     <Compile Include="Util\WeightedSet.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="mod.json" />
+    <None Include="Build\Configs\CreatureRandomizer.json" />
+    <None Include="Build\Configs\DialogueRandomizer.json" />
+    <None Include="Build\Configs\ItemRandomizer.json" />
+    <None Include="Build\Configs\RecipeCompensator.json" />
+    <None Include="Build\mod.json" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
