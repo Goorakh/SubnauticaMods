@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace GRandomizer.Util
 {
-    public class InitializeOnAccessDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public class InitializeOnAccessDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
     {
         public delegate bool ValueSelectorTryGet(TKey key, out TValue value);
 
         readonly Dictionary<TKey, TValue> _internalDict;
         readonly ValueSelectorTryGet _valueSelector;
+
+        object _syncRoot;
 
         public InitializeOnAccessDictionary(ValueSelectorTryGet selector)
         {
@@ -40,6 +43,23 @@ namespace GRandomizer.Util
         public ICollection<TValue> Values => _internalDict.Values;
         public int Count => _internalDict.Count;
         public bool IsReadOnly => false;
+
+        ICollection IDictionary.Keys => _internalDict.Keys;
+        ICollection IDictionary.Values => _internalDict.Values;
+        public bool IsFixedSize => false;
+        public object SyncRoot
+        {
+            get
+            {
+                if (_syncRoot == null)
+                    Interlocked.CompareExchange<object>(ref _syncRoot, new object(), null);
+                
+                return _syncRoot;
+            }
+        }
+        public bool IsSynchronized => false;
+
+        public object this[object key] { get => this[(TKey)key]; set => this[(TKey)key] = (TValue)value; }
 
         public void Add(TKey key, TValue value)
         {
@@ -101,6 +121,31 @@ namespace GRandomizer.Util
         }
 
         void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(object key)
+        {
+            return key is TKey tkey && ContainsKey(tkey);
+        }
+
+        public void Add(object key, object value)
+        {
+            Add((TKey)key, (TValue)value);
+        }
+
+        IDictionaryEnumerator IDictionary.GetEnumerator()
+        {
+            return _internalDict.GetEnumerator();
+        }
+
+        public void Remove(object key)
+        {
+            Remove((TKey)key);
+        }
+
+        void ICollection.CopyTo(Array array, int index)
         {
             throw new NotImplementedException();
         }
