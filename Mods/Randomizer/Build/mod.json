@@ -2,9 +2,10 @@
   "Id": "gorakh_grandomizer",
   "DisplayName": "GRandomizer",
   "Author": "Gorakh",
-  "Version": "1.0",
+  "Version": "0.0.1.0",
   "Enable": true,
   "Game": "Subnautica",
   "AssemblyName": "GRandomizer.dll",
-  "Dependencies": [ "SMLHelper" ]
+  "Dependencies": [ "SMLHelper" ],
+  "VersionChecker": { "LatestVersionURL": "https://raw.githubusercontent.com/Goorakh/SubnauticaMods/master/Mods/Randomizer/Build/mod.json" }
 }
