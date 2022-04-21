@@ -19,7 +19,10 @@ namespace GRandomizer.Util
             get
             {
                 if (!_isInitialized)
+                {
                     _value = _initializeFunc();
+                    _isInitialized = true;
+                }
 
                 return _value;
             }
