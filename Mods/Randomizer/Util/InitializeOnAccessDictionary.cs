@@ -93,7 +93,7 @@ namespace GRandomizer.Util
 
             if (_valueSelector(key, out value))
             {
-                _internalDict[key] = value;
+                _internalDict.Add(key, value);
                 return true;
             }
 
@@ -148,6 +148,11 @@ namespace GRandomizer.Util
         void ICollection.CopyTo(Array array, int index)
         {
             throw new NotImplementedException();
+        }
+
+        public static implicit operator Dictionary<TKey, TValue>(InitializeOnAccessDictionary<TKey, TValue> initOnAccessDictionary)
+        {
+            return initOnAccessDictionary._internalDict;
         }
     }
 }

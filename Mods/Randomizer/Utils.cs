@@ -30,18 +30,23 @@ namespace GRandomizer
             }
         }
 
-        public static void LogError(string log, bool showOnScreen)
+        public static void LogError(string log, bool showOnScreen = false)
         {
             logLevel(QModManager.Utility.Logger.Level.Error, log, showOnScreen);
         }
 
-        public static void LogWarning(string log, bool showOnScreen)
+        public static void LogInfo(string log, bool showOnScreen = false)
+        {
+            logLevel(QModManager.Utility.Logger.Level.Info, log, showOnScreen);
+        }
+
+        public static void LogWarning(string log, bool showOnScreen = false)
         {
             logLevel(QModManager.Utility.Logger.Level.Warn, log, showOnScreen);
         }
 
 #if DEBUG
-        public static void DebugLog(string log, bool showOnScreen)
+        public static void DebugLog(string log, bool showOnScreen = false)
         {
             logLevel(QModManager.Utility.Logger.Level.Debug, log, showOnScreen);
         }

@@ -81,6 +81,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MiscPatches\EggPatch.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="MiscPatches\RecipeCorrector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -100,9 +101,12 @@
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Util\DualDictionary.cs" />
     <Compile Include="Util\ConfigReader.cs" />
+    <Compile Include="Util\GRConstants.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />
+    <Compile Include="Util\LocalGenerator.cs" />
     <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
     <Compile Include="Util\SoundPatcher.cs" />

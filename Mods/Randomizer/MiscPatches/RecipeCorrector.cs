@@ -1,9 +1,14 @@
 ﻿using GRandomizer.RandomizerControllers;
 using GRandomizer.Util;
 using HarmonyLib;
+using QModManager.API;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using UnityEngine;
 
 namespace GRandomizer.MiscPatches
 {
@@ -14,53 +19,169 @@ namespace GRandomizer.MiscPatches
             return CraftData.harvestOutputList.Values
                             .AddItem(TechType.CreepvineSeedCluster) // TODO: Don't hardcode these
                             .AddItem(TechType.StalkerTooth)
+                            .AddItem(TechType.Titanium)
+                            .AddItem(TechType.Copper)
+                            .AddItem(TechType.Lead)
+                            .AddItem(TechType.Silver)
+                            .AddItem(TechType.Gold)
+                            .AddItem(TechType.Lithium)
+                            .AddItem(TechType.Diamond)
                             .ToHashSet();
         });
 
-        // Note: Null value is used as a 'use original' sign, instead of using a separate dictionary/collection for tracking that
-        static readonly InitializeOnAccessDictionary<IIngredient, RandomizedIngredient> _ingredientReplacements = new InitializeOnAccessDictionary<IIngredient, RandomizedIngredient>(key =>
+        static class ReplaceRecipes
         {
-            if (_ingredientsToCorrect.Get.Contains(key.techType))
+            [HarmonyPatch(typeof(CrafterLogic), nameof(CrafterLogic.TryPickupSingle))]
+            static class CrafterLogic_TryPickupSingle_Patch
             {
-                return new RandomizedIngredient(key.techType, key.amount);
+                static void Prefix(ref TechType techType)
+                {
+                    if (LootRandomizer.IsEnabled() && _ingredientsToCorrect.Get.Contains(techType))
+                        LootRandomizer.TryReplaceItem(ref techType);
+                }
             }
-            else
-            {
-                return null;
-            }
-        });
 
-        static IIngredient tryGetCorrectedIngredient(IIngredient original)
-        {
-            return LootRandomizer.IsEnabled() ? _ingredientReplacements[original] ?? original : original;
+            [HarmonyPatch]
+            static class TooltipReplacer
+            {
+                static IEnumerable<MethodInfo> TargetMethods()
+                {
+                    string _string;
+                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.BuildTech(default, default, out _string, default));
+                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.Recipe(default, default, out _string, default));
+                }
+
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase method, ILGenerator generator)
+                {
+                    int techTypeArgIndex = Array.FindIndex(method.GetParameters(), p => p.ParameterType == typeof(TechType));
+
+                    LocalBuilder originalTechType = generator.DeclareLocal(typeof(TechType));
+                    List<CodeInstruction> prefix = new List<CodeInstruction>
+                    {
+                        new CodeInstruction(OpCodes.Ldarg, techTypeArgIndex),
+                        new CodeInstruction(OpCodes.Dup, techTypeArgIndex),
+
+                        new CodeInstruction(OpCodes.Stloc, originalTechType),
+
+                        new CodeInstruction(OpCodes.Call, Hooks.getReplacementTechType_MI),
+                        new CodeInstruction(OpCodes.Starg, techTypeArgIndex)
+                    };
+
+                    MethodInfo CraftData_Get_MI = SymbolExtensions.GetMethodInfo(() => CraftData.Get(default, default));
+
+                    List<CodeInstruction> instructionsList = instructions.ToList();
+                    for (int i = 0; i < instructionsList.Count; i++)
+                    {
+                        if (instructionsList[i].Calls(CraftData_Get_MI))
+                        {
+                            for (int j = i - 1; j >= 0; j--)
+                            {
+                                CodeInstruction instruction = instructionsList[j];
+                                if (instruction.IsLdarg(techTypeArgIndex) ||
+                                    (instruction.opcode == OpCodes.Call && instruction.operand is MethodInfo mi && mi.ReturnType == typeof(TechType))) // In case another mod has replaced the instruction :)
+                                {
+                                    instruction.opcode = OpCodes.Ldloc;
+                                    instruction.operand = originalTechType;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    return prefix.Concat(instructionsList);
+                }
+            }
+
+            [HarmonyPatch(typeof(uGUI_CraftNode), nameof(uGUI_CraftNode.CreateIcon))]
+            static class uGUI_CraftNode_CreateIcon_Patch
+            {
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    MethodInfo SpriteManager_Get_MI = SymbolExtensions.GetMethodInfo(() => SpriteManager.Get(default));
+
+                    foreach (CodeInstruction instruction in instructions)
+                    {
+                        if (instruction.Calls(SpriteManager_Get_MI))
+                        {
+                            yield return new CodeInstruction(OpCodes.Call, Hooks.getReplacementTechType_MI);
+                        }
+
+                        yield return instruction;
+                    }
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo getReplacementTechType_MI = SymbolExtensions.GetMethodInfo(() => getReplacementTechType(default));
+                static TechType getReplacementTechType(TechType original)
+                {
+                    if (LootRandomizer.IsEnabled() && _ingredientsToCorrect.Get.Contains(original))
+                        return LootRandomizer.TryGetItemReplacement(original);
+
+                    return original;
+                }
+            }
         }
 
         [HarmonyPatch]
-        static class TechData_GetIngredient_Patch
+        static class IIngredient_get_techType_Patch
         {
             static IEnumerable<MethodInfo> TargetMethods()
             {
-                yield return SymbolExtensions.GetMethodInfo<CraftData.TechData>(_ => _.GetIngredient(default));
-                yield return SymbolExtensions.GetMethodInfo<SMLHelper.V2.Crafting.TechData>(_ => _.GetIngredient(default));
+                return from assembly in AppDomain.CurrentDomain.GetAssemblies()
+                       from type in assembly.GetTypes()
+                       where type.ImplementInterface(typeof(IIngredient))
+                       select AccessTools.PropertyGetter(type, nameof(IIngredient.techType));
             }
 
-            static IIngredient Postfix(IIngredient __result)
+            static TechType Postfix(TechType __result)
             {
-                return tryGetCorrectedIngredient(__result);
+                if (ExcludeSML_Patch.IsFromSML || !LootRandomizer.IsEnabled() || !_ingredientsToCorrect.Get.Contains(__result))
+                    return __result;
+
+                return LootRandomizer.TryGetItemReplacement(__result);
             }
         }
 
-        class RandomizedIngredient : IIngredient
+        [HarmonyPatch]
+        [HarmonyBefore(GRConstants.SML_HELPER_HARMONY_ID)]
+        static class ExcludeSML_Patch
         {
-            readonly TechType _originalTechType;
-            public TechType techType => LootRandomizer.TryGetItemReplacement(_originalTechType);
+            static readonly FieldInfo IsFromSML_FI = AccessTools.Field(typeof(ExcludeSML_Patch), nameof(IsFromSML));
+            public static bool IsFromSML = false;
 
-            public int amount { get; }
-
-            public RandomizedIngredient(TechType originalTechType, int amount)
+            static IEnumerable<MethodInfo> TargetMethods()
             {
-                _originalTechType = originalTechType;
-                this.amount = amount;
+                yield return SymbolExtensions.GetMethodInfo(() => SMLHelper.V2.Handlers.CraftDataHandler.ConvertToTechData(default));
+                yield return SymbolExtensions.GetMethodInfo(() => SMLHelper.V2.Patchers.CraftDataPatcher.NeedsPatchingCheckPrefix(default));
+                yield return SymbolExtensions.GetMethodInfo(() => SMLHelper.V2.Patchers.CraftDataPatcher.PatchCustomTechData());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                MethodInfo IIngredient_get_techType_MI = AccessTools.PropertyGetter(typeof(IIngredient), nameof(IIngredient.techType));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    bool patchThisInstruction = instruction.Calls(IIngredient_get_techType_MI);
+
+                    if (patchThisInstruction)
+                    {
+                        // IsFromSML = true;
+                        yield return new CodeInstruction(OpCodes.Ldc_I4_1);
+                        yield return new CodeInstruction(OpCodes.Stsfld, IsFromSML_FI);
+                    }
+
+                    yield return instruction;
+
+                    if (patchThisInstruction)
+                    {
+                        // IsFromSML = false;
+                        yield return new CodeInstruction(OpCodes.Ldc_I4_0);
+                        yield return new CodeInstruction(OpCodes.Stsfld, IsFromSML_FI);
+                    }
+                }
             }
         }
     }

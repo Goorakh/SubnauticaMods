@@ -4,6 +4,7 @@ using QModManager.Utility;
 using Story;
 using System;
 using System.Collections.Generic;
+using System.Deployment.Internal.Isolation;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -13,39 +14,18 @@ namespace GRandomizer.RandomizerControllers
 {
     static class LootRandomizer
     {
-        // WHY ARE THESE SEPARATE TECHTYPES????!?!??!?!?!?!?!!?!
-        static readonly Dictionary<TechType, TechType> _eggToUndiscoveredEgg = new Dictionary<TechType, TechType>
-        {
-            { TechType.BonesharkEgg, TechType.BonesharkEggUndiscovered },
-            { TechType.CrabsnakeEgg, TechType.CrabsnakeEggUndiscovered },
-            { TechType.CrabsquidEgg, TechType.CrabsquidEggUndiscovered },
-            { TechType.CrashEgg, TechType.CrashEggUndiscovered },
-            { TechType.CutefishEgg, TechType.CutefishEggUndiscovered },
-            { TechType.GasopodEgg, TechType.GasopodEggUndiscovered },
-            { TechType.JellyrayEgg, TechType.JellyrayEggUndiscovered },
-            { TechType.JumperEgg, TechType.JumperEggUndiscovered },
-            { TechType.LavaLizardEgg, TechType.LavaLizardEggUndiscovered },
-            { TechType.MesmerEgg, TechType.MesmerEggUndiscovered },
-            { TechType.RabbitrayEgg, TechType.RabbitrayEggUndiscovered },
-            { TechType.ReefbackEgg, TechType.ReefbackEggUndiscovered },
-            { TechType.SandsharkEgg, TechType.SandsharkEggUndiscovered },
-            { TechType.ShockerEgg, TechType.ShockerEggUndiscovered },
-            { TechType.SpadefishEgg, TechType.SpadefishEggUndiscovered },
-            { TechType.StalkerEgg, TechType.StalkerEggUndiscovered }
-        };
-
         static readonly InitializeOnAccess<TechType[]> _itemTypes = new InitializeOnAccess<TechType[]>(() =>
         {
-            HashSet<TechType> obtainableTypes = (from itemGroup in CraftData.groups
-                                                 where itemGroup.key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
-                                                 where itemGroup.key != TechGroup.BasePieces // Exclude base pieces
-                                                 where itemGroup.key != TechGroup.ExteriorModules // Exclude base pieces
-                                                 where itemGroup.key != TechGroup.InteriorPieces // Exclude base pieces
-                                                 where itemGroup.key != TechGroup.InteriorModules // Exclude base pieces
-                                                 where itemGroup.key != TechGroup.Miscellaneous // Exclude base pieces
-                                                 from subGroup in itemGroup.Value
-                                                 where subGroup.key != TechCategory.Cyclops // Exclude cyclops blueprints
-                                                 from techType in subGroup.Value
+            HashSet<TechType> obtainableTypes = (from techGroup in CraftData.groups
+                                                 where techGroup.Key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
+                                                 where techGroup.Key != TechGroup.BasePieces // Exclude base pieces
+                                                 where techGroup.Key != TechGroup.ExteriorModules // Exclude base pieces
+                                                 where techGroup.Key != TechGroup.InteriorPieces // Exclude base pieces
+                                                 where techGroup.Key != TechGroup.InteriorModules // Exclude base pieces
+                                                 where techGroup.Key != TechGroup.Miscellaneous // Exclude base pieces
+                                                 from category in techGroup.Value
+                                                 where category.Key != TechCategory.Cyclops // Exclude cyclops blueprints
+                                                 from techType in category.Value
                                                  select techType).ToHashSet();
 
             foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
@@ -109,13 +89,18 @@ namespace GRandomizer.RandomizerControllers
             return obtainableTypes.ToArray();
         });
 
-        static readonly Dictionary<TechType, TechType> _itemReplacementsDictionary = new Dictionary<TechType, TechType>();
-
-        static readonly MethodInfo tryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
-        public static TechType TryGetItemReplacement(TechType techType)
+        static readonly InitializeOnAccess<Dictionary<TechType, TechType>> _itemReplacementsDictionary = new InitializeOnAccess<Dictionary<TechType, TechType>>(() =>
         {
-            return TryGetItemReplacement(techType, null);
-        }
+            Dictionary<TechType, TechType> itemReplacements = new Dictionary<TechType, TechType>();
+
+            List<TechType> itemsList = _itemTypes.Get.ToList();
+            foreach (TechType item in new List<TechType>(itemsList))
+            {
+                itemReplacements.Add(item, itemsList.GetAndRemoveRandom());
+            }
+
+            return itemReplacements;
+        });
 
 #if DEBUG
         static int _debugIndex = 0;
@@ -135,9 +120,10 @@ namespace GRandomizer.RandomizerControllers
         }
 #endif
 
-        public static TechType TryGetItemReplacement(TechType techType, Predicate<TechType> condition)
+        static readonly MethodInfo tryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
+        public static TechType TryGetItemReplacement(TechType techType)
         {
-            if (!IsEnabled())
+            if (!IsEnabled() || techType == TechType.None)
                 return techType;
 
 #if DEBUG
@@ -147,29 +133,13 @@ namespace GRandomizer.RandomizerControllers
             }
 #endif
 
-            if (_itemReplacementsDictionary.TryGetValue(techType, out TechType replacement))
-            {
-                return replacement;
-            }
-            else
-            {
-                if (!_itemTypes.Get.Contains(techType))
-                    return _itemReplacementsDictionary[techType] = techType;
+            if (_itemReplacementsDictionary.Get.TryGetValue(techType, out TechType replacementType))
+                return replacementType;
 
-                TechType replacementType;
-                do
-                {
-                    replacementType = _itemTypes.Get.GetRandom();
-                } while (replacementType == techType || (condition != null && !condition(replacementType)));
-
-#if DEBUG
-                Utils.DebugLog($"Replace item: {techType} -> {replacementType}", false);
-#endif
-
-                return _itemReplacementsDictionary[techType] = replacementType;
-            }
+            Utils.LogWarning($"[LootRandomizer]: {techType} is not in the replacement dictionary, account for or exclude it!");
+            return techType;
         }
-        static void tryReplaceItem(ref TechType techType)
+        public static void TryReplaceItem(ref TechType techType)
         {
             techType = TryGetItemReplacement(techType);
         }
@@ -254,7 +224,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Prefix(PickPrefab __instance)
             {
-                tryReplaceItem(ref __instance.pickTech);
+                TryReplaceItem(ref __instance.pickTech);
             }
         }
 
@@ -420,26 +390,33 @@ namespace GRandomizer.RandomizerControllers
                             light.enabled = false;
                         }
 
-                        if (itemModel.TryGetModelBounds(out Bounds modelBounds) && renderers[i].gameObject.TryGetModelBounds(out Bounds rendererBounds))
+                        itemModel.transform.localPosition = renderers[i].transform.localPosition;
+
+                        if (itemModel.TryGetModelBounds(out Bounds modelBounds))
                         {
-                            itemModel.transform.position += rendererBounds.center - modelBounds.center;
-
-                            float scaleMult = rendererBounds.size.magnitude / modelBounds.size.magnitude;
-                            if (scaleMult > 1.5f || scaleMult < (1 / 3f))
-                                itemModel.transform.localScale *= scaleMult;
-
-                            if (itemModel.GetComponentInChildren<Collider>() == null)
+                            if (renderers[i].gameObject.TryGetModelBounds(out Bounds rendererBounds))
                             {
-                                BoxCollider boxCollider = itemModel.AddComponent<BoxCollider>();
-                                boxCollider.size = modelBounds.size;
-                                boxCollider.center = modelBounds.center;
+                                itemModel.transform.position += rendererBounds.center - modelBounds.center;
+
+                                float scaleMult = rendererBounds.size.magnitude / modelBounds.size.magnitude;
+                                if (scaleMult > 1.5f || scaleMult < (1 / 3f))
+                                    itemModel.transform.localScale *= scaleMult;
+
+                                if (itemModel.GetComponentInChildren<Collider>() == null)
+                                {
+                                    BoxCollider boxCollider = itemModel.AddComponent<BoxCollider>();
+                                    boxCollider.size = modelBounds.size;
+                                    boxCollider.center = modelBounds.center;
+                                }
+                            }
+                            else
+                            {
+                                Utils.LogWarning($"[replaceDrillableChunks {__instance.name}]: Could not get model bounds for renderers[{i}] ({renderers[i].name})", true);
                             }
                         }
                         else
                         {
-                            Utils.LogWarning($"[replaceDrillableChunks]: Could not get model bounds for {techType} ({itemModel.name}) or renderers[{i}] ({renderers[i].name})", true);
-
-                            itemModel.transform.localPosition = renderers[i].transform.localPosition;
+                            Utils.LogWarning($"[replaceDrillableChunks {__instance.name}]: Could not get model bounds for {techType} ({itemModel.name})", true);
                         }
 
                         GameObject.Destroy(renderers[i].gameObject);
@@ -458,15 +435,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    ItemsContainer container = __instance.storageContainer.container;
-                    int containerSizeX = container.sizeX;
-                    int containerSizeY = container.sizeY;
-
-                    TechType newType = TryGetItemReplacement(prefab.GetTechType(), t =>
-                    {
-                        Vector2int size = CraftData.GetItemSize(t);
-                        return size.x <= containerSizeX && size.y <= containerSizeY;
-                    });
+                    TechType newType = TryGetItemReplacement(prefab.GetTechType());
 
                     GameObject newPrefab = CraftData.GetPrefabForTechType(newType);
                     Pickupable pickupablePrefab = newPrefab.GetComponent<Pickupable>();
@@ -582,77 +551,6 @@ namespace GRandomizer.RandomizerControllers
                     static GameObject Get_waterModel_Hook(GameObject waterModel)
                     {
                         return IsEnabled() ? overrideWaterModel : waterModel;
-                    }
-                }
-            }
-
-            [HarmonyPatch]
-            static class FiltrationMachine_EggPatch
-            {
-                static IEnumerable<MethodInfo> TargetMethods()
-                {
-                    yield return SymbolExtensions.GetMethodInfo<FiltrationMachine>(_ => _.Start());
-                    yield return SymbolExtensions.GetMethodInfo<FiltrationMachine>(_ => _.UpdateModel());
-                    yield return SymbolExtensions.GetMethodInfo<FiltrationMachine>(_ => _.TryFilterSalt());
-                    yield return SymbolExtensions.GetMethodInfo<FiltrationMachine>(_ => _.TryFilterWater());
-                }
-
-                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-                {
-                    LocalBuilder techTypeLoc = generator.DeclareLocal(typeof(TechType));
-                    LocalBuilder countLoc = generator.DeclareLocal(typeof(int));
-
-                    MethodInfo ItemsContainer_GetCount_MI = SymbolExtensions.GetMethodInfo<ItemsContainer>(_ => _.GetCount(default));
-
-                    foreach (CodeInstruction instruction in instructions)
-                    {
-                        if (instruction.Calls(ItemsContainer_GetCount_MI))
-                        {
-                            yield return new CodeInstruction(OpCodes.Stloc, techTypeLoc);
-                            yield return new CodeInstruction(OpCodes.Dup); // Dup instance
-
-                            yield return new CodeInstruction(OpCodes.Ldloc, techTypeLoc);
-
-                            yield return instruction;
-                            yield return new CodeInstruction(OpCodes.Stloc, countLoc);
-
-                            yield return new CodeInstruction(OpCodes.Ldloc, countLoc);
-
-                            Label skipEggCheck = generator.DefineLabel();
-                            yield return new CodeInstruction(OpCodes.Brtrue, skipEggCheck);
-
-                            yield return new CodeInstruction(OpCodes.Ldloc, techTypeLoc);
-                            yield return new CodeInstruction(OpCodes.Call, Hooks.tryGetUndiscoveredEggType_MI);
-
-                            yield return instruction;
-                            yield return new CodeInstruction(OpCodes.Stloc, countLoc);
-
-                            Label skipPop = generator.DefineLabel();
-                            yield return new CodeInstruction(OpCodes.Br, skipPop);
-
-                            // Pop instance
-                            yield return new CodeInstruction(OpCodes.Pop).WithLabels(skipEggCheck);
-
-                            yield return new CodeInstruction(OpCodes.Nop).WithLabels(skipPop);
-
-                            yield return new CodeInstruction(OpCodes.Ldloc, countLoc);
-                        }
-                        else
-                        {
-                            yield return instruction;
-                        }
-                    }
-                }
-
-                static class Hooks
-                {
-                    public static readonly MethodInfo tryGetUndiscoveredEggType_MI = SymbolExtensions.GetMethodInfo(() => tryGetUndiscoveredEggType(default));
-                    static TechType tryGetUndiscoveredEggType(TechType eggType)
-                    {
-                        if (IsEnabled() && _eggToUndiscoveredEgg.TryGetValue(eggType, out TechType undiscoveredType))
-                            return undiscoveredType;
-
-                        return eggType;
                     }
                 }
             }
@@ -779,7 +677,7 @@ namespace GRandomizer.RandomizerControllers
 
             static void Postfix(ref TechType __result)
             {
-                tryReplaceItem(ref __result);
+                TryReplaceItem(ref __result);
             }
         }
 
@@ -892,6 +790,20 @@ namespace GRandomizer.RandomizerControllers
                 {
                     return IsEnabled() ? CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.StillsuitWater)) : null;
                 }
+            }
+        }
+
+        [HarmonyPatch(typeof(BreakableResource), nameof(BreakableResource.SpawnResourceFromPrefab))]
+        static class BreakableResource_SpawnResourceFromPrefab_Patch
+        {
+            static void Prefix(ref GameObject breakPrefab)
+            {
+                if (!IsEnabled())
+                    return;
+
+                TechType originalType = CraftData.GetTechType(breakPrefab);
+                TechType replacementType = TryGetItemReplacement(originalType);
+                breakPrefab = CraftData.GetPrefabForTechType(replacementType);
             }
         }
     }

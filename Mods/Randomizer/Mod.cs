@@ -28,10 +28,10 @@ namespace GRandomizer
             DialogueRandomizer.Initialize();
 
             string modName = ($"gorakh_{assembly.GetName().Name}");
-            Logger.Log(Logger.Level.Info, $"Patching {modName}");
+            Utils.LogInfo($"Patching {modName}");
             Harmony harmony = new Harmony(modName);
             harmony.PatchAll(assembly);
-            Logger.Log(Logger.Level.Info, "Patched successfully!");
+            Utils.LogInfo("Patched successfully!");
         }
     }
 }
