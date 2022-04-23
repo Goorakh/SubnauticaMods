@@ -2,9 +2,7 @@
 using HarmonyLib;
 using QModManager.Utility;
 using Story;
-using System;
 using System.Collections.Generic;
-using System.Deployment.Internal.Isolation;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;

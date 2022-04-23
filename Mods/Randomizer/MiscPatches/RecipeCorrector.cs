@@ -1,14 +1,11 @@
 ﻿using GRandomizer.RandomizerControllers;
 using GRandomizer.Util;
 using HarmonyLib;
-using QModManager.API;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using UnityEngine;
 
 namespace GRandomizer.MiscPatches
 {
