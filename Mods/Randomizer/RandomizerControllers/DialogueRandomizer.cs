@@ -165,8 +165,8 @@ namespace GRandomizer.RandomizerControllers
                     Subtitles_Add_Patch.IsCorrectedSubtitle = false;
                 }
 
-#if DEBUG
-                Utils.DebugLog($"onSoundPlayed {_lineReplacements.Get.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}", false);
+#if VERBOSE
+                Utils.DebugLog($"onSoundPlayed {_lineReplacements.Get.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}");
 #endif
             }
         }
@@ -188,8 +188,8 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (_isInitialized && mode > RandomDialogueMode.Off && _lineReplacements.Get.Keys.Any(line => _sequences.Get[line].SubtitleKey == key))
                 {
-#if DEBUG
-                    Utils.DebugLog($"Subtitles_Add_Patch.Prefix key: {key}, IsCorrectedSubtitle: {IsCorrectedSubtitle}", false);
+#if VERBOSE
+                    Utils.DebugLog($"Subtitles_Add_Patch.Prefix key: {key}, IsCorrectedSubtitle: {IsCorrectedSubtitle}");
 #endif
                     return IsCorrectedSubtitle;
                 }

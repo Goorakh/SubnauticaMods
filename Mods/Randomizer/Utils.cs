@@ -44,7 +44,7 @@ namespace GRandomizer
             logLevel(QModManager.Utility.Logger.Level.Warn, log, showOnScreen);
         }
 
-#if DEBUG
+#if VERBOSE
         public static void DebugLog(string log, bool showOnScreen = false)
         {
             logLevel(QModManager.Utility.Logger.Level.Debug, log, showOnScreen);

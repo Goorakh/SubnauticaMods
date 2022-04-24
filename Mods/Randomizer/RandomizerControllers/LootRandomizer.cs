@@ -107,14 +107,18 @@ namespace GRandomizer.RandomizerControllers
             if (++_debugIndex >= _itemTypes.Get.Length)
                 _debugIndex = 0;
 
+#if VERBOSE
             Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
+#endif
         }
         public static void DecreaseDebugIndex()
         {
             if (--_debugIndex < 0)
                 _debugIndex = _itemTypes.Get.Length - 1;
 
+#if VERBOSE
             Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
+#endif
         }
 #endif
 

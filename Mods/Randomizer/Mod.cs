@@ -30,6 +30,13 @@ namespace GRandomizer
             NO GAME!!!
 #endif
 
+            const string VERBOSE_STR =
+#if VERBOSE
+                                       "VERBOSE ";
+#else
+                                       "";
+#endif
+
             const string MOD_VER =
 #if DEBUG
                                    "DEBUG";
@@ -37,7 +44,8 @@ namespace GRandomizer
                                    "RELEASE";
 #endif
 
-            Utils.LogInfo(string.Format("Initializing GRandomizer Version {0} (" + GAME_VER + " " + MOD_VER + " BUILD)...", assembly.GetName().Version), false);
+            const string BUILD_DESCRIPTION = VERBOSE_STR + GAME_VER + " " + MOD_VER + " BUILD";
+            Utils.LogInfo(string.Format("Initializing GRandomizer Version {0} (" + BUILD_DESCRIPTION + ")...", assembly.GetName().Version), false);
 
             Config = OptionsPanelHandler.Main.RegisterModOptions<RandomizerConfig>();
             ModFolder = new FileInfo(assembly.Location).Directory;

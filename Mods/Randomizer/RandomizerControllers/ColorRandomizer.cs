@@ -371,17 +371,16 @@ namespace GRandomizer.RandomizerControllers
                         {
                             if (biome.skyPrefab != null)
                             {
-#if DEBUG
+#if VERBOSE
                                 int skyIndex = UnityEngine.Random.Range(0, skyPrefabs.Count);
-                                Utils.DebugLog($"Replace {biome.name} skyPrefab: {biome.skyPrefab.name}->{skyPrefabs[skyIndex].name}", false);
-                                biome.skyPrefab = skyPrefabs[skyIndex];
-                                skyPrefabs.RemoveAt(skyIndex);
+                                Utils.DebugLog($"Replace {biome.name} skyPrefab: {biome.skyPrefab.name}->{skyPrefabs[skyIndex].name}");
+                                biome.skyPrefab = skyPrefabs.GetAndRemove(skyIndex);
 #else
                                 biome.skyPrefab = skyPrefabs.GetAndRemoveRandom();
 #endif
                             }
 
-#if DEBUG
+#if VERBOSE
                             WaterscapeVolume.Settings oldSettings = (WaterscapeVolume.Settings)biome.settings.MemberwiseClone();
 #endif
                             biome.settings.absorption = Utils.Abs(Utils.Random.Rotation * biome.settings.absorption) * UnityEngine.Random.Range(0.3f, 2f);
@@ -397,7 +396,7 @@ namespace GRandomizer.RandomizerControllers
                             if (UnityEngine.Random.value < 0.2f)
                                 biome.settings.temperature *= UnityEngine.Random.Range(0f, 3f);
 
-#if DEBUG
+#if VERBOSE
                             foreach (FieldInfo field in AccessTools.GetDeclaredFields(typeof(WaterscapeVolume.Settings)))
                             {
                                 object oldValue = field.GetValue(oldSettings);
@@ -405,7 +404,7 @@ namespace GRandomizer.RandomizerControllers
 
                                 if (!oldValue.Equals(newValue))
                                 {
-                                    Utils.DebugLog($"Replace {biome.name} WaterscapeVolume.Settings.{field.Name}: {oldValue}->{newValue}", false);
+                                    Utils.DebugLog($"Replace {biome.name} WaterscapeVolume.Settings.{field.Name}: {oldValue}->{newValue}");
                                 }
                             }
 #endif

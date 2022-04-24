@@ -24,7 +24,7 @@ namespace GRandomizer.Util
             {
                 if (other.GetComponentInChildren(comp.GetType(), true) == null)
                 {
-#if DEBUG
+#if VERBOSE
                     Utils.DebugLog($"[RemoveAllComponentsNotIn] Remove component {comp.GetType().FullName} from {comp.name} ({obj.name})", false);
 #endif
 

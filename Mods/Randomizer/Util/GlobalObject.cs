@@ -74,7 +74,9 @@ namespace GRandomizer.Util
             void OnConsoleCommand_r_play(NotificationCenter.Notification n)
             {
                 string arg = (string)n.data[0];
+#if VERBOSE
                 Utils.DebugLog(arg, true);
+#endif
                 foreach (KeyValuePair<string, RuntimeManager.LoadedBank> item in RuntimeManager.Instance.loadedBanks)
                 {
                     if (completedBanks.Contains(item.Key))
@@ -98,20 +100,22 @@ namespace GRandomizer.Util
                                         instance.start();
                                         playedSounds.Add(instance);
 
+#if VERBOSE
                                         Utils.DebugLog($"Playing {path} from bank:/{item.Key}", true);
+#endif
                                         return;
                                     }
                                 }
                             }
                             else
                             {
-                                Utils.DebugLog($"Error: EventDescription.getPath returned {pathres}", true);
+                                Utils.LogError($"Error: EventDescription.getPath returned {pathres}", true);
                             }
                         }
                     }
                     else
                     {
-                        Utils.DebugLog($"Error: Bank.getEventList returned {result}", true);
+                        Utils.LogError($"Error: Bank.getEventList returned {result}", true);
                     }
                 }
             }
@@ -162,7 +166,9 @@ namespace GRandomizer.Util
                 {
                     tmp = false;
 
+#if VERBOSE
                     Utils.DebugLog("Banks loaded!", true);
+#endif
                 }
                 else if (Input.GetKeyDown(KeyCode.KeypadMinus))
                 {
@@ -212,7 +218,9 @@ namespace GRandomizer.Util
                                         instance.start();
                                         playedSounds.Add(instance);
 
+#if VERBOSE
                                         Utils.DebugLog($"Playing {path} from bank:/{item.Key}", true);
+#endif
                                         lastPath = path;
                                         lastBank = item.key;
                                         return;
@@ -220,7 +228,7 @@ namespace GRandomizer.Util
                                 }
                                 else
                                 {
-                                    Utils.DebugLog($"Error: EventDescription.getPath returned {result}", true);
+                                    Utils.LogError($"Error: EventDescription.getPath returned {result}", true);
                                 }
                             }
 
@@ -228,7 +236,7 @@ namespace GRandomizer.Util
                         }
                         else
                         {
-                            Utils.DebugLog($"Error: Bank.getEventList returned {result}", true);
+                            Utils.LogError($"Error: Bank.getEventList returned {result}", true);
                         }
                     }
                 }
