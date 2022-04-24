@@ -23,6 +23,7 @@ namespace GRandomizer.MiscPatches
                             .AddItem(TechType.Gold)
                             .AddItem(TechType.Lithium)
                             .AddItem(TechType.Diamond)
+                            //.AddItem(TechType.CrashPowder)
                             .ToHashSet();
         });
 

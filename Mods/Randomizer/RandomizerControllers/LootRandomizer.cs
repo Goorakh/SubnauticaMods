@@ -176,47 +176,6 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        [HarmonyPatch]
-        static class EnsurePickupable_Patch
-        {
-            static IEnumerable<MethodInfo> TargetMethods()
-            {
-                yield return SymbolExtensions.GetMethodInfo<SpawnEscapePodSupplies>(_ => _.OnNewBorn());
-                yield return SymbolExtensions.GetMethodInfo<SpawnStoredLoot>(_ => _.SpawnRandomStoredItems());
-                yield return SymbolExtensions.GetMethodInfo<Stillsuit>(_ => _.UpdateEquipped(default, default));
-            }
-
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-            {
-                MethodInfo GameObject_GetComponent_Pickupable_MI = SymbolExtensions.GetMethodInfo<GameObject>(_ => _.GetComponent<Pickupable>());
-
-                foreach (CodeInstruction instruction in instructions)
-                {
-                    if (instruction.Calls(GameObject_GetComponent_Pickupable_MI))
-                    {
-                        yield return new CodeInstruction(OpCodes.Dup); // Dup instance
-
-                        yield return instruction;
-
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.AddComponentIfNeeded_MI);
-                    }
-                    else
-                    {
-                        yield return instruction;
-                    }
-                }
-            }
-
-            static class Hooks
-            {
-                public static readonly MethodInfo AddComponentIfNeeded_MI = SymbolExtensions.GetMethodInfo(() => AddComponentIfNeeded(default, default));
-                static Pickupable AddComponentIfNeeded(GameObject obj, Pickupable component)
-                {
-                    return component ?? obj.AddComponent<Pickupable>();
-                }
-            }
-        }
-
         [HarmonyPatch(typeof(PickPrefab), nameof(PickPrefab.Start))]
         static class PickPrefab_Start_Patch
         {
@@ -376,7 +335,7 @@ namespace GRandomizer.RandomizerControllers
                     for (int i = 0; i < renderers.Length; i++)
                     {
                         GameObject itemModel = CraftData.InstantiateFromPrefab(techType);
-                        Utils.PrepareStaticItem(itemModel);
+                        itemModel.PrepareStaticItem();
                         itemModel.RemoveAllComponentsNotIn(renderers[i].gameObject);
 
                         itemModel.transform.SetParent(renderers[i].transform.parent);
@@ -579,7 +538,7 @@ namespace GRandomizer.RandomizerControllers
 
                 static void Postfix(FiltrationMachine __instance)
                 {
-                    Utils.PrepareStaticItem(__instance.shownModel);
+                    __instance.shownModel.PrepareStaticItem();
                     __instance.shownModel.RemoveAllComponentsNotIn(__instance.waterModel);
 
                     if (__instance.shownModel.GetComponentInChildren<VFXFabricating>() == null)
@@ -802,6 +761,31 @@ namespace GRandomizer.RandomizerControllers
                 TechType originalType = CraftData.GetTechType(breakPrefab);
                 TechType replacementType = TryGetItemReplacement(originalType);
                 breakPrefab = CraftData.GetPrefabForTechType(replacementType);
+            }
+        }
+
+        //[HarmonyPatch]
+        static class CrashHome_Start_Patch
+        {
+            static MethodBase TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<CrashHome>(_ => _.Start());
+            }
+
+            static void Prefix(CrashHome __instance)
+            {
+                if (!IsEnabled())
+                    return;
+
+                PrefabPlaceholder prefabPlaceholder = __instance.GetComponentInChildren<PrefabPlaceholder>();
+                if (prefabPlaceholder)
+                {
+                    CraftData.PreparePrefabIDCache();
+                    if (CraftData.entClassTechTable.TryGetValue(prefabPlaceholder.prefabClassId, out TechType techType))
+                    {
+                        prefabPlaceholder.prefabClassId = CraftData.GetClassIdForTechType(TryGetItemReplacement(techType));
+                    }
+                }
             }
         }
     }

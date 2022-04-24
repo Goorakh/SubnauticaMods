@@ -81,7 +81,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MiscPatches\AddPickupableComponentIfMissing.cs" />
     <Compile Include="MiscPatches\EggPatch.cs" />
+    <Compile Include="MiscPatches\EnsurePickupable_Patch.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="MiscPatches\RecipeCorrector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -103,6 +105,7 @@
     <Compile Include="Utils.cs" />
     <Compile Include="Util\DualDictionary.cs" />
     <Compile Include="Util\ConfigReader.cs" />
+    <Compile Include="Util\Extensions.cs" />
     <Compile Include="Util\GRConstants.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />
