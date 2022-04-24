@@ -21,6 +21,24 @@ namespace GRandomizer
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
 
+            const string GAME_VER =
+#if SN1
+                                    "SUBNAUTICA";
+#elif BZ
+                                    "BELOW ZERO";
+#else
+            NO GAME!!!
+#endif
+
+            const string MOD_VER =
+#if DEBUG
+                                   "DEBUG";
+#else
+                                   "RELEASE";
+#endif
+
+            Utils.LogInfo(string.Format("Initializing GRandomizer Version {0} (" + GAME_VER + " " + MOD_VER + " BUILD)...", assembly.GetName().Version), false);
+
             Config = OptionsPanelHandler.Main.RegisterModOptions<RandomizerConfig>();
             ModFolder = new FileInfo(assembly.Location).Directory;
 

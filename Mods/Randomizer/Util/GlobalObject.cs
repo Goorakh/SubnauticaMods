@@ -71,7 +71,7 @@ namespace GRandomizer.Util
 #if DEBUG
         class DebugController : MonoBehaviour
         {
-            private void OnConsoleCommand_r_play(NotificationCenter.Notification n)
+            void OnConsoleCommand_r_play(NotificationCenter.Notification n)
             {
                 string arg = (string)n.data[0];
                 Utils.DebugLog(arg, true);
@@ -117,14 +117,13 @@ namespace GRandomizer.Util
             }
 
             bool tmp = false;
+            string lastPath;
+            string lastBank;
+            readonly List<string> completedBanks = new List<string>();
+            readonly List<EventInstance> playedSounds = new List<EventInstance>();
 
             void Update()
             {
-                if (Input.GetKeyDown(KeyCode.Keypad5))
-                {
-                    DevConsole.RegisterConsoleCommand(this, "r_play", true, true);
-                }
-
                 if (Input.GetKeyDown(KeyCode.Keypad1))
                 {
                     LootRandomizer.IncreaseDebugIndex();
@@ -132,6 +131,10 @@ namespace GRandomizer.Util
                 else if (Input.GetKeyDown(KeyCode.Keypad2))
                 {
                     LootRandomizer.DecreaseDebugIndex();
+                }
+                else if (Input.GetKeyDown(KeyCode.Keypad5))
+                {
+                    DevConsole.RegisterConsoleCommand(this, "r_play", true, true);
                 }
                 else if (Input.GetKeyDown(KeyCode.Keypad0))
                 {
@@ -230,11 +233,6 @@ namespace GRandomizer.Util
                     }
                 }
             }
-
-            string lastPath;
-            string lastBank;
-            readonly List<string> completedBanks = new List<string>();
-            readonly List<EventInstance> playedSounds = new List<EventInstance>();
         }
 #endif
     }
