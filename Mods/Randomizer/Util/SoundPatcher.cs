@@ -55,12 +55,12 @@ namespace GRandomizer.Util
                     }
                     else
                     {
-                        Utils.LogWarning($"EventInstance.start() Prefix: description.getPath returned {result}", true);
+                        Utils.LogWarning($"description.getPath returned {result}", true);
                     }
                 }
                 else
                 {
-                    Utils.LogWarning($"EventInstance.start() Prefix: __instance.getDescription returned {result}", true);
+                    Utils.LogWarning($"__instance.getDescription returned {result}", true);
                 }
             }
         }

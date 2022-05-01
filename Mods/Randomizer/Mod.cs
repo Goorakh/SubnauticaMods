@@ -45,13 +45,15 @@ namespace GRandomizer
 #endif
 
             const string BUILD_DESCRIPTION = VERBOSE_STR + GAME_VER + " " + MOD_VER + " BUILD";
-            Utils.LogInfo(string.Format("Initializing GRandomizer Version {0} (" + BUILD_DESCRIPTION + ")...", assembly.GetName().Version), false);
+            Utils.LogInfo(string.Format("Initializing GRandomizer Version {0} (" + BUILD_DESCRIPTION + ")...", assembly.GetName().Version));
 
             Config = OptionsPanelHandler.Main.RegisterModOptions<RandomizerConfig>();
             ModFolder = new FileInfo(assembly.Location).Directory;
 
             GlobalObject.CreateIfMissing();
+
             DialogueRandomizer.Initialize();
+            ColorRandomizer.Initialize();
 
             string modName = ($"gorakh_{assembly.GetName().Name}");
             Utils.LogInfo($"Patching {modName}");

@@ -14,8 +14,7 @@ namespace GRandomizer.RandomizerControllers
             JObject jObject = ConfigReader.ReadFromFile<JObject>("Configs/CreatureRandomizer::CreatureWeights");
             Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
 
-            return new WeightedSet<TechType>((from weightKvp in creatureWeights
-                                              select new WeightedSet<TechType>.WeightedItem(weightKvp.Key, weightKvp.Value)).ToArray());
+            return new WeightedSet<TechType>(creatureWeights);
         });
 
         static bool IsEnabled()
@@ -32,7 +31,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Prefix(Creature __instance)
             {
-                if (IsEnabled() && __instance.GetComponent<RandomizedCreature>() == null)
+                if (IsEnabled() && !__instance.HasComponent<RandomizedCreature>())
                 {
                     TechType oldCreatureType = CraftData.GetTechType(__instance.gameObject);
 

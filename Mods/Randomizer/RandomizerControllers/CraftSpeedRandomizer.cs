@@ -1,6 +1,7 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
 using System;
+using System.Reflection;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
@@ -17,14 +18,20 @@ namespace GRandomizer.RandomizerControllers
             return (float)Math.Round(Mathf.Pow(UnityEngine.Random.value, 6f) * 60f, 1);
         });
 
-        [HarmonyPatch(typeof(Crafter), nameof(Crafter.Craft))]
-        static class Crafter_Craft_Patch
+        [HarmonyPatch]
+        static class CraftData_GetCraftTime_Patch
         {
-            static void Prefix(TechType techType, ref float duration)
+            static MethodBase TargetMethod()
             {
-                if (IsEnabled())
+                float _float;
+                return SymbolExtensions.GetMethodInfo(() => CraftData.GetCraftTime(default, out _float));
+            }
+
+            static void Postfix(bool __result, TechType techType, ref float result)
+            {
+                if (__result && IsEnabled())
                 {
-                    duration = _craftTimes[techType];
+                    result = _craftTimes[techType];
                 }
             }
         }

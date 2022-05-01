@@ -3,6 +3,7 @@ using HarmonyLib;
 using QModManager.Utility;
 using Story;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -59,7 +60,7 @@ namespace GRandomizer.RandomizerControllers
                 }
                 else
                 {
-                    Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)", false);
+                    Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)");
                 }
             }
 
@@ -71,7 +72,7 @@ namespace GRandomizer.RandomizerControllers
                 }
                 else
                 {
-                    Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)", false);
+                    Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)");
                 }
             }
 
@@ -102,34 +103,41 @@ namespace GRandomizer.RandomizerControllers
 
 #if DEBUG
         static int _debugIndex = 0;
+        static void logDebugIndex()
+        {
+#if VERBOSE
+            Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
+#endif
+        }
         public static void IncreaseDebugIndex()
         {
             if (++_debugIndex >= _itemTypes.Get.Length)
                 _debugIndex = 0;
 
-#if VERBOSE
-            Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
-#endif
+            logDebugIndex();
         }
         public static void DecreaseDebugIndex()
         {
             if (--_debugIndex < 0)
                 _debugIndex = _itemTypes.Get.Length - 1;
 
-#if VERBOSE
-            Utils.DebugLog($"_debugIndex: {_debugIndex} ({_itemTypes.Get[_debugIndex]})", true);
-#endif
+            logDebugIndex();
+        }
+        public static void SetDebugIndex(int index)
+        {
+            _debugIndex = index;
+            logDebugIndex();
         }
 #endif
 
-        static readonly MethodInfo tryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
+        public static readonly MethodInfo TryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
         public static TechType TryGetItemReplacement(TechType techType)
         {
             if (!IsEnabled() || techType == TechType.None)
                 return techType;
 
 #if DEBUG
-            if (false && techType == TechType.BigFilteredWater)
+            if (techType == TechType.Titanium)
             {
                 return _itemTypes.Get[_debugIndex];
             }
@@ -138,7 +146,7 @@ namespace GRandomizer.RandomizerControllers
             if (_itemReplacementsDictionary.Get.TryGetValue(techType, out TechType replacementType))
                 return replacementType;
 
-            Utils.LogWarning($"[LootRandomizer]: {techType} is not in the replacement dictionary, account for or exclude it!");
+            Utils.LogWarning($"{techType} is not in the replacement dictionary, account for or exclude it!");
             return techType;
         }
         public static void TryReplaceItem(ref TechType techType)
@@ -197,7 +205,7 @@ namespace GRandomizer.RandomizerControllers
 
                 if (instruction.LoadsConstant(type))
                 {
-                    yield return new CodeInstruction(OpCodes.Call, tryGetItemReplacement_MI);
+                    yield return new CodeInstruction(OpCodes.Call, TryGetItemReplacement_MI);
                 }
             }
         }
@@ -285,7 +293,7 @@ namespace GRandomizer.RandomizerControllers
                             yield return new CodeInstruction(OpCodes.Stloc, methodArgLocals[i]);
                         }
 
-                        yield return new CodeInstruction(OpCodes.Call, tryGetItemReplacement_MI); // Get replacement TechType
+                        yield return new CodeInstruction(OpCodes.Call, TryGetItemReplacement_MI); // Get replacement TechType
 
                         for (int i = 1; i < methodArgLocals.Length; i++) // Load all parameters back
                         {
@@ -346,10 +354,7 @@ namespace GRandomizer.RandomizerControllers
                         itemModel.transform.localRotation = Utils.Random.Rotation;
 
                         // Don't blind the player with 10 light sources in the same spot
-                        foreach (Light light in itemModel.GetComponentsInChildren<Light>())
-                        {
-                            light.enabled = false;
-                        }
+                        itemModel.DisableAllComponentsOfType<Light>();
 
                         itemModel.transform.localPosition = renderers[i].transform.localPosition;
 
@@ -363,7 +368,7 @@ namespace GRandomizer.RandomizerControllers
                                 if (scaleMult > 1.5f || scaleMult < (1 / 3f))
                                     itemModel.transform.localScale *= scaleMult;
 
-                                if (itemModel.GetComponentInChildren<Collider>() == null)
+                                if (!itemModel.HasComponentInChildren<Collider>())
                                 {
                                     BoxCollider boxCollider = itemModel.AddComponent<BoxCollider>();
                                     boxCollider.size = modelBounds.size;
@@ -372,12 +377,12 @@ namespace GRandomizer.RandomizerControllers
                             }
                             else
                             {
-                                Utils.LogWarning($"[replaceDrillableChunks {__instance.name}]: Could not get model bounds for renderers[{i}] ({renderers[i].name})", true);
+                                Utils.LogWarning($"[{__instance.name}] Could not get model bounds for renderers[{i}] ({renderers[i].name})", true);
                             }
                         }
                         else
                         {
-                            Utils.LogWarning($"[replaceDrillableChunks {__instance.name}]: Could not get model bounds for {techType} ({itemModel.name})", true);
+                            Utils.LogWarning($"[{__instance.name}]: Could not get model bounds for {techType} ({itemModel.name})", true);
                         }
 
                         GameObject.Destroy(renderers[i].gameObject);
@@ -400,7 +405,7 @@ namespace GRandomizer.RandomizerControllers
 
                     GameObject newPrefab = CraftData.GetPrefabForTechType(newType);
                     Pickupable pickupablePrefab = newPrefab.GetComponent<Pickupable>();
-                    if (pickupablePrefab != null)
+                    if (pickupablePrefab.Exists())
                     {
                         prefab = pickupablePrefab;
                         return true;
@@ -544,28 +549,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     __instance.shownModel.PrepareStaticItem();
                     __instance.shownModel.RemoveAllComponentsNotIn(__instance.waterModel);
-
-                    if (__instance.shownModel.GetComponentInChildren<VFXFabricating>() == null)
-                    {
-                        VFXFabricating fabricating = __instance.shownModel.AddComponent<VFXFabricating>();
-
-                        if (__instance.shownModel.TryGetModelBounds(out Bounds modelBounds))
-                        {
-                            Vector3 center = modelBounds.center;
-
-                            Vector3 halfHeight = new Vector3(0f, modelBounds.size.y / 2f, 0f);
-                            Vector3 bottomCenter = center - halfHeight;
-                            Vector3 topCenter = center + halfHeight;
-
-                            fabricating.localMinY = fabricating.transform.InverseTransformPoint(bottomCenter).y;
-                            fabricating.localMaxY = fabricating.transform.InverseTransformPoint(topCenter).y;
-                        }
-                        else
-                        {
-                            fabricating.localMinY = 0f;
-                            fabricating.localMaxY = 1f;
-                        }
-                    }
+                    __instance.shownModel.AddVFXFabricatingComponentIfMissing(true);
                 }
 
                 static class Hooks
@@ -573,7 +557,7 @@ namespace GRandomizer.RandomizerControllers
                     public static readonly MethodInfo GetOrAddComponent_MI = SymbolExtensions.GetMethodInfo(() => GetComponent_Hook(default, default));
                     static VFXScan GetComponent_Hook(GameObject shownModel, VFXScan vfxComponent)
                     {
-                        return vfxComponent ?? shownModel.AddComponent<VFXScan>();
+                        return vfxComponent.Exists() ? vfxComponent : shownModel.AddComponent<VFXScan>();
                     }
                 }
             }
@@ -614,7 +598,7 @@ namespace GRandomizer.RandomizerControllers
                             yield return new CodeInstruction(OpCodes.Stloc, methodArgLocals[i]);
                         }
 
-                        yield return new CodeInstruction(OpCodes.Call, tryGetItemReplacement_MI); // Get replacement TechType
+                        yield return new CodeInstruction(OpCodes.Call, TryGetItemReplacement_MI); // Get replacement TechType
 
                         for (int i = 1; i < methodArgLocals.Length; i++) // Load all parameters back
                         {
@@ -768,6 +752,78 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
+        [HarmonyPatch]
+        static class GasoPod_DropGasPods_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<GasoPod>(_ => _.DropGasPods());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                MethodInfo Instantiate_GameObject_MI = SymbolExtensions.GetMethodInfo(() => GameObject.Instantiate<GameObject>(default(GameObject)));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    yield return instruction;
+
+                    if (instruction.Calls(Instantiate_GameObject_MI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Dup);
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.onPodInstantiate_MI);
+                    }
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo onPodInstantiate_MI = SymbolExtensions.GetMethodInfo(() => onPodInstantiate(default));
+                static void onPodInstantiate(GameObject podObj)
+                {
+                    if (IsEnabled())
+                    {
+                        TechType newModelType = TryGetItemReplacement(TechType.GasPod);
+                        if (newModelType != TechType.GasPod)
+                        {
+                            GasPod gasPod = podObj.GetComponent<GasPod>();
+                            GameObject newModel = GameObject.Instantiate(CraftData.GetPrefabForTechType(newModelType), Vector3.zero, Quaternion.identity, false);
+
+                            //newModel.EnsureComponent<Pickupable>();
+
+                            newModel.PrepareStaticItem();
+                            newModel.RemoveAllComponentsNotIn(gasPod.model);
+
+                            newModel.SetActive(true);
+
+                            newModel.transform.SetParent(gasPod.model.transform.parent, true);
+                            newModel.transform.localPosition = gasPod.model.transform.localPosition;
+                            newModel.transform.localRotation = Utils.Random.Rotation;
+
+                            if (newModel.TryGetModelBounds(out Bounds newModelBounds))
+                            {
+                                if (gasPod.model.TryGetModelBounds(out Bounds gasPodModelBounds))
+                                {
+                                    newModel.transform.position += gasPodModelBounds.center - newModelBounds.center;
+                                }
+                                else
+                                {
+                                    Utils.LogWarning($"Could not get model bounds for {nameof(TechType.GasPod)} ({gasPod.model.name})");
+                                }
+                            }
+                            else
+                            {
+                                Utils.LogWarning($"Could not get model bounds for {newModelType} ({newModel.name})");
+                            }
+
+                            GameObject.Destroy(gasPod.model);
+                            gasPod.model = newModel;
+                        }
+                    }
+                }
+            }
+        }
+
         //[HarmonyPatch]
         static class CrashHome_Start_Patch
         {
@@ -782,7 +838,7 @@ namespace GRandomizer.RandomizerControllers
                     return;
 
                 PrefabPlaceholder prefabPlaceholder = __instance.GetComponentInChildren<PrefabPlaceholder>();
-                if (prefabPlaceholder)
+                if (prefabPlaceholder.Exists())
                 {
                     CraftData.PreparePrefabIDCache();
                     if (CraftData.entClassTechTable.TryGetValue(prefabPlaceholder.prefabClassId, out TechType techType))

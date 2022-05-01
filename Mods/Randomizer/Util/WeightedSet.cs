@@ -16,8 +16,13 @@ namespace GRandomizer.Util
         public WeightedSet(IEnumerable<T> items, Func<T, float> weightSelector)
         {
             _items = (from item in items
-                      let weight = weightSelector(item)
-                      select new WeightedItem(item, weight)).ToArray();
+                      select new WeightedItem(item, weightSelector(item))).ToArray();
+        }
+
+        public WeightedSet(IEnumerable<KeyValuePair<T, float>> kvps)
+        {
+            _items = (from kvp in kvps
+                      select new WeightedItem(kvp.Key, kvp.Value)).ToArray();
         }
 
         public T SelectRandom()

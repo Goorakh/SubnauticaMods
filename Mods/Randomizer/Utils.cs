@@ -1,6 +1,10 @@
-﻿using Oculus.Newtonsoft.Json.Linq;
+﻿using GRandomizer.Util;
+using HarmonyLib;
+using Oculus.Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
@@ -29,31 +33,48 @@ namespace GRandomizer
             }
         }
 
-        public static void LogError(string log, bool showOnScreen = false)
+        public static void LogError(string log, bool showOnScreen = false, int stackOffset = 0)
         {
-            logLevel(QModManager.Utility.Logger.Level.Error, log, showOnScreen);
+            logLevel(QModManager.Utility.Logger.Level.Error, log, showOnScreen, stackOffset);
         }
 
-        public static void LogInfo(string log, bool showOnScreen = false)
+        public static void LogInfo(string log, bool showOnScreen = false, int stackOffset = 0)
         {
-            logLevel(QModManager.Utility.Logger.Level.Info, log, showOnScreen);
+            logLevel(QModManager.Utility.Logger.Level.Info, log, showOnScreen, stackOffset);
         }
 
-        public static void LogWarning(string log, bool showOnScreen = false)
+        public static void LogWarning(string log, bool showOnScreen = false, int stackOffset = 0)
         {
-            logLevel(QModManager.Utility.Logger.Level.Warn, log, showOnScreen);
+            logLevel(QModManager.Utility.Logger.Level.Warn, log, showOnScreen, stackOffset);
         }
 
 #if VERBOSE
-        public static void DebugLog(string log, bool showOnScreen = false)
+        public static void DebugLog(string log, bool showOnScreen = false, int stackOffset = 0)
         {
-            logLevel(QModManager.Utility.Logger.Level.Debug, log, showOnScreen);
+            logLevel(QModManager.Utility.Logger.Level.Debug, log, showOnScreen, stackOffset);
         }
 #endif
 
-        static void logLevel(QModManager.Utility.Logger.Level level, string log, bool showOnScreen)
+        static void logLevel(QModManager.Utility.Logger.Level level, string log, bool showOnScreen, int stackOffset)
         {
-            QModManager.Utility.Logger.Log(level, $"[GRandomizer]: {log}", null, showOnScreen);
+            MethodBase callerMethod = new StackTrace().GetFrame(2 + stackOffset)?.GetMethod();
+            string methodTag = callerMethod != null ? callerMethod.Name : "null";
+
+            QModManager.Utility.Logger.Log(level, $"[{methodTag}]: {log}", null, showOnScreen);
+        }
+
+        public static float Clamp01RollOver(float value)
+        {
+            if (value > 1f)
+            {
+                value -= 1f;
+            }
+            else if (value < 0f)
+            {
+                value += 1f;
+            }
+
+            return value;
         }
 
         public static class Random
@@ -64,6 +85,11 @@ namespace GRandomizer
             }
 
             public static Quaternion Rotation => Quaternion.Euler(UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f), UnityEngine.Random.Range(-180f, 180f));
+
+            public static T EnumValue<T>() where T : Enum
+            {
+                return (T)Enum.GetValues(typeof(T)).GetRandomOrDefault();
+            }
         }
     }
 }

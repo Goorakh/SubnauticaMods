@@ -42,10 +42,7 @@ namespace GRandomizer.MiscPatches
             public static readonly MethodInfo addComponent_MI = SymbolExtensions.GetMethodInfo(() => addComponent(default));
             static void addComponent(GameObject obj)
             {
-                if (!obj.GetComponent<Pickupable>())
-                {
-                    obj.AddComponent<Pickupable>();
-                }
+                obj.EnsureComponent<Pickupable>();
             }
         }
     }

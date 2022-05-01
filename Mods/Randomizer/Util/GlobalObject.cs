@@ -21,7 +21,7 @@ namespace GRandomizer.Util
                 ExecuteTime = executeTime;
             }
         }
-        static readonly List<ScheduledAction> _schedulesActions = new List<ScheduledAction>();
+        static readonly List<ScheduledAction> _scheduledActions = new List<ScheduledAction>();
 
         static GameObject _instance;
         public static GameObject Instance
@@ -53,17 +53,17 @@ namespace GRandomizer.Util
         public static void Schedule(Action callback, float waitTime)
         {
             CreateIfMissing();
-            _schedulesActions.Add(new ScheduledAction(callback, Time.time + waitTime));
+            _scheduledActions.Add(new ScheduledAction(callback, Time.time + waitTime));
         }
 
         void Update()
         {
-            for (int i = _schedulesActions.Count - 1; i >= 0; i--)
+            for (int i = _scheduledActions.Count - 1; i >= 0; i--)
             {
-                if (Time.time >= _schedulesActions[i].ExecuteTime)
+                if (Time.time >= _scheduledActions[i].ExecuteTime)
                 {
-                    _schedulesActions[i].Callback();
-                    _schedulesActions.RemoveAt(i);
+                    _scheduledActions[i].Callback();
+                    _scheduledActions.RemoveAt(i);
                 }
             }
         }
@@ -120,6 +120,11 @@ namespace GRandomizer.Util
                 }
             }
 
+            void OnConsoleCommand_sdi(NotificationCenter.Notification n)
+            {
+                LootRandomizer.SetDebugIndex(int.Parse((string)n.data[0]));
+            }
+
             bool tmp = false;
             string lastPath;
             string lastBank;
@@ -139,6 +144,7 @@ namespace GRandomizer.Util
                 else if (Input.GetKeyDown(KeyCode.Keypad5))
                 {
                     DevConsole.RegisterConsoleCommand(this, "r_play", true, true);
+                    DevConsole.RegisterConsoleCommand(this, "sdi");
                 }
                 else if (Input.GetKeyDown(KeyCode.Keypad0))
                 {

@@ -37,8 +37,6 @@ namespace GRandomizer.RandomizerControllers
                         }
                     }
 
-                    System.Random random = new System.Random();
-
                     Dictionary<string, string> newLocalizationDictionary = new Dictionary<string, string>();
                     foreach (KeyValuePair<string, string> item in __instance.strings)
                     {
@@ -78,7 +76,14 @@ namespace GRandomizer.RandomizerControllers
             {
                 public static Dictionary<string, string> LoadStringsDict_Hook(Dictionary<string, string> strings)
                 {
-                    return IsEnabled() && _randomizedLocalizationDict != null ? _randomizedLocalizationDict : strings;
+                    if (IsEnabled())
+                    {
+                        return _randomizedLocalizationDict ?? strings;
+                    }
+                    else
+                    {
+                        return strings;
+                    }
                 }
             }
         }

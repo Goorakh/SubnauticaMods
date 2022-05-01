@@ -68,6 +68,10 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
@@ -79,6 +83,10 @@
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +143,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <DoNotPublicize Include="UnityEngine.CoreModule:UnityEngine.SceneManagement.SceneManager.sceneLoaded" />
   </ItemGroup>
   <PropertyGroup>
     <PublicizeAll>true</PublicizeAll>

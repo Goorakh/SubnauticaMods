@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using GRandomizer.Util;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace GRandomizer.MiscPatches
             yield return AccessTools.EnumeratorMoveNext(SymbolExtensions.GetMethodInfo(() => CraftData.AddToInventoryRoutine(default, default, default, default, default)));
             yield return SymbolExtensions.GetMethodInfo<Pickupable>(_ => _.Initialize());
             yield return SymbolExtensions.GetMethodInfo<CrafterLogic>(_ => _.TryPickupSingle(default));
+            yield return SymbolExtensions.GetMethodInfo(() => CrafterGhostModel.GetGhostModel(default));
         }
 
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
@@ -49,7 +51,7 @@ namespace GRandomizer.MiscPatches
             public static readonly MethodInfo AddComponentIfNeeded_MI = SymbolExtensions.GetMethodInfo(() => AddComponentIfNeeded(default, default));
             static Pickupable AddComponentIfNeeded(GameObject obj, Pickupable component)
             {
-                return component ?? obj.AddComponent<Pickupable>();
+                return component.Exists() ? component : obj.AddComponent<Pickupable>();
             }
         }
     }
