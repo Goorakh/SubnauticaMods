@@ -112,6 +112,7 @@
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Util\Discard.cs" />
     <Compile Include="Util\DualDictionary.cs" />
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\Extensions.cs" />
@@ -122,7 +123,6 @@
     <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
     <Compile Include="Util\SoundPatcher.cs" />
-    <Compile Include="Util\SpeakerType.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\WeightedSet.cs" />
   </ItemGroup>
@@ -136,7 +136,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Data\TODO.txt" />
-    <Content Include="Data\VOdata.txt" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

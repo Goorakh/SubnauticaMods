@@ -59,32 +59,5 @@ namespace GRandomizer.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to SPEAKER=Base
-        ///event:/sub/base/power_down
-        ///event:/sub/base/power_down_3D
-        ///event:/sub/base/power_up_3D
-        ///event:/sub/base/power_up
-        ///event:/sub/base/power_10_3D
-        ///event:/sub/base/power_30_3D
-        ///event:/sub/base/hull_restored
-        ///event:/sub/base/hull_increase
-        ///event:/sub/base/AI_nopower
-        ///event:/sub/base/hull_breach
-        ///event:/sub/base/hull_warning
-        ///event:/sub/base/welcome
-        ///event:/sub/base/hull_decrease
-        ///
-        ///SPEAKER=Cyclops
-        ///event:/sub/cyclops/AI_system_failure
-        ///event:/sub/cyclops/AI_ahead_flank
-        ///event:/sub/cyclops/AI_depth_w [rest of string was truncated]&quot;;.
-        /// </summary>
-        internal static string VOdata {
-            get {
-                return ResourceManager.GetString("VOdata", resourceCulture);
-            }
-        }
     }
 }

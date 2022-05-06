@@ -1,6 +1,6 @@
 ﻿namespace GRandomizer
 {
-    public enum RandomDialogueMode
+    public enum RandomDialogueMode : byte
     {
         Off,
         SameSpeaker,

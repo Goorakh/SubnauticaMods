@@ -1,4 +1,1272 @@
 {
-	"DontRandomizeSpeakers":[ "Player" ],
-	"DontRandomizeLines":[]
+	"DontRandomizeSpeakers": [ "Player" ],
+	"DontRandomizeLines": [],
+	"Lines": {
+		"Base": [
+			{
+				"SoundID": "event:/sub/base/power_down",
+				"SubtitleID": "BasePowerDown"
+			},
+			{
+				"SoundID": "event:/sub/base/power_down_3D",
+				"SubtitleID": "BasePowerDown"
+			},
+			{
+				"SoundID": "event:/sub/base/power_up_3D",
+				"SubtitleID": "BasePowerUp"
+			},
+			{
+				"SoundID": "event:/sub/base/power_up",
+				"SubtitleID": "BasePowerUp"
+			},
+			{
+				"SoundID": "event:/sub/base/power_10_3D",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/power_30_3D",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/hull_restored",
+				"SubtitleID": "BaseHullRestored"
+			},
+			{
+				"SoundID": "event:/sub/base/hull_increase",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/AI_nopower",
+				"SubtitleID": "BaseWelcomeNoPower"
+			},
+			{
+				"SoundID": "event:/sub/base/hull_breach",
+				"SubtitleID": "BaseHullBreach"
+			},
+			{
+				"SoundID": "event:/sub/base/hull_warning",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/welcome",
+				"SubtitleID": "BaseWelcomeAboard"
+			},
+			{
+				"SoundID": "event:/sub/base/hull_decrease",
+				"SubtitleID": null
+			}
+		],
+		"Cyclops": [
+			{
+				"SoundID": "event:/sub/cyclops/AI_system_failure",
+				"SubtitleID": "CyclopsWelcomeAboardEmergency"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_ahead_flank",
+				"SubtitleID": "AheadFlank"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_depth_warning_1",
+				"SubtitleID": "WarningUnsafeDepth"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_silent_running",
+				"SubtitleID": "SilentRunning"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_engine_up",
+				"SubtitleID": "CyclopsEnginePowerUp"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_drain",
+				"SubtitleID": "CyclopsHullRestored"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_ahead_standard",
+				"SubtitleID": "AheadStandard"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_hull_crit",
+				"SubtitleID": "HullCritical"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_leak",
+				"SubtitleID": "CyclopsHullBreach"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_decoy",
+				"SubtitleID": "CyclopsDecoyLaunch"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_hull_low",
+				"SubtitleID": "HullLow"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_welcome_attention",
+				"SubtitleID": "CyclopsWelcomeAboardAttention"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_external_damage",
+				"SubtitleID": "HullExternalDamage"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_engine_overheat",
+				"SubtitleID": "EngineOverheat"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_abandon",
+				"SubtitleID": "HullAbandon"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_shields",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_engine_heat_critical",
+				"SubtitleID": "EngineOverheatCritical"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_fire_detected",
+				"SubtitleID": "FireDetected"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_fire_extinguished",
+				"SubtitleID": "CyclopsFireExtinguished"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_ahead_slow",
+				"SubtitleID": "AheadSlow"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_attack",
+				"SubtitleID": "CreatureAttack"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_emergency_speed",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_power_low",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_engine_down",
+				"SubtitleID": "CyclopsEnginePowerDown"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_cavitate",
+				"SubtitleID": "Cavitate"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_welcome",
+				"SubtitleID": "CyclopsWelcomeAboard"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_depth_warning_2",
+				"SubtitleID": "WarningCrushDepth"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/AI_no_power",
+				"SubtitleID": "CyclopsWelcomeNoPower"
+			},
+			{
+				"SoundID": "event:/sub/cyclops/explode_countdown",
+				"SubtitleID": null
+			}
+		],
+		"NeptuneRocket": [
+			{
+				"SoundID": "event:/sub/rocket/computer_on",
+				"SubtitleID": "Rocket_PreflightCheck6"
+			},
+			{
+				"SoundID": "event:/sub/rocket/coms_on",
+				"SubtitleID": "Rocket_PreflightCheck5"
+			},
+			{
+				"SoundID": "event:/sub/rocket/all_systems_go",
+				"SubtitleID": "Rocket_ReadyForLaunch"
+			},
+			{
+				"SoundID": "event:/sub/rocket/lifesupport_on",
+				"SubtitleID": "Rocket_PreflightCheck1"
+			},
+			{
+				"SoundID": "event:/sub/rocket/auxilery_on",
+				"SubtitleID": "Rocket_PreflightCheck3"
+			},
+			{
+				"SoundID": "event:/sub/rocket/telemerty_on",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/rocket/hydrolics_on",
+				"SubtitleID": "Rocket_PreflightCheck2"
+			},
+			{
+				"SoundID": "event:/sub/rocket/time_pod_open_first_use_VO",
+				"SubtitleID": "Rocket_PreflightCheck4"
+			}
+		],
+		"PDA": [
+			{
+				"SoundID": "event:/env/background/ship_explode",
+				"SubtitleID": "Story_AuroraWarning4"
+			},
+			{
+				"SoundID": "event:/player/data_terminal_use",
+				"SubtitleID": "Precursor_Gun_DataDownload1"
+			},
+			{
+				"SoundID": "event:/loot/new_PDA_data",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_FarmingTray",
+				"SubtitleID": "Goal_FarmingTray"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeGrassyPlateaus",
+				"SubtitleID": "Goal_BiomeGrassyPlateaus"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_RadSuit",
+				"SubtitleID": "Goal_RadSuit"
+			},
+			{
+				"SoundID": "event:/player/selfScan3b",
+				"SubtitleID": "SelfScan3b"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_4",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Observatory",
+				"SubtitleID": "Goal_Observatory"
+			},
+			{
+				"SoundID": "event:/player/story/Aurora_RingRoom_Terminal2",
+				"SubtitleID": "Aurora_RingRoom_Terminal2"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeKooshZone",
+				"SubtitleID": "Goal_BiomeKooshZone"
+			},
+			{
+				"SoundID": "event:/player/story/RadioMushroom24NoSignalAlt",
+				"SubtitleID": "RadioMushroom24NoSignalAlt"
+			},
+			{
+				"SoundID": "event:/player/goal_lifepod1",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Bench",
+				"SubtitleID": "Goal_Bench"
+			},
+			{
+				"SoundID": "event:/player/selfScan2",
+				"SubtitleID": "SelfScan2"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Exo",
+				"SubtitleID": "Goal_Exo"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeBloodKelp",
+				"SubtitleID": "Goal_BiomeBloodKelp"
+			},
+			{
+				"SoundID": "event:/player/goal_airsack",
+				"SubtitleID": "Goal_Bladderfish"
+			},
+			{
+				"SoundID": "event:/player/story/RadioRadiationSuitNoSignalAlt",
+				"SubtitleID": "RadioRadiationSuitNoSignalAlt"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeFloatingIsland",
+				"SubtitleID": "Goal_BiomeFloatingIsland"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog4",
+				"SubtitleID": "Precursor_Prison_Aquarium_EnvironmentLog4"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_NuclearReactor",
+				"SubtitleID": "Goal_NuclearReactor"
+			},
+			{
+				"SoundID": "event:/player/story/Story_AuroraConsole3",
+				"SubtitleID": "Story_AuroraConsole3"
+			},
+			{
+				"SoundID": "event:/player/Precursor_Gun_LostRiverHint2",
+				"SubtitleID": "Precursor_Gun_LostRiverHint"
+			},
+			{
+				"SoundID": "event:/player/new_objective_added",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/goal_Bladderfish",
+				"SubtitleID": "Goal_Bladderfish"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_ExteriorLog1",
+				"SubtitleID": "Precursor_Prison_ExteriorLog1"
+			},
+			{
+				"SoundID": "event:/player/story/Story_RadioWarning",
+				"SubtitleID": "Story_RadioWarning"
+			},
+			{
+				"SoundID": "event:/player/goal_lifepod2",
+				"SubtitleID": "Goal_Lifepod2"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeSeaTreaderPath",
+				"SubtitleID": "Goal_BiomeSeaTreaderPath"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_LavaCastle_Log1",
+				"SubtitleID": "Precursor_LavaCastle_Log1"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Gun_DataDownload2",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Moonpool",
+				"SubtitleID": "Goal_Moonpool"
+			},
+			{
+				"SoundID": "event:/player/scan_aurora",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraFurtherIn",
+				"SubtitleID": "Goal_LocationAuroraFurtherIn"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_LavaCastle_Log2",
+				"SubtitleID": "Precursor_LavaCastle_Log2"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Diamond",
+				"SubtitleID": "Goal_Diamond"
+			},
+			{
+				"SoundID": "event:/player/adviseSelfScan",
+				"SubtitleID": "AdviseSelfScan"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeSafeShallowsCave",
+				"SubtitleID": "Goal_BiomeSafeShallowsCave"
+			},
+			{
+				"SoundID": "event:/player/goal_Fins",
+				"SubtitleID": "Goal_Fins"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_WaterPark",
+				"SubtitleID": "Goal_WaterPark"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_UnlockRadSuit",
+				"SubtitleID": "Goal_UnlockRadSuit"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeVoid",
+				"SubtitleID": "Goal_BiomeVoid"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_7",
+				"SubtitleID": "Precursor_LostRiverBase_Log7"
+			},
+			{
+				"SoundID": "event:/player/goal_lifepod3",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeMushroomForestCave",
+				"SubtitleID": "Goal_BiomeMushroomForestCave"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LostRiverEntrance",
+				"SubtitleID": "Goal_LostRiverEntrance"
+			},
+			{
+				"SoundID": "event:/player/mapped",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Antechamber_Log1",
+				"SubtitleID": "Precursor_Prison_Antechamber_Log1"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Lubricant",
+				"SubtitleID": "Goal_Lubricant"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeDeepGrandReef",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/goal_BiomeKelpForest",
+				"SubtitleID": "Goal_BiomeKelpForest"
+			},
+			{
+				"SoundID": "event:/player/story/Rocket_ReadyGunStillActive",
+				"SubtitleID": "Rocket_ReadyGunStillActive"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Cyclops",
+				"SubtitleID": "Goal_Cyclops"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeCrashedShip",
+				"SubtitleID": "Goal_BiomeCrashedShip"
+			},
+			{
+				"SoundID": "event:/player/goal_danger",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraInterior",
+				"SubtitleID": "Goal_LocationAuroraInterior"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeMountains",
+				"SubtitleID": "Goal_BiomeMountains"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog3",
+				"SubtitleID": "Precursor_Prison_Aquarium_EnvironmentLog3"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_MoonPool_Log1",
+				"SubtitleID": "Precursor_Prison_MoonPool_Log1"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BaseWindow",
+				"SubtitleID": "Goal_BaseWindow"
+			},
+			{
+				"SoundID": "event:/player/signal_upload",
+				"SubtitleID": "NewSignalNotification"
+			},
+			{
+				"SoundID": "event:/player/change_mission",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeMountainCave",
+				"SubtitleID": "Goal_BiomeMountainCave"
+			},
+			{
+				"SoundID": "event:/player/story/RadioShallows22NoSignalAlt",
+				"SubtitleID": "RadioShallows22NoSignalAlt"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Gun_DataDownload1",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/goal_Scanner",
+				"SubtitleID": "Goal_Scanner"
+			},
+			{
+				"SoundID": "event:/player/food_very_low",
+				"SubtitleID": "FoodVeryLow"
+			},
+			{
+				"SoundID": "event:/player/new_creature",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/invalid_construction",
+				"SubtitleID": "InvalidConstructorPlacement"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_SecondarySystems",
+				"SubtitleID": "Goal_SecondarySystems"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog1",
+				"SubtitleID": "Precursor_Prison_Aquarium_EnvironmentLog1"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraDriveEntry",
+				"SubtitleID": "Goal_LocationAuroraDriveEntry"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeJellyCave",
+				"SubtitleID": "Goal_BiomeJellyCave"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraExoRoom",
+				"SubtitleID": "Goal_LocationAuroraExoRoom"
+			},
+			{
+				"SoundID": "event:/player/radiation_remaining",
+				"SubtitleID": "RemainingRadiationLeaks"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_5",
+				"SubtitleID": "Precursor_LostRiverBase_Log5"
+			},
+			{
+				"SoundID": "event:/player/goal_Copper",
+				"SubtitleID": "Goal_Copper"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeJellyCave2",
+				"SubtitleID": "Goal_BiomeJellyCave2"
+			},
+			{
+				"SoundID": "event:/player/infection_scan_advise_full",
+				"SubtitleID": "Precursor_LostRiverBase_Log3"
+			},
+			{
+				"SoundID": "event:/player/goal_CookedPeeper",
+				"SubtitleID": "Goal_CookedPeeper"
+			},
+			{
+				"SoundID": "event:/player/open_pda",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/infection_scan_advise",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/vitals_ok",
+				"SubtitleID": "VitalsOk"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_6",
+				"SubtitleID": "Precursor_LostRiverBase_Log6"
+			},
+			{
+				"SoundID": "event:/player/oxygen_50",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Builder",
+				"SubtitleID": "Goal_Builder"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_CookedHoverfish",
+				"SubtitleID": "Goal_CookedHoverfish"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_1",
+				"SubtitleID": "Precursor_LostRiverBase_Log1"
+			},
+			{
+				"SoundID": "event:/player/story/RadioGrassy25NoSignalAlt",
+				"SubtitleID": "RadioGrassy25NoSignalAlt"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_JellyCaveEntrance",
+				"SubtitleID": "Goal_JellyCaveEntrance"
+			},
+			{
+				"SoundID": "event:/player/goal_PDALoading",
+				"SubtitleID": "Goal_PDALoading"
+			},
+			{
+				"SoundID": "event:/player/Precursor_Gun_LostRiverHint",
+				"SubtitleID": "Precursor_Gun_LostRiverHint"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Bioreactor",
+				"SubtitleID": "Goal_Bioreactor"
+			},
+			{
+				"SoundID": "event:/player/selfScan3",
+				"SubtitleID": "SelfScan3"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeMushroomForest",
+				"SubtitleID": "Goal_BiomeMushroomForest"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeDunes",
+				"SubtitleID": "Goal_BiomeDunes"
+			},
+			{
+				"SoundID": "event:/tools/scanner/new_blueprint",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Room",
+				"SubtitleID": "Goal_Room"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Silver",
+				"SubtitleID": "Goal_Silver"
+			},
+			{
+				"SoundID": "event:/player/food_low",
+				"SubtitleID": "FoodLow"
+			},
+			{
+				"SoundID": "event:/player/story/RadioKelp28NoSignalAlt",
+				"SubtitleID": "RadioKelp28NoSignalAlt"
+			},
+			{
+				"SoundID": "event:/player/goal_Knife",
+				"SubtitleID": "Goal_Knife"
+			},
+			{
+				"SoundID": "event:/player/water_very_low",
+				"SubtitleID": "WaterVeryLow"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_StasisRifle",
+				"SubtitleID": "Goal_StasisRifle"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraHallway",
+				"SubtitleID": "Goal_LocationAuroraHallway"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_LavaCastle_Log4",
+				"SubtitleID": "Precursor_LavaCastle_Log4"
+			},
+			{
+				"SoundID": "event:/player/Precursor_Gun_DisableDenied",
+				"SubtitleID": "Precursor_Gun_DisableDenied"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeSparseReef",
+				"SubtitleID": "Goal_BiomeSparseReef"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_PurifiedWater",
+				"SubtitleID": "Goal_PurifiedWater"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeLostRiver",
+				"SubtitleID": "Goal_BiomeLostRiver"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeKelpForestCave",
+				"SubtitleID": "Goal_BiomeKelpForestCave"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_LocationAuroraEntry",
+				"SubtitleID": "Goal_LocationAuroraEntry"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Seaglide",
+				"SubtitleID": "Goal_Seaglide"
+			},
+			{
+				"SoundID": "event:/player/story/OvereatingWarning",
+				"SubtitleID": "OvereatingWarning"
+			},
+			{
+				"SoundID": "event:/player/goal_Intro1",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Bleach",
+				"SubtitleID": "Goal_Bleach"
+			},
+			{
+				"SoundID": "event:/player/selfScan1",
+				"SubtitleID": "SelfScan1"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeUnderwaterIslands",
+				"SubtitleID": "Goal_BiomeUnderwaterIslands"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_LavaCastle_Log3",
+				"SubtitleID": "Precursor_LavaCastle_Log3"
+			},
+			{
+				"SoundID": "event:/player/water_low",
+				"SubtitleID": "WaterLow"
+			},
+			{
+				"SoundID": "event:/player/scan_planet",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeCrashZone",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/oxygen_25",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/main_brief",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/oxygen_10_sec",
+				"SubtitleID": "OxygenWarning10"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog2",
+				"SubtitleID": "Precursor_Prison_Aquarium_EnvironmentLog2"
+			},
+			{
+				"SoundID": "event:/player/selfScan4",
+				"SubtitleID": "SelfScan4"
+			},
+			{
+				"SoundID": "event:/player/new_tech",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeDeepGrandReef2",
+				"SubtitleID": "Goal_BiomeDeepGrandReef"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Location AuroraDriveInterior",
+				"SubtitleID": "Goal_LocationAuroraDriveInterior"
+			},
+			{
+				"SoundID": "event:/player/story/Story_AuroraConsole2",
+				"SubtitleID": "Story_AuroraConsole2"
+			},
+			{
+				"SoundID": "event:/player/goal_BiomeKelpForest2",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/tools/scanner/new_PDA_data",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/selfScan5",
+				"SubtitleID": "SelfScan5"
+			},
+			{
+				"SoundID": "event:/player/story/Ending_zinger",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Goal_Seamoth",
+				"SubtitleID": "Goal_Seamoth"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_BiomeBloodKelp2",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/food_critical",
+				"SubtitleID": "FoodCritical"
+			},
+			{
+				"SoundID": "event:/player/story/Goal_CookedGarryfish",
+				"SubtitleID": "Goal_CookedGarryfish"
+			},
+			{
+				"SoundID": "event:/player/Precursor_LostRiverBase_Log_2",
+				"SubtitleID": "Precursor_LostRiverBase_Log2"
+			},
+			{
+				"SoundID": "event:/player/story/Precursor_Prison_Aquarium_EnvironmentLog5",
+				"SubtitleID": "Precursor_Prison_Aquarium_EnvironmentLog5"
+			},
+			{
+				"SoundID": "event:/player/gun_disabled_pda",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/oxygen_30_sec",
+				"SubtitleID": "OxygenWarning30"
+			},
+			{
+				"SoundID": "event:/player/goal_BiomePrecursorGunUpper",
+				"SubtitleID": "Goal_BiomePrecursorGunUpper"
+			},
+			{
+				"SoundID": "event:/player/goal_BiomePrecursorGunUpper2",
+				"SubtitleID": "Goal_BiomePrecursorGunUpper2"
+			},
+			{
+				"SoundID": "event:/player/goal_BiomePrecursorGunUpper3",
+				"SubtitleID": "Goal_BiomePrecursorGunUpper3"
+			},
+			{
+				"SoundID": "event:/player/water_critical",
+				"SubtitleID": "WaterCritical"
+			},
+			{
+				"SoundID": "event:/player/depth_200",
+				"SubtitleID": "DepthWarning200"
+			},
+			{
+				"SoundID": "event:/player/aurora_warning_1",
+				"SubtitleID": "Story_AuroraWarning1"
+			},
+			{
+				"SoundID": "event:/player/aurora_warning_2",
+				"SubtitleID": "Story_AuroraWarning2"
+			},
+			{
+				"SoundID": "event:/player/aurora_warning_3",
+				"SubtitleID": "Story_AuroraWarning3"
+			},
+			{
+				"SoundID": "event:/player/oxygen_10",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/stillsuit_equipped",
+				"SubtitleID": "StillsuitEquipped"
+			},
+			{
+				"SoundID": "event:/player/blood_loss",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/depth_100",
+				"SubtitleID": "DepthWarning100"
+			},
+			{
+				"SoundID": "event:/player/batterly_low",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/Precursor_Gun_ControlRoom",
+				"SubtitleID": "Precursor_Gun_ControlRoom"
+			}
+		],
+		"SeaEmperor": [
+			{
+				"SoundID": "event:/creature/magistrate/encounter_1",
+				"SubtitleID": "Precursor_Prison_Aquarium_EmperorLog1"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/encounter_2",
+				"SubtitleID": "Precursor_Prison_Aquarium_EmperorLog2"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/encounter_3",
+				"SubtitleID": "Precursor_Prison_Aquarium_EmperorLog3"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/encounter_4",
+				"SubtitleID": "Precursor_Prison_Aquarium_EmperorLog4"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/telepathy_1",
+				"SubtitleID": "Emperor_Telepathic_Contact1"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/telepathy_2",
+				"SubtitleID": "Emperor_Telepathic_Contact2"
+			},
+			{
+				"SoundID": "event:/creature/magistrate/telepathy_3",
+				"SubtitleID": "Emperor_Telepathic_Contact3"
+			}
+		],
+		"Seamoth": [
+			{
+				"SoundID": "event:/sub/seamoth/torpedo_disarmed",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/seamoth/crush_depth_warning",
+				"SubtitleID": "WarningCrushDepth"
+			},
+			{
+				"SoundID": "event:/sub/seamoth/undock",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/enter_seamoth_left",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/base/enter_seamoth_right",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/seamoth/depth_warning",
+				"SubtitleID": "WarningUnsafeDepth"
+			},
+			{
+				"SoundID": "event:/sub/seamoth/hull_breach_warning",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/seamoth/torpedo_armed",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/seamoth/AI_no_power",
+				"SubtitleID": "SeamothWelcomeNoPower"
+			},
+			{
+				"SoundID": "event:/sub/seamoth/hull_fix",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/seamoth/welcome",
+				"SubtitleID": "SeamothWelcomeAboard"
+			}
+		],
+		"SunbeamCaptain": [
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeamEvent01",
+				"SubtitleID": "RadioSunbeam1"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeamEvent02",
+				"SubtitleID": "RadioSunbeam2"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeamEvent03",
+				"SubtitleID": "RadioSunbeam3"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeamEvent04",
+				"SubtitleID": "RadioSunbeam4"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeamEvent05",
+				"SubtitleID": "PDASunbeamDestroyEventInRange"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioSunbeam_not coming",
+				"SubtitleID": "RadioSunbeamCancel"
+			}
+		],
+		"Player": [
+			{
+				"SoundID": "event:/player/jump",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/end_freedive",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/Pain_no_tank_light",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/eat",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/Pain",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/drink_stillsuit",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/drink",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/Pain_no_tank",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/coughing",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/Pain_surface",
+				"SubtitleID": null
+			}
+		],
+		"Misc": [
+			{
+				"SoundID": "event:/player/story/Ency_Aurora_RingRoom_Terminal3",
+				"SubtitleID": "EncyDesc_Aurora_RingRoom_Terminal3"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Aurora_Cargo_PDA2",
+				"SubtitleID": "EncyDesc_Aurora_Cargo_PDA1"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Lifepod1",
+				"SubtitleID": "EncyDesc_Lifepod1"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioSecondOfficer",
+				"SubtitleID": "RadioSecondOfficer"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioBloodKelp29",
+				"SubtitleID": "RadioBloodKelp29"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioRadiationSuit (female)",
+				"SubtitleID": "RadioRadiationSuit"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Lifepod4",
+				"SubtitleID": "EncyDesc_Lifepod4"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDARoom1Desk",
+				"SubtitleID": "EncyDesc_JellyPDARoom1Desk"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDAExterior",
+				"SubtitleID": "EncyDesc_JellyPDAExterior"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDABrokenCorridor",
+				"SubtitleID": "EncyDesc_JellyPDABrokenCorridor"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioGrassy21",
+				"SubtitleID": "RadioGrassy21"
+			},
+			{
+				"SoundID": "event:/player/sunbeam_destroy",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_OuterBiomeWreckLore9",
+				"SubtitleID": "EncyDesc_OuterBiomeWreckLore9"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_DeepPDA4",
+				"SubtitleID": "EncyDesc_DeepPDA4"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_IslandsPDABase1Desk",
+				"SubtitleID": "EncyDesc_IslandsPDABase1Desk"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodCrashZone1",
+				"SubtitleID": "EncyDesc_LifepodCrashZone1"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDAObservatory",
+				"SubtitleID": "EncyDesc_JellyPDAObservatory"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_IslandsPDABase1bDesk",
+				"SubtitleID": "EncyDesc_IslandsPDABase1bDesk"
+			},
+			{
+				"SoundID": "event:/player/access_granted",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDARoom2Locker",
+				"SubtitleID": "EncyDesc_JellyPDARoom2Locker"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Lifepod2",
+				"SubtitleID": "EncyDesc_Lifepod2"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodKeenDialog",
+				"SubtitleID": "EncyDesc_LifepodKeenDialog"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Aurora_Living_Area_PDA2b",
+				"SubtitleID": "EncyDesc_Aurora_Living_Area_PDA2b"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodRandom",
+				"SubtitleID": "EncyDesc_LifepodRandom"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_DeepPDA2",
+				"SubtitleID": "EncyDesc_DeepPDA2"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodSeaglide",
+				"SubtitleID": "EncyDesc_LifepodSeaglide"
+			},
+			{
+				"SoundID": "event:/player/story/RadioWarper2",
+				"SubtitleID": "RadioWarper2"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_IslandsPDAExterior",
+				"SubtitleID": "EncyDesc_IslandsPDAExterior"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_InnerBiomeWreckLore7",
+				"SubtitleID": "EncyDesc_InnerBiomeWreckLore7"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDARoom2Desk",
+				"SubtitleID": "EncyDesc_JellyPDARoom2Desk"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodDecoy",
+				"SubtitleID": "EncyDesc_LifepodDecoy"
+			},
+			{
+				"SoundID": "event:/player/story/RadioCaptainsQuartersCode",
+				"SubtitleID": "RadioCaptainsQuartersCode"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_IslandsPDABase1a",
+				"SubtitleID": "EncyDesc_IslandsPDABase1a"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_DeepPDA1",
+				"SubtitleID": "EncyDesc_DeepPDA1"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioShallows22",
+				"SubtitleID": "RadioShallows22"
+			},
+			{
+				"SoundID": "event:/player/access_denied",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_JellyPDARoom1Locker",
+				"SubtitleID": "EncyDesc_JellyPDARoom1Locker"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioMushroom24",
+				"SubtitleID": "RadioMushroom24"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_LifepodCrashZone2",
+				"SubtitleID": "EncyDesc_LifepodCrashZone2"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_DeepPDA3",
+				"SubtitleID": "EncyDesc_DeepPDA3"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioGrassy25",
+				"SubtitleID": "RadioGrassy25"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioKelp28",
+				"SubtitleID": "RadioKelp28"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_IslandsPDABase1Interior",
+				"SubtitleID": "EncyDesc_IslandsPDABase1Interior"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_RendezvousFloatingIsland",
+				"SubtitleID": "EncyDesc_RendezvousFloatingIsland"
+			},
+			{
+				"SoundID": "event:/player/story/VO/RadioRadiationSuit (male)",
+				"SubtitleID": "RadioRadiationSuit"
+			},
+			{
+				"SoundID": "event:/player/story/VO/Ency_Lifepod3",
+				"SubtitleID": "EncyDesc_Lifepod3"
+			},
+			{
+				"SoundID": "event:/player/story/RadioWarper1",
+				"SubtitleID": "RadioWarper1"
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioMushroom24",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radio_power_on",
+				"SubtitleID": "RadioPowerOn"
+			},
+			{
+				"SoundID": "event:/main_menu/intro",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/Deepgrandreef",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/exo/welcome",
+				"SubtitleID": "ExosuitWelcomeAboard"
+			},
+			{
+				"SoundID": "event:/sub/base/coffeemachine_idle",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radio_generic",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioRadiationSuit",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radioKoosh26",
+				"SubtitleID": "RadioKoosh26"
+			},
+			{
+				"SoundID": "event:/sub/base/make_coffee",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/tools/dolls/mark",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/tools/dolls/jack",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radio_lifepod_17",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/sub/pod/radio/radio_lifepod_bounceback",
+				"SubtitleID": "RadioBounceBack"
+			},
+			{
+				"SoundID": "event:/player/enzyme_cure",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/aurora_last_transmission",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/gun_disabled",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/story/RadioPrecursor1",
+				"SubtitleID": "RadioPrecursor1"
+			},
+			{
+				"SoundID": "event:/player/gun_door_open",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/sick_reveal",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/gunterminal_access_granted",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/blast_off",
+				"SubtitleID": null
+			},
+			{
+				"SoundID": "event:/player/sunbeam_rescue",
+				"SubtitleID": null
+			}
+		]
+	}
 }
