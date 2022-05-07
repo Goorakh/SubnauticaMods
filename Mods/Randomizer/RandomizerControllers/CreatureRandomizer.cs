@@ -12,9 +12,8 @@ namespace GRandomizer.RandomizerControllers
         static readonly InitializeOnAccess<WeightedSet<TechType>> _weightedCreaturesSet = new InitializeOnAccess<WeightedSet<TechType>>(() =>
         {
             JObject jObject = ConfigReader.ReadFromFile<JObject>("Configs/CreatureRandomizer::CreatureWeights");
-            Dictionary<TechType, float> creatureWeights = jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (string str, out TechType techType) => TechTypeExtensions.FromString(str, out techType, true));
 
-            return new WeightedSet<TechType>(creatureWeights);
+            return new WeightedSet<TechType>(jObject.ToDictionary<TechType, float>("Configs/CreatureRandomizer.json CreatureWeights", (JProperty prop, out TechType techType) => TechTypeExtensions.FromString(prop.Name, out techType, true)));
         });
 
         static bool IsEnabled()

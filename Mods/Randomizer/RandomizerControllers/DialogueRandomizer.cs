@@ -65,54 +65,26 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccess<Dictionary<string, string>> _lineReplacements = new InitializeOnAccess<Dictionary<string, string>>(() =>
         {
-            string[] excludeSpeakers = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
-            string[] excludeLines = ConfigReader.ReadFromFile<string[]>("Configs/DialogueRandomizer::DontRandomizeLines");
+            HashSet<string> excludeSpeakers = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
+            HashSet<string> excludeLines = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeLines");
 
-            Dictionary<string, SpeechSequence> filteredSequences = new Dictionary<string, SpeechSequence>();
-            foreach (KeyValuePair<string, SpeechSequence> kvp in _sequences.Get)
-            {
-                if (excludeSpeakers.Contains(value: kvp.Value.SpeakerID) || excludeLines.Contains(value: kvp.Key))
-                    continue;
+            Dictionary<string, SpeechSequence> filteredSequences = (from sequence in _sequences.Get.Values
+                                                                    where !excludeSpeakers.Contains(sequence.SpeakerID)
+                                                                    where !excludeLines.Contains(sequence.SoundEventPath)
+                                                                    select sequence).ToDictionary(s => s.SoundEventPath);
 
-                filteredSequences.Add(kvp.Key, kvp.Value);
-            }
-
-            Dictionary<string, string> replacements = new Dictionary<string, string>();
             switch (mode)
             {
                 case RandomDialogueMode.SameSpeaker:
-                    Dictionary<string, List<string>> speakerLines = new Dictionary<string, List<string>>();
-
-                    foreach (SpeechSequence sequence in filteredSequences.Values)
-                    {
-                        if (speakerLines.TryGetValue(sequence.SpeakerID, out List<string> lines))
-                        {
-                            lines.Add(sequence.SoundEventPath);
-                        }
-                        else
-                        {
-                            speakerLines.Add(sequence.SpeakerID, new List<string> { sequence.SoundEventPath });
-                        }
-                    }
-
-                    foreach (SpeechSequence sequence in filteredSequences.Values)
-                    {
-                        replacements.Add(sequence.SoundEventPath, speakerLines[sequence.SpeakerID].GetAndRemoveRandom());
-                    }
-                    break;
+                    return (from sequence in filteredSequences.Values
+                            group sequence.SoundEventPath by sequence.SpeakerID into gr
+                            from replacementPair in gr.ToRandomizedReplacementDictionary()
+                            select replacementPair).ToDictionary();
                 case RandomDialogueMode.Random:
-                    List<string> sequenceKeys = filteredSequences.Keys.ToList();
-
-                    foreach (SpeechSequence sequence in filteredSequences.Values)
-                    {
-                        replacements.Add(sequence.SoundEventPath, sequenceKeys.GetAndRemoveRandom());
-                    }
-                    break;
+                    return filteredSequences.Keys.ToRandomizedReplacementDictionary();
                 default:
                     throw new NotImplementedException($"{mode} is not implemented");
             }
-
-            return replacements;
         });
 
         static bool _isInitialized = false;

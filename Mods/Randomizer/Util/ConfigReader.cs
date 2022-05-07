@@ -35,16 +35,19 @@ namespace GRandomizer.Util
             JObject obj = getJSONObject(split[0]);
             JToken token = obj;
 
-            string[] properties = split[1].Split('.');
-            foreach (string prop in properties)
+            if (split.Length > 1)
             {
-                if (token.Type == JTokenType.Object)
+                string[] properties = split[1].Split('.');
+                foreach (string prop in properties)
                 {
-                    token = ((JObject)token)[prop];
-                }
-                else
-                {
-                    throw new Exception($"Unhandled token type {token.Type}, {token.GetType().FullName}, {token}");
+                    if (token.Type == JTokenType.Object)
+                    {
+                        token = token[prop];
+                    }
+                    else
+                    {
+                        throw new Exception($"Unhandled token type {token.Type}, {token.GetType().FullName}, {token}");
+                    }
                 }
             }
 

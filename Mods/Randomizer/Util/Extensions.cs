@@ -201,7 +201,7 @@ namespace GRandomizer.Util
             }
         }
 
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this JObject jObject, string identifier, TryConvert<string, TKey> keySelector)
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this JObject jObject, string identifier, TryConvert<JProperty, TKey> keySelector)
         {
             if (jObject is null)
                 throw new ArgumentNullException(nameof(jObject));
@@ -213,25 +213,46 @@ namespace GRandomizer.Util
 
             foreach (JToken token in jObject.ChildrenTokens)
             {
-                JProperty property = (JProperty)token;
-                if (keySelector(property.Name, out TKey key))
+                if (token is JProperty property)
                 {
-                    if (dictionary.ContainsKey(key))
+                    if (keySelector(property, out TKey key))
                     {
-                        Utils.LogError($"[{identifier}] JSON Parse error: Duplicate key {property.Name} ({key})", true, 1);
+                        if (dictionary.ContainsKey(key))
+                        {
+                            Utils.LogError($"[{identifier}] JSON Parse error: Duplicate key {property.Name} ({key})", true, 1);
+                        }
+                        else
+                        {
+                            dictionary.Add(key, property.Value.ToObject<TValue>());
+                        }
                     }
                     else
                     {
-                        dictionary.Add(key, property.Value.ToObject<TValue>());
+                        Utils.LogWarning($"[{identifier}] Unable to select key for property {property.Name} (missing mod?)", false, 1);
                     }
                 }
                 else
                 {
-                    Utils.LogWarning($"[{identifier}] Unable to select key for property {property.Name} (missing mod?)", false, 1);
+                    Utils.LogWarning($"[{identifier}] Child token {token.Path} is {token.Type} ({token.GetType().FullName}), expected {nameof(JProperty)}");
                 }
             }
 
             return dictionary;
+        }
+        
+        public static Dictionary<TKey, IEnumerable<TValue>> ToDictionary<TKey, TValue>(this IEnumerable<IGrouping<TKey, TValue>> group)
+        {
+            return group.ToDictionary<IGrouping<TKey, TValue>, TKey, IEnumerable<TValue>>(g => g.Key, g => g);
+        }
+
+        public static Dictionary<TKey, TValueNew> ConvertValues<TKey, TValueOld, TValueNew>(this IDictionary<TKey, TValueOld> dict, Func<TValueOld, TValueNew> converter)
+        {
+            return dict.ToDictionary(kvp => kvp.Key, kvp => converter(kvp.Value));
+        }
+
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> valuePairs)
+        {
+            return valuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         public static T GetAndRemoveRandom<T>(this IList<T> list)
@@ -389,6 +410,19 @@ namespace GRandomizer.Util
         public static int FindArgumentIndex(this MethodBase mb, Type parameterType)
         {
             return mb.FindArgumentIndex(p => p.ParameterType == parameterType);
+        }
+
+        public static Dictionary<T, T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable)
+        {
+            Dictionary<T, T> result = new Dictionary<T, T>();
+
+            List<T> itemsList = enumerable.ToList();
+            foreach (T item in new List<T>(itemsList))
+            {
+                result.Add(item, itemsList.GetAndRemoveRandom());
+            }
+
+            return result;
         }
     }
 }

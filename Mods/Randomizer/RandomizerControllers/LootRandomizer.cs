@@ -2,6 +2,7 @@
 using HarmonyLib;
 using QModManager.Utility;
 using Story;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -52,7 +53,7 @@ namespace GRandomizer.RandomizerControllers
                 }
             }
 
-            foreach (string includeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Include"))
+            foreach (string includeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Include"))
             {
                 if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
                 {
@@ -64,7 +65,7 @@ namespace GRandomizer.RandomizerControllers
                 }
             }
 
-            foreach (string excludeStr in ConfigReader.ReadFromFile<string[]>("Configs/ItemRandomizer::Blacklist"))
+            foreach (string excludeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Blacklist"))
             {
                 if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
                 {
@@ -76,13 +77,10 @@ namespace GRandomizer.RandomizerControllers
                 }
             }
 
-            foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
+            int removed;
+            if ((removed = obtainableTypes.RemoveWhere(type => CraftData.GetPrefabForTechType(type) == null)) > 0)
             {
-                if (CraftData.GetPrefabForTechType(type) == null)
-                {
-                    Utils.LogWarning($"Removing item type {type} due to no prefab defined in CraftData", true);
-                    obtainableTypes.Remove(type);
-                }
+                Utils.LogWarning($"Removing {removed} item types due to null prefab", true);
             }
 
             return obtainableTypes.ToArray();
@@ -90,15 +88,7 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccess<Dictionary<TechType, TechType>> _itemReplacementsDictionary = new InitializeOnAccess<Dictionary<TechType, TechType>>(() =>
         {
-            Dictionary<TechType, TechType> itemReplacements = new Dictionary<TechType, TechType>();
-
-            List<TechType> itemsList = _itemTypes.Get.ToList();
-            foreach (TechType item in new List<TechType>(itemsList))
-            {
-                itemReplacements.Add(item, itemsList.GetAndRemoveRandom());
-            }
-
-            return itemReplacements;
+            return _itemTypes.Get.ToRandomizedReplacementDictionary();
         });
 
 #if DEBUG
@@ -149,6 +139,8 @@ namespace GRandomizer.RandomizerControllers
             Utils.LogWarning($"{techType} is not in the replacement dictionary, account for or exclude it!");
             return techType;
         }
+
+        public static readonly MethodInfo TryReplaceItem_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceItem(ref Discard<TechType>.Value));
         public static void TryReplaceItem(ref TechType techType)
         {
             techType = TryGetItemReplacement(techType);
@@ -846,6 +838,32 @@ namespace GRandomizer.RandomizerControllers
                         prefabPlaceholder.prefabClassId = CraftData.GetClassIdForTechType(TryGetItemReplacement(techType));
                     }
                 }
+            }
+        }
+
+        [HarmonyPatch]
+        static class KnownTech_ReplaceTechType_Patch
+        {
+            static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Contains(default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Add(default, default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Remove(default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetCompoundDependenciesUnlocked(default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetCompoundDependenciesTotal(default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetTechUnlockState(default));
+                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetTechUnlockState(default, out Discard<int>.Value, out Discard<int>.Value));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+            {
+                CodeInstruction[] prefixInstructions = new CodeInstruction[2]
+                {
+                    new CodeInstruction(OpCodes.Ldarga_S, original.FindArgumentIndex(typeof(TechType))),
+                    new CodeInstruction(OpCodes.Call, TryReplaceItem_MI)
+                };
+
+                return prefixInstructions.Concat(instructions);
             }
         }
     }
