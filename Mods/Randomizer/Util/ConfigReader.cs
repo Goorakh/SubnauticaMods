@@ -16,16 +16,16 @@ namespace GRandomizer.Util
             if (!path.EndsWith(FILE_EXTENSION))
                 path += FILE_EXTENSION;
 
-            if (_configCache.TryGetValue(path, out JObject cached))
-                return cached;
+            if (_configCache.TryGetValue(path, out JObject jObj))
+                return jObj;
 
             string fullPath = Path.Combine(Mod.ModFolder.FullName, path);
             if (!File.Exists(fullPath))
                 throw new FileNotFoundException(fullPath);
 
-            JObject obj = (JObject)JsonConvert.DeserializeObject(File.ReadAllText(fullPath));
-            _configCache.Add(path, obj);
-            return obj;
+            jObj = (JObject)JsonConvert.DeserializeObject(File.ReadAllText(fullPath));
+            _configCache.Add(path, jObj);
+            return jObj;
         }
 
         public static T ReadFromFile<T>(string path)

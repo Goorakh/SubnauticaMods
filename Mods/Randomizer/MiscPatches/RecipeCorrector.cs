@@ -190,20 +190,19 @@ namespace GRandomizer.MiscPatches
             {
                 static IEnumerable<MethodInfo> TargetMethods()
                 {
-                    string _string;
-                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.BuildTech(default, default, out _string, default));
-                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.Recipe(default, default, out _string, default));
+                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.BuildTech(default, default, out Discard<string>.Value, default));
+                    yield return SymbolExtensions.GetMethodInfo(() => TooltipFactory.Recipe(default, default, out Discard<string>.Value, default));
                 }
 
                 static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase method, ILGenerator generator)
                 {
-                    int techTypeArgIndex = Array.FindIndex(method.GetParameters(), p => p.ParameterType == typeof(TechType));
+                    int techTypeArgIndex = method.FindArgumentIndex(typeof(TechType));
 
                     LocalBuilder originalTechType = generator.DeclareLocal(typeof(TechType));
                     List<CodeInstruction> prefix = new List<CodeInstruction>
                     {
                         new CodeInstruction(OpCodes.Ldarg, techTypeArgIndex),
-                        new CodeInstruction(OpCodes.Dup, techTypeArgIndex),
+                        new CodeInstruction(OpCodes.Dup),
 
                         new CodeInstruction(OpCodes.Stloc, originalTechType),
 

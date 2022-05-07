@@ -377,5 +377,18 @@ namespace GRandomizer.Util
         {
             return member.DeclaringType.IsFromModAssembly();
         }
+
+        public static int FindArgumentIndex(this MethodBase mb, Predicate<ParameterInfo> parameterPredicate)
+        {
+            int index = Array.FindIndex(mb.GetParameters(), parameterPredicate);
+            if (!mb.IsStatic)
+                index++;
+
+            return index;
+        }
+        public static int FindArgumentIndex(this MethodBase mb, Type parameterType)
+        {
+            return mb.FindArgumentIndex(p => p.ParameterType == parameterType);
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
-using Oculus.Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,12 +24,9 @@ namespace GRandomizer
             return vector3;
         }
 
-        public static IEnumerable<TechType> GetAllDefinedTechTypes()
+        public static TechType[] GetAllDefinedTechTypes()
         {
-            foreach (TechType techType in (TechType[])Enum.GetValues(typeof(TechType)))
-            {
-                yield return techType;
-            }
+            return (TechType[])Enum.GetValues(typeof(TechType));
         }
 
         public static void LogError(string log, bool showOnScreen = false, int stackOffset = 0)

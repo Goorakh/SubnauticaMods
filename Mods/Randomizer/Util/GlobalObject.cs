@@ -199,8 +199,7 @@ namespace GRandomizer.Util
                             bool foundLast = false;
                             foreach (EventDescription ev in events)
                             {
-                                RESULT pathres;
-                                if ((pathres = ev.getPath(out string path)) == RESULT.OK)
+                                if ((result = ev.getPath(out string path)) == RESULT.OK)
                                 {
                                     if (path.StartsWith("event:/"))
                                     {
@@ -218,23 +217,30 @@ namespace GRandomizer.Util
                                             }
                                         }
 
-                                        FMODUWE.GetEventInstance(path, out EventInstance instance);
-                                        instance.setVolume(1f);
-                                        instance.set3DAttributes(Camera.main.transform.position.To3DAttributes());
-                                        instance.start();
-                                        playedSounds.Add(instance);
+                                        if ((result = FMODUWE.GetEventInstance(path, out EventInstance instance)) == RESULT.OK)
+                                        {
+                                            instance.setVolume(1f);
+                                            instance.set3DAttributes(Camera.main.transform.position.To3DAttributes());
+                                            instance.start();
+                                            playedSounds.Add(instance);
 
 #if VERBOSE
-                                        Utils.DebugLog($"Playing {path} from bank:/{item.Key}", true);
+                                            Utils.DebugLog($"Playing {path} from bank:/{item.Key}", true);
 #endif
-                                        lastPath = path;
-                                        lastBank = item.key;
+                                            lastPath = path;
+                                            lastBank = item.key;
+                                        }
+                                        else
+                                        {
+                                            Utils.LogError($"FMODUWE.GetEventInstance returned {result}", true);
+                                        }
+
                                         return;
                                     }
                                 }
                                 else
                                 {
-                                    Utils.LogError($"Error: EventDescription.getPath returned {result}", true);
+                                    Utils.LogError($"EventDescription.getPath returned {result}", true);
                                 }
                             }
 
@@ -242,7 +248,7 @@ namespace GRandomizer.Util
                         }
                         else
                         {
-                            Utils.LogError($"Error: Bank.getEventList returned {result}", true);
+                            Utils.LogError($"Bank.getEventList returned {result}", true);
                         }
                     }
                 }
