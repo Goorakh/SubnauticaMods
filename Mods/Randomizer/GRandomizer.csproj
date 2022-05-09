@@ -93,6 +93,7 @@
     <Compile Include="MiscPatches\AddPickupableComponentIfMissing.cs" />
     <Compile Include="MiscPatches\EggPatch.cs" />
     <Compile Include="MiscPatches\EnsurePickupable_Patch.cs" />
+    <Compile Include="MiscPatches\SubtitlePatcher.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="MiscPatches\RecipeCorrector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

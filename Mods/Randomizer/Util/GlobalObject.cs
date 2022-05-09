@@ -1,6 +1,7 @@
 ﻿using FMOD;
 using FMOD.Studio;
 using FMODUnity;
+using GRandomizer.MiscPatches;
 using GRandomizer.RandomizerControllers;
 using System;
 using System.Collections.Generic;
@@ -77,47 +78,14 @@ namespace GRandomizer.Util
 #if VERBOSE
                 Utils.DebugLog(arg, true);
 #endif
-                foreach (KeyValuePair<string, RuntimeManager.LoadedBank> item in RuntimeManager.Instance.loadedBanks)
-                {
-                    if (completedBanks.Contains(item.Key))
-                        continue;
+                FMODUWE.GetEventInstance(arg, out EventInstance instance);
+                instance.setVolume(1f);
+                instance.set3DAttributes(Camera.main.transform.position.To3DAttributes());
+                instance.start();
+                playedSounds.Add(instance);
 
-                    RESULT result;
-                    if ((result = item.Value.Bank.getEventList(out EventDescription[] events)) == RESULT.OK)
-                    {
-                        foreach (EventDescription ev in events)
-                        {
-                            RESULT pathres;
-                            if ((pathres = ev.getPath(out string path)) == RESULT.OK)
-                            {
-                                if (path.StartsWith("event:/"))
-                                {
-                                    if (arg == path)
-                                    {
-                                        FMODUWE.GetEventInstance(path, out EventInstance instance);
-                                        instance.setVolume(1f);
-                                        instance.set3DAttributes(Camera.main.transform.position.To3DAttributes());
-                                        instance.start();
-                                        playedSounds.Add(instance);
-
-#if VERBOSE
-                                        Utils.DebugLog($"Playing {path} from bank:/{item.Key}", true);
-#endif
-                                        return;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                Utils.LogError($"Error: EventDescription.getPath returned {pathres}", true);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Utils.LogError($"Error: Bank.getEventList returned {result}", true);
-                    }
-                }
+                if (DialogueRandomizer.TryGetSubtitleKey(arg, out string subtitle))
+                    DialogueRandomizer.ShowCorrectedSubtitle(subtitle);
             }
 
             void OnConsoleCommand_sdi(NotificationCenter.Notification n)
@@ -125,7 +93,7 @@ namespace GRandomizer.Util
                 LootRandomizer.SetDebugIndex(int.Parse((string)n.data[0]));
             }
 
-            bool tmp = false;
+            bool banksLoading = false;
             string lastPath;
             string lastBank;
             readonly List<string> completedBanks = new List<string>();
@@ -166,11 +134,11 @@ namespace GRandomizer.Util
                         RuntimeManager.WaitForAllLoads();
                     }
 
-                    tmp = true;
+                    banksLoading = true;
                 }
-                else if (tmp && !RuntimeManager.AnyBankLoading())
+                else if (banksLoading && !RuntimeManager.AnyBankLoading())
                 {
-                    tmp = false;
+                    banksLoading = false;
 
 #if VERBOSE
                     Utils.DebugLog("Banks loaded!", true);

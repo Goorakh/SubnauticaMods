@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.MiscPatches;
+using GRandomizer.Util;
 using HarmonyLib;
 using Oculus.Newtonsoft.Json.Linq;
 using System;
@@ -51,6 +52,9 @@ namespace GRandomizer.RandomizerControllers
                     }
                     else
                     {
+                        if (subtitleID == null && SubtitlePatcher.CustomSubtitleDataBySoundID.TryGetValue(soundID, out SubtitlePatcher.SubtitleData data))
+                            subtitleID = data.LocalizationKey;
+
                         SpeechSequence sequence = new SpeechSequence(speakerHeader.Key, soundID, subtitleID);
 #if VERBOSE
                         Utils.DebugLog($"Loading sequence: {sequence}");
@@ -83,7 +87,7 @@ namespace GRandomizer.RandomizerControllers
                 case RandomDialogueMode.Random:
                     return filteredSequences.Keys.ToRandomizedReplacementDictionary();
                 default:
-                    throw new NotImplementedException($"{mode} is not implemented");
+                    throw new NotImplementedException($"RandomDialogueMode.{mode} is not implemented");
             }
         });
 
@@ -116,15 +120,26 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (_sequences.Get.TryGetValue(playedPath, out SpeechSequence playedSequence) && playedSequence.HasSubtitles)
                 {
-                    Subtitles_Add_Patch.IsCorrectedSubtitle = true;
-                    Subtitles.main.Add(playedSequence.SubtitleKey);
-                    Subtitles_Add_Patch.IsCorrectedSubtitle = false;
+                    ShowCorrectedSubtitle(playedSequence.SubtitleKey);
                 }
 
 #if VERBOSE
                 Utils.DebugLog($"{_lineReplacements.Get.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}");
 #endif
             }
+        }
+
+        public static bool TryGetSubtitleKey(string soundID, out string subtitleKey)
+        {
+            subtitleKey = null;
+            return _sequences.Get.TryGetValue(soundID, out SpeechSequence sequence) && (subtitleKey = sequence.SubtitleKey) != null;
+        }
+
+        public static void ShowCorrectedSubtitle(string key)
+        {
+            Subtitles_Add_Patch.IsCorrectedSubtitle = true;
+            Subtitles.main.Add(key);
+            Subtitles_Add_Patch.IsCorrectedSubtitle = false;
         }
 
         [HarmonyPatch]
@@ -185,7 +200,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo EntryData_getkey_Hook_MI = SymbolExtensions.GetMethodInfo(() => EntryData_getkey_Hook(default, default));
                 static string EntryData_getkey_Hook(PDALog.EntryData entryData, string key)
                 {
-                    if (_isInitialized && entryData != null && entryData.sound != null)
+                    if (_isInitialized && mode > RandomDialogueMode.Off && entryData != null && entryData.sound != null)
                     {
                         if (_lineReplacements.Get.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
                         {
