@@ -86,9 +86,9 @@ namespace GRandomizer.RandomizerControllers
             return obtainableTypes.ToArray();
         });
 
-        static readonly InitializeOnAccess<Dictionary<TechType, TechType>> _itemReplacementsDictionary = new InitializeOnAccess<Dictionary<TechType, TechType>>(() =>
+        static readonly InitializeOnAccess<DualDictionary<TechType, TechType>> _itemReplacementsDictionary = new InitializeOnAccess<DualDictionary<TechType, TechType>>(() =>
         {
-            return _itemTypes.Get.ToRandomizedReplacementDictionary();
+            return new DualDictionary<TechType, TechType>(_itemTypes.Get.ToRandomizedReplacementDictionary());
         });
 
 #if DEBUG
@@ -120,6 +120,8 @@ namespace GRandomizer.RandomizerControllers
         }
 #endif
 
+        const string NOT_IN_ITEM_DICT_LOG = "{0} is not in the replacement dictionary, account for or exclude it!";
+
         public static readonly MethodInfo TryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
         public static TechType TryGetItemReplacement(TechType techType)
         {
@@ -127,17 +129,29 @@ namespace GRandomizer.RandomizerControllers
                 return techType;
 
 #if DEBUG
-            if (techType == TechType.Titanium)
+            if (false && techType == TechType.Titanium)
             {
                 return _itemTypes.Get[_debugIndex];
             }
 #endif
 
-            if (_itemReplacementsDictionary.Get.TryGetValue(techType, out TechType replacementType))
+            if (_itemReplacementsDictionary.Get.F2S_TryGetValue(techType, out TechType replacementType))
                 return replacementType;
 
-            Utils.LogWarning($"{techType} is not in the replacement dictionary, account for or exclude it!");
+            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType));
             return techType;
+        }
+
+        public static TechType TryGetOriginalItem(TechType replaced)
+        {
+            if (!IsEnabled() || replaced == TechType.None)
+                return replaced;
+
+            if (_itemReplacementsDictionary.Get.S2F_TryGetValue(replaced, out TechType originalType))
+                return originalType;
+
+            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, replaced));
+            return replaced;
         }
 
         public static readonly MethodInfo TryReplaceItem_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceItem(ref Discard<TechType>.Value));
@@ -785,6 +799,7 @@ namespace GRandomizer.RandomizerControllers
 
                             newModel.PrepareStaticItem();
                             newModel.RemoveAllComponentsNotIn(gasPod.model);
+                            newModel.DisableRigidbodies();
 
                             newModel.SetActive(true);
 
@@ -838,32 +853,6 @@ namespace GRandomizer.RandomizerControllers
                         prefabPlaceholder.prefabClassId = CraftData.GetClassIdForTechType(TryGetItemReplacement(techType));
                     }
                 }
-            }
-        }
-
-        [HarmonyPatch]
-        static class KnownTech_ReplaceTechType_Patch
-        {
-            static IEnumerable<MethodBase> TargetMethods()
-            {
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Contains(default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Add(default, default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.Remove(default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetCompoundDependenciesUnlocked(default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetCompoundDependenciesTotal(default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetTechUnlockState(default));
-                yield return SymbolExtensions.GetMethodInfo(() => KnownTech.GetTechUnlockState(default, out Discard<int>.Value, out Discard<int>.Value));
-            }
-
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
-            {
-                CodeInstruction[] prefixInstructions = new CodeInstruction[2]
-                {
-                    new CodeInstruction(OpCodes.Ldarga_S, original.FindArgumentIndex(typeof(TechType))),
-                    new CodeInstruction(OpCodes.Call, TryReplaceItem_MI)
-                };
-
-                return prefixInstructions.Concat(instructions);
             }
         }
     }

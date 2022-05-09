@@ -326,5 +326,61 @@ namespace GRandomizer.MiscPatches
                 }
             }
         }
+
+        [HarmonyPatch]
+        static class Inventory_Pickup_Patch
+        {
+            static MethodBase TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<Inventory>(_ => _.Pickup(default, default));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+            {
+                LocalGenerator localGen = new LocalGenerator(generator);
+
+                MethodInfo KnownTech_Analyze_MI = SymbolExtensions.GetMethodInfo(() => KnownTech.Analyze(default, default));
+                ParameterInfo[] KnownTech_Analyze_Params = KnownTech_Analyze_MI.GetParameters();
+                int techTypeIndex = KnownTech_Analyze_MI.FindArgumentIndex(typeof(TechType));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.Calls(KnownTech_Analyze_MI))
+                    {
+                        LocalBuilder[] locals = new LocalBuilder[KnownTech_Analyze_Params.Length - (techTypeIndex + 1)];
+                        for (int i = locals.Length - 1; i >= 0; i--)
+                        {
+                            yield return new CodeInstruction(OpCodes.Stloc, locals[i] = localGen.GetLocal(KnownTech_Analyze_Params[i + (techTypeIndex + 1)].ParameterType, false));
+                        }
+
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.Pickupable_GetTechType_Hook_MI);
+
+                        for (int i = 0; i < locals.Length; i++)
+                        {
+                            yield return new CodeInstruction(OpCodes.Ldloc, locals[i]);
+                            localGen.ReleaseLocal(locals[i]);
+                        }
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo Pickupable_GetTechType_Hook_MI = SymbolExtensions.GetMethodInfo(() => Pickupable_GetTechType_Hook(default));
+                static TechType Pickupable_GetTechType_Hook(TechType techType)
+                {
+                    if (LootRandomizer.IsEnabled())
+                    {
+                        TechType originalType = LootRandomizer.TryGetOriginalItem(techType);
+                        if (originalType != techType && _ingredientsToCorrect.Get.Contains(originalType))
+                            return originalType;
+                    }
+
+                    return techType;
+                }
+            }
+        }
     }
 }
