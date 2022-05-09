@@ -72,20 +72,20 @@ namespace GRandomizer.RandomizerControllers
             HashSet<string> excludeSpeakers = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
             HashSet<string> excludeLines = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeLines");
 
-            Dictionary<string, SpeechSequence> filteredSequences = (from sequence in _sequences.Get.Values
-                                                                    where !excludeSpeakers.Contains(sequence.SpeakerID)
-                                                                    where !excludeLines.Contains(sequence.SoundEventPath)
-                                                                    select sequence).ToDictionary(s => s.SoundEventPath);
+            IEnumerable<SpeechSequence> filteredSequences = from sequence in _sequences.Get.Values
+                                                            where !excludeSpeakers.Contains(sequence.SpeakerID)
+                                                            where !excludeLines.Contains(sequence.SoundEventPath)
+                                                            select sequence;
 
             switch (mode)
             {
                 case RandomDialogueMode.SameSpeaker:
-                    return (from sequence in filteredSequences.Values
+                    return (from sequence in filteredSequences
                             group sequence.SoundEventPath by sequence.SpeakerID into gr
                             from replacementPair in gr.ToRandomizedReplacementDictionary()
                             select replacementPair).ToDictionary();
                 case RandomDialogueMode.Random:
-                    return filteredSequences.Keys.ToRandomizedReplacementDictionary();
+                    return filteredSequences.Select(s => s.SoundEventPath).ToRandomizedReplacementDictionary();
                 default:
                     throw new NotImplementedException($"RandomDialogueMode.{mode} is not implemented");
             }
