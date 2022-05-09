@@ -13,7 +13,7 @@ namespace GRandomizer.MiscPatches
 {
     static class SubtitlePatcher
     {
-        public const string LOCALIZATION_KEY_PREFIX = "GR_";
+        public const string LOCALIZATION_KEY_PREFIX = "GR_SUBTITLE_";
 
         public struct SubtitleData
         {
