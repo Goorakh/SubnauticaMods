@@ -240,16 +240,6 @@ namespace GRandomizer.Util
             return dictionary;
         }
         
-        public static Dictionary<TKey, IEnumerable<TValue>> ToDictionary<TKey, TValue>(this IEnumerable<IGrouping<TKey, TValue>> group)
-        {
-            return group.ToDictionary<IGrouping<TKey, TValue>, TKey, IEnumerable<TValue>>(g => g.Key, g => g);
-        }
-
-        public static Dictionary<TKey, TValueNew> ConvertValues<TKey, TValueOld, TValueNew>(this IDictionary<TKey, TValueOld> dict, Func<TValueOld, TValueNew> converter)
-        {
-            return dict.ToDictionary(kvp => kvp.Key, kvp => converter(kvp.Value));
-        }
-
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> valuePairs)
         {
             return valuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -402,10 +392,7 @@ namespace GRandomizer.Util
         public static int FindArgumentIndex(this MethodBase mb, Predicate<ParameterInfo> parameterPredicate)
         {
             int index = Array.FindIndex(mb.GetParameters(), parameterPredicate);
-            if (!mb.IsStatic)
-                index++;
-
-            return index;
+            return index + (index != -1 && !mb.IsStatic ? 1 : 0);
         }
         public static int FindArgumentIndex(this MethodBase mb, Type parameterType)
         {
@@ -417,9 +404,13 @@ namespace GRandomizer.Util
             Dictionary<T, T> result = new Dictionary<T, T>();
 
             List<T> itemsList = enumerable.ToList();
-            foreach (T item in new List<T>(itemsList))
+
+            T[] keys = new T[itemsList.Count];
+            itemsList.CopyTo(keys, 0);
+
+            foreach (T key in keys)
             {
-                result.Add(item, itemsList.GetAndRemoveRandom());
+                result.Add(key, itemsList.GetAndRemoveRandom());
             }
 
             return result;

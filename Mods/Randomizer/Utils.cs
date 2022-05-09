@@ -18,10 +18,7 @@ namespace GRandomizer
 
         public static Vector3 Abs(Vector3 vector3)
         {
-            vector3.x = Mathf.Abs(vector3.x);
-            vector3.y = Mathf.Abs(vector3.y);
-            vector3.z = Mathf.Abs(vector3.z);
-            return vector3;
+            return new Vector3(Mathf.Abs(vector3.x), Mathf.Abs(vector3.y), Mathf.Abs(vector3.z));
         }
 
         public static TechType[] GetAllDefinedTechTypes()
@@ -61,16 +58,7 @@ namespace GRandomizer
 
         public static float Clamp01RollOver(float value)
         {
-            if (value > 1f)
-            {
-                value -= 1f;
-            }
-            else if (value < 0f)
-            {
-                value += 1f;
-            }
-
-            return value;
+            return (value % 1f) + (value < 0f ? 1f : 0f);
         }
 
         public static class Random
