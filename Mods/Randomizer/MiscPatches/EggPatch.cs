@@ -36,6 +36,28 @@ namespace GRandomizer.MiscPatches
             ( TechType.StalkerEgg, TechType.StalkerEggUndiscovered )
         };
 
+        public static readonly MethodInfo CorrectEggType_MI = SymbolExtensions.GetMethodInfo(() => CorrectEggType(default));
+        public static TechType CorrectEggType(TechType eggType)
+        {
+            if (_eggPairs.F2S_TryGetValue(eggType, out TechType undiscoveredEgg))
+            {
+                if (!KnownTech.Contains(eggType))
+                    return undiscoveredEgg;
+            }
+            else if (_eggPairs.S2F_TryGetValue(eggType, out TechType discoveredEgg))
+            {
+                if (KnownTech.Contains(discoveredEgg))
+                    return discoveredEgg;
+            }
+
+            return eggType;
+        }
+
+        public static TechType ToDiscoveredEggType(TechType eggType)
+        {
+            return _eggPairs.S2F_TryGetValue(eggType, out TechType discoveredEgg) ? discoveredEgg : eggType;
+        }
+
         static IEnumerable<MethodInfo> TargetMethods()
         {
             yield return SymbolExtensions.GetMethodInfo(() => CraftData.GetCookedData(default));
@@ -84,7 +106,7 @@ namespace GRandomizer.MiscPatches
                 if ((instruction.opcode == OpCodes.Stfld || instruction.opcode == OpCodes.Stsfld) && instruction.operand is FieldInfo field)
                 {
                     if (field.FieldType == typeof(TechType))
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.tryCorrectEggType_MI);
+                        yield return new CodeInstruction(OpCodes.Call, CorrectEggType_MI);
                 }
                 else if ((instruction.opcode == OpCodes.Call || instruction.opcode == OpCodes.Callvirt || instruction.opcode == OpCodes.Newobj) && instruction.operand is MethodBase method)
                 {
@@ -101,14 +123,14 @@ namespace GRandomizer.MiscPatches
 
                             // If there are multiple TechType arguments, correct them before storing the local
                             if (parameters[i] == typeof(TechType))
-                                yield return new CodeInstruction(OpCodes.Call, Hooks.tryCorrectEggType_MI);
+                                yield return new CodeInstruction(OpCodes.Call, CorrectEggType_MI);
 
                             yield return new CodeInstruction(OpCodes.Stloc, local);
                             parameterLocals[i] = local;
                         }
 
                         // Correct the first TechType argument that was left on the stack
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.tryCorrectEggType_MI);
+                        yield return new CodeInstruction(OpCodes.Call, CorrectEggType_MI);
 
                         for (int i = firstTechTypeIndex + 1; i < parameters.Length; i++)
                         {
@@ -119,30 +141,10 @@ namespace GRandomizer.MiscPatches
                 }
                 else if (returnsTechType && instruction.opcode == OpCodes.Ret)
                 {
-                    yield return new CodeInstruction(OpCodes.Call, Hooks.tryCorrectEggType_MI);
+                    yield return new CodeInstruction(OpCodes.Call, CorrectEggType_MI);
                 }
 
                 yield return instruction;
-            }
-        }
-
-        static class Hooks
-        {
-            public static readonly MethodInfo tryCorrectEggType_MI = SymbolExtensions.GetMethodInfo(() => tryCorrectEggType(default));
-            static TechType tryCorrectEggType(TechType eggType)
-            {
-                if (_eggPairs.F2S_TryGetValue(eggType, out TechType undiscoveredEgg))
-                {
-                    if (!KnownTech.Contains(eggType))
-                        return undiscoveredEgg;
-                }
-                else if (_eggPairs.S2F_TryGetValue(eggType, out TechType discoveredEgg))
-                {
-                    if (KnownTech.Contains(discoveredEgg))
-                        return discoveredEgg;
-                }
-
-                return eggType;
             }
         }
     }

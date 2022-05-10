@@ -212,5 +212,93 @@ namespace GRandomizer.RandomizerControllers
                 }
             }
         }
+
+        [HarmonyPatch]
+        static class uGUI_EncyclopediaTab_DisplayEntry_Patch
+        {
+            static MethodBase TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<uGUI_EncyclopediaTab>(_ => _.DisplayEntry(default));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original, ILGenerator generator)
+            {
+                LocalGenerator localGen = new LocalGenerator(generator);
+
+                MethodInfo uGUI_EncyclopediaTab_SetText_MI = SymbolExtensions.GetMethodInfo<uGUI_EncyclopediaTab>(_ => _.SetText(default));
+
+                int entryDataLocalIndex = -1;
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (entryDataLocalIndex == -1 && instruction.opcode.IsAny(OpCodes.Ldloca, OpCodes.Ldloca_S))
+                    {
+                        int localIndex = instruction.GetLocalIndex();
+
+                        if (original.GetMethodBody().LocalVariables[localIndex].LocalType == typeof(PDAEncyclopedia.EntryData))
+                            entryDataLocalIndex = localIndex;
+                    }
+
+                    if (instruction.Calls(uGUI_EncyclopediaTab_SetText_MI))
+                    {
+                        if (entryDataLocalIndex == -1)
+                        {
+                            Utils.LogWarning($"Could not find {nameof(entryDataLocalIndex)} before {nameof(uGUI_EncyclopediaTab)}.{nameof(uGUI_EncyclopediaTab.SetText)} call, skipping");
+                        }
+                        else
+                        {
+                            ParameterInfo[] parameters = uGUI_EncyclopediaTab_SetText_MI.GetParameters();
+                            LocalBuilder[] locals = new LocalBuilder[parameters.Length];
+
+                            for (int i = parameters.Length - 1; i >= 0; i--)
+                            {
+                                if (parameters[i].ParameterType == typeof(string))
+                                {
+                                    yield return new CodeInstruction(OpCodes.Ldloc, entryDataLocalIndex);
+                                    yield return new CodeInstruction(OpCodes.Call, Hooks.GetDescriptionText_Hook_MI);
+
+                                    for (int j = i + 1; j < parameters.Length; j++)
+                                    {
+                                        yield return new CodeInstruction(OpCodes.Ldloc, locals[j]);
+                                        localGen.ReleaseLocal(locals[j]);
+                                    }
+
+                                    break;
+                                }
+
+                                yield return new CodeInstruction(OpCodes.Stloc, locals[i] = localGen.GetLocal(parameters[i].ParameterType, false));
+                            }
+                        }
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo GetDescriptionText_Hook_MI = SymbolExtensions.GetMethodInfo(() => GetDescriptionText_Hook(default, default));
+                static string GetDescriptionText_Hook(string original, PDAEncyclopedia.EntryData entry)
+                {
+                    if (_isInitialized && mode > RandomDialogueMode.Off && entry != null && entry.audio.Exists())
+                    {
+                        if (_lineReplacements.Get.TryGetValue(entry.audio.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
+                        {
+                            if (sequence.HasSubtitles)
+                            {
+                                return Language.main.Get(sequence.SubtitleKey);
+                            }
+                            else
+                            {
+                                Utils.LogWarning($"{sequence.SoundEventPath} has no subtitle");
+                                return "NULL";
+                            }
+                        }
+                    }
+
+                    return original;
+                }
+            }
+        }
     }
 }

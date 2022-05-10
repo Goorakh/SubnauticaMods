@@ -19,7 +19,7 @@ namespace GRandomizer.Util
             _generator = ilGenerator;
         }
 
-        public LocalBuilder GetLocal(Type type, bool release = true)
+        public LocalBuilder GetLocal(Type type, bool release)
         {
             if (_localsCache.TryGetValue(type, out List<LocalBuilder> localsList) && localsList.Count > 0)
                 return release ? localsList[0] : localsList.GetAndRemove(0);

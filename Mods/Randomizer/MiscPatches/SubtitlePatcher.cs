@@ -24,7 +24,7 @@ namespace GRandomizer.MiscPatches
             public SubtitleData(string soundID, string text, int startDelay = 0)
             {
                 SoundID = soundID;
-                LocalizationKey = LOCALIZATION_KEY_PREFIX + soundID;
+                LocalizationKey = LOCALIZATION_KEY_PREFIX + Guid.NewGuid();
                 
                 Text = (startDelay != 0 ? Language.delayHintSequence + startDelay : string.Empty) + text;
             }

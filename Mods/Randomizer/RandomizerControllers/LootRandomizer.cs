@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.MiscPatches;
+using GRandomizer.Util;
 using HarmonyLib;
 using QModManager.Utility;
 using Story;
@@ -125,6 +126,8 @@ namespace GRandomizer.RandomizerControllers
         public static readonly MethodInfo TryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
         public static TechType TryGetItemReplacement(TechType techType)
         {
+            techType = EggPatch.ToDiscoveredEggType(techType);
+
             if (!IsEnabled() || techType == TechType.None)
                 return techType;
 
@@ -136,7 +139,7 @@ namespace GRandomizer.RandomizerControllers
 #endif
 
             if (_itemReplacementsDictionary.Get.F2S_TryGetValue(techType, out TechType replacementType))
-                return replacementType;
+                return EggPatch.CorrectEggType(replacementType);
 
             Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType));
             return techType;
@@ -144,11 +147,13 @@ namespace GRandomizer.RandomizerControllers
 
         public static TechType TryGetOriginalItem(TechType replaced)
         {
+            replaced = EggPatch.ToDiscoveredEggType(replaced);
+
             if (!IsEnabled() || replaced == TechType.None)
                 return replaced;
 
             if (_itemReplacementsDictionary.Get.S2F_TryGetValue(replaced, out TechType originalType))
-                return originalType;
+                return EggPatch.CorrectEggType(originalType);
 
             Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, replaced));
             return replaced;

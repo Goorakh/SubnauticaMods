@@ -55,22 +55,12 @@ namespace GRandomizer.RandomizerControllers
                 return colorReplacer;
             }
 
-            // This works, but doesn't do anything to an RGB value if it's 0, and a black color isn't changed at all
-            // TODO: Find a new smooth function to swap out the colors (similar input colors must still be similar, otherwise it ends up flickering)
             static Color rotateColor(Color original, Vector3 offset)
             {
                 return new Color(Mathf.Abs(Mathf.Sin((original.r + offset.x) * (2f * Mathf.PI))),
                                  Mathf.Abs(Mathf.Sin((original.g + offset.y) * (2f * Mathf.PI))),
                                  Mathf.Abs(Mathf.Sin((original.b + offset.z) * (2f * Mathf.PI))),
                                  original.a);
-                /*
-                Vector3 replacementVec = Utils.Abs(rotation * new Vector3(original.r, original.g, original.b));
-                Color replacement = new Color(replacementVec.x, replacementVec.y, replacementVec.z, original.a);
-#if VERBOSE && false
-                Utils.DebugLog($"{original} -> {replacement} {rotation.eulerAngles}");
-#endif
-                return replacement;
-                */
             }
 
             public Color GetReplacement(Color original)
@@ -197,12 +187,18 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
+#if VERBOSE
+                    Dictionary<FieldInfo, object> originalFieldValues = (from field in __instance.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+                                                                      where !field.FieldType.IsClass
+                                                                      select new KeyValuePair<FieldInfo, object>(field, field.GetValue(__instance))).ToDictionary();
+#endif
+
                     __instance.SunDirection = UnityEngine.Random.Range(-180f, 180f);
                     __instance.sunMaxAngle = UnityEngine.Random.Range(0f, 90f);
 
                     __instance.NorthPoleOffset = UnityEngine.Random.Range(-60f, 60f);
 
-                    __instance.Exposure = UnityEngine.Random.Range(0f, 5f);
+                    __instance.Exposure = UnityEngine.Random.Range(0f, 3f);
                     __instance.RayleighScattering = UnityEngine.Random.Range(0f, 5f);
                     __instance.MieScattering = UnityEngine.Random.Range(0f, 5f);
 
@@ -260,6 +256,17 @@ namespace GRandomizer.RandomizerControllers
 
                     __instance.endSequenceLightColor = Utils.Random.Color(__instance.endSequenceLightColor.a);
                     __instance.endSequenceSunBurstColor = Utils.Random.Color(__instance.endSequenceSunBurstColor.a);
+
+#if VERBOSE
+                    foreach (KeyValuePair<FieldInfo, object> original in originalFieldValues)
+	                {
+                        object newValue = original.Key.GetValue(__instance);
+                        if (!Equals(original.Value, newValue))
+                        {
+                            Utils.DebugLog($"uSkyManager.{original.Key.Name}: {original.Value} -> {newValue}");
+                        }
+	                }
+#endif
                 }
             }
         }
