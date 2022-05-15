@@ -193,49 +193,77 @@ namespace GRandomizer.RandomizerControllers
             gradient.SetKeys(colorKeys, alphaKeys);
         }
 
-        static void randomizeParticleSystemMinMaxGradient(ref ParticleSystem.MinMaxGradient minmax)
+        static ParticleSystem.MinMaxGradient randomizeParticleSystemMinMaxGradient(ParticleSystem.MinMaxGradient minmax)
         {
             switch (minmax.m_Mode)
             {
                 case ParticleSystemGradientMode.Color:
-                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMax);
+                    minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
                     break;
                 case ParticleSystemGradientMode.Gradient:
                     randomizeGradient(minmax.m_GradientMax, null);
                     break;
                 case ParticleSystemGradientMode.TwoColors:
-                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMin);
-                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMax);
+                    minmax.colorMin = ColorReplacer.GetGlobalReplacement(minmax.colorMin);
+                    minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
                     break;
                 case ParticleSystemGradientMode.TwoGradients:
                     randomizeGradient(minmax.m_GradientMin, null);
                     randomizeGradient(minmax.m_GradientMax, null);
                     break;
             }
+
+            return minmax;
         }
 
         static void randomizeParticleSystem(ParticleSystem ps)
         {
+            #region main
             ParticleSystem.MainModule main = ps.main;
 
-            ParticleSystem.MinMaxGradient startColor = main.startColor;
-            randomizeParticleSystemMinMaxGradient(ref startColor);
-            main.startColor = startColor;
+            main.duration *= UnityEngine.Random.Range(0.75f, 1.25f);
+            main.startDelayMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+            main.startLifetimeMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+            main.startSpeedMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+
+            if (main.startSize3D)
+            {
+                main.startSizeXMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+                main.startSizeYMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+                main.startSizeZMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+            }
+            else
+            {
+                main.startSizeMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+            }
+
+            if (main.startRotation3D)
+            {
+                main.startRotationXMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+                main.startRotationYMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+                main.startRotationZMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+            }
+            else
+            {
+                main.startRotationMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+            }
+
+            main.startColor = randomizeParticleSystemMinMaxGradient(main.startColor);
+
+            main.simulationSpeed *= UnityEngine.Random.Range(0.3f, 1.7f);
+
+            #endregion
 
             ParticleSystem.ColorOverLifetimeModule colorOverLifetime = ps.colorOverLifetime;
             if (colorOverLifetime.enabled)
             {
-                ParticleSystem.MinMaxGradient colorOverLifetimeColor = colorOverLifetime.color;
-                randomizeParticleSystemMinMaxGradient(ref colorOverLifetimeColor);
-                colorOverLifetime.color = colorOverLifetimeColor;
+                colorOverLifetime.color = randomizeParticleSystemMinMaxGradient(colorOverLifetime.color);
             }
 
             ParticleSystem.ColorBySpeedModule colorBySpeed = ps.colorBySpeed;
             if (colorBySpeed.enabled)
             {
-                ParticleSystem.MinMaxGradient colorBySpeedColor = colorBySpeed.color;
-                randomizeParticleSystemMinMaxGradient(ref colorBySpeedColor);
-                colorBySpeed.color = colorBySpeedColor;
+                colorBySpeed.color = randomizeParticleSystemMinMaxGradient(colorBySpeed.color);
             }
 
             ParticleSystem.LightsModule lights = ps.lights;
@@ -247,13 +275,8 @@ namespace GRandomizer.RandomizerControllers
             ParticleSystem.TrailModule trails = ps.trails;
             if (trails.enabled)
             {
-                ParticleSystem.MinMaxGradient trailsColorOverLifetime = trails.colorOverLifetime;
-                randomizeParticleSystemMinMaxGradient(ref trailsColorOverLifetime);
-                trails.colorOverLifetime = trailsColorOverLifetime;
-
-                ParticleSystem.MinMaxGradient trailsColorOverTrail = trails.colorOverTrail;
-                randomizeParticleSystemMinMaxGradient(ref trailsColorOverTrail);
-                trails.colorOverTrail = trailsColorOverTrail;
+                trails.colorOverLifetime = randomizeParticleSystemMinMaxGradient(trails.colorOverLifetime);
+                trails.colorOverTrail = randomizeParticleSystemMinMaxGradient(trails.colorOverTrail);
             }
         }
 
@@ -1234,24 +1257,24 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class VFXController_Start_Patch
+        static class ParticleSystem_Patch
         {
-            static MethodInfo TargetMethod()
+            static IEnumerable<MethodInfo> TargetMethods()
             {
-                return SymbolExtensions.GetMethodInfo<VFXController>(_ => _.Start());
+                yield return SymbolExtensions.GetMethodInfo<ParticleSystem>(_ => _.Play(default));
+                yield return SymbolExtensions.GetMethodInfo<ParticleSystem>(_ => _.Simulate(default, default, default, default));
+                yield return SymbolExtensions.GetMethodInfo<ParticleSystem>(_ => _.Emit_Internal(default));
+                yield return SymbolExtensions.GetMethodInfo<ParticleSystem>(_ => _.EmitOld_Internal(ref Discard<ParticleSystem.Particle>.Value));
+                yield return SymbolExtensions.GetMethodInfo<ParticleSystem>(_ => _.Emit_Injected(ref Discard<ParticleSystem.EmitParams>.Value, default));
             }
 
-            static void Prefix(VFXController __instance)
+            static readonly HashSet<int> _randomizedParticleSystems = new HashSet<int>();
+
+            static void Prefix(ParticleSystem __instance)
             {
-                if (IsEnabled())
+                if (IsEnabled() && _randomizedParticleSystems.Add(__instance.GetInstanceID()))
                 {
-                    foreach (VFXController.VFXEmitter emitter in __instance.emitters)
-                    {
-                        if (emitter != null && emitter.fxPS.Exists())
-                        {
-                            randomizeParticleSystem(emitter.fxPS);
-                        }
-                    }
+                    randomizeParticleSystem(__instance);
                 }
             }
         }
