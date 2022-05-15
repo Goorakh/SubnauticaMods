@@ -186,9 +186,9 @@ namespace GRandomizer.Util
                     throw new ArgumentException($"Cannot hook {nameof(HookFieldFlags.Ldfld)} and {nameof(HookFieldFlags.Stfld)} with the same method");
                 }
 
-                if (field.IsLiteral || field.IsInitOnly)
+                if (field.IsLiteral)
                 {
-                    Utils.LogWarning($"flags include {nameof(HookFieldFlags.Stfld)} but {field.Name} is readonly or const");
+                    Utils.LogWarning($"flags include {nameof(HookFieldFlags.Stfld)} but {field.Name} is const");
                     Stfld = false;
                 }
 
