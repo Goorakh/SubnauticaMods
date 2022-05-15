@@ -17,69 +17,85 @@ namespace GRandomizer.RandomizerControllers
     {
         static readonly InitializeOnAccess<TechType[]> _itemTypes = new InitializeOnAccess<TechType[]>(() =>
         {
-            HashSet<TechType> obtainableTypes = (from techGroup in CraftData.groups
-                                                 where techGroup.Key != TechGroup.Constructor // Exclude vehicles in mobile vehicle bay
-                                                 where techGroup.Key != TechGroup.BasePieces // Exclude base pieces
-                                                 where techGroup.Key != TechGroup.ExteriorModules // Exclude base pieces
-                                                 where techGroup.Key != TechGroup.InteriorPieces // Exclude base pieces
-                                                 where techGroup.Key != TechGroup.InteriorModules // Exclude base pieces
-                                                 where techGroup.Key != TechGroup.Miscellaneous // Exclude base pieces
-                                                 from category in techGroup.Value
-                                                 where category.Key != TechCategory.Cyclops // Exclude cyclops blueprints
-                                                 from techType in category.Value
-                                                 select techType).ToHashSet();
-
-            foreach (TechType type in new HashSet<TechType>(obtainableTypes)) // Clone collection since it will be modified in the foreach
+            IEnumerable<TechType> getObtainableItems()
             {
-                if (CraftData.techData.TryGetValue(type, out CraftData.TechData data))
+                foreach (var techGroup in CraftData.groups)
                 {
-                    if (data._linkedItems != null)
+                    switch (techGroup.Key)
                     {
-                        foreach (TechType linked in data._linkedItems)
-                        {
-                            obtainableTypes.Add(linked);
-                        }
+                        case TechGroup.Constructor: // Exclude vehicles in mobile vehicle bay
+                        case TechGroup.BasePieces: // Exclude base pieces
+                        case TechGroup.ExteriorModules: // Exclude base pieces
+                        case TechGroup.InteriorPieces: // Exclude base pieces
+                        case TechGroup.InteriorModules: // Exclude base pieces
+                        case TechGroup.Miscellaneous: // Exclude base pieces
+                            continue;
                     }
 
-                    if (data._ingredients != null)
+                    foreach (var category in techGroup.Value)
                     {
-                        foreach (CraftData.Ingredient ingredient in data._ingredients)
+                        if (category.Key != TechCategory.Cyclops)  // Exclude cyclops blueprints
                         {
-                            if (ingredient != null)
+                            foreach (TechType item in category.Value)
                             {
-                                obtainableTypes.Add(ingredient._techType);
+                                yield return item;
+
+                                if (CraftData.techData.TryGetValue(item, out CraftData.TechData techData))
+                                {
+                                    if (techData._linkedItems != null)
+                                    {
+                                        foreach (TechType linked in techData._linkedItems)
+                                        {
+                                            yield return linked;
+                                        }
+                                    }
+
+                                    if (techData._ingredients != null)
+                                    {
+                                        foreach (CraftData.Ingredient ingredient in techData._ingredients)
+                                        {
+                                            if (ingredient != null)
+                                                yield return ingredient._techType;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
+
+                foreach (string includeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Include"))
+                {
+                    if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
+                    {
+                        yield return includeType;
+                    }
+                    else
+                    {
+                        Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)");
+                    }
+                }
             }
 
-            foreach (string includeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Include"))
+            IEnumerable<TechType> getBlacklistedItems()
             {
-                if (TechTypeExtensions.FromString(includeStr, out TechType includeType, true))
+                foreach (string excludeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Blacklist"))
                 {
-                    obtainableTypes.Add(includeType);
-                }
-                else
-                {
-                    Utils.LogWarning($"Unknown TechType ({includeStr}) in ItemRandomizer.json Include list (are you missing a mod?)");
+                    if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
+                    {
+                        yield return excludeType;
+                    }
+                    else
+                    {
+                        Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)");
+                    }
                 }
             }
 
-            foreach (string excludeStr in ConfigReader.ReadFromFile<HashSet<string>>("Configs/ItemRandomizer::Blacklist"))
-            {
-                if (TechTypeExtensions.FromString(excludeStr, out TechType excludeType, true))
-                {
-                    obtainableTypes.Remove(excludeType);
-                }
-                else
-                {
-                    Utils.LogWarning($"Unknown TechType ({excludeStr}) in ItemRandomizer.json Blacklist (are you missing a mod?)");
-                }
-            }
+            HashSet<TechType> obtainableTypes = getObtainableItems().Except(getBlacklistedItems()).ToHashSet();
 
             int removed;
-            if ((removed = obtainableTypes.RemoveWhere(type => CraftData.GetPrefabForTechType(type) == null)) > 0)
+            if ((removed = obtainableTypes.RemoveWhere(type => !CraftData.GetPrefabForTechType(type).Exists())) > 0)
             {
                 Utils.LogWarning($"Removing {removed} item types due to null prefab", true);
             }
@@ -121,13 +137,11 @@ namespace GRandomizer.RandomizerControllers
         }
 #endif
 
-        const string NOT_IN_ITEM_DICT_LOG = "{0} is not in the replacement dictionary, account for or exclude it!";
+        const string NOT_IN_ITEM_DICT_LOG = "{0} (DE {1}) is not in the replacement dictionary, account for or exclude it!";
 
         public static readonly MethodInfo TryGetItemReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetItemReplacement(default));
         public static TechType TryGetItemReplacement(TechType techType)
         {
-            techType = EggPatch.ToDiscoveredEggType(techType);
-
             if (!IsEnabled() || techType == TechType.None)
                 return techType;
 
@@ -138,24 +152,26 @@ namespace GRandomizer.RandomizerControllers
             }
 #endif
 
-            if (_itemReplacementsDictionary.Get.F2S_TryGetValue(techType, out TechType replacementType))
-                return EggPatch.CorrectEggType(replacementType);
+            TechType discoveredEgg = EggPatch.ToDiscoveredEggType(techType);
 
-            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType));
+            if (_itemReplacementsDictionary.Get.F2S_TryGetValue(discoveredEgg, out TechType replacementType))
+                return EggPatch.CorrectEggType(replacementType);
+            
+            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType, discoveredEgg));
             return techType;
         }
 
         public static TechType TryGetOriginalItem(TechType replaced)
         {
-            replaced = EggPatch.ToDiscoveredEggType(replaced);
-
             if (!IsEnabled() || replaced == TechType.None)
                 return replaced;
 
-            if (_itemReplacementsDictionary.Get.S2F_TryGetValue(replaced, out TechType originalType))
+            TechType discoveredEgg = EggPatch.ToDiscoveredEggType(replaced);
+
+            if (_itemReplacementsDictionary.Get.S2F_TryGetValue(discoveredEgg, out TechType originalType))
                 return EggPatch.CorrectEggType(originalType);
 
-            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, replaced));
+            Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, replaced, discoveredEgg));
             return replaced;
         }
 
@@ -359,6 +375,10 @@ namespace GRandomizer.RandomizerControllers
                     {
                         GameObject itemModel = CraftData.InstantiateFromPrefab(techType);
                         itemModel.PrepareStaticItem();
+                        Pickupable pickupable = itemModel.GetComponent<Pickupable>();
+                        if (pickupable.Exists())
+                            pickupable.isPickupable = false;
+
                         itemModel.RemoveAllComponentsNotIn(renderers[i].gameObject);
 
                         itemModel.transform.SetParent(renderers[i].transform.parent);
@@ -463,29 +483,9 @@ namespace GRandomizer.RandomizerControllers
 
         static class FiltrationMachine_ItemModelReplacer
         {
-            static GameObject _overrideSaltModel;
-            static GameObject overrideSaltModel
-            {
-                get
-                {
-                    if (_overrideSaltModel == null)
-                        _overrideSaltModel = CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.Salt));
+            static readonly InitializeOnAccess<GameObject> _overrideSaltModel = new InitializeOnAccess<GameObject>(() => CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.Salt)));
 
-                    return _overrideSaltModel;
-                }
-            }
-
-            static GameObject _overrideWaterModel;
-            static GameObject overrideWaterModel
-            {
-                get
-                {
-                    if (_overrideWaterModel == null)
-                        _overrideWaterModel = CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.BigFilteredWater));
-
-                    return _overrideWaterModel;
-                }
-            }
+            static readonly InitializeOnAccess<GameObject> _overrideWaterModel = new InitializeOnAccess<GameObject>(() => CraftData.GetPrefabForTechType(TryGetItemReplacement(TechType.BigFilteredWater)));
 
             static readonly FieldInfo FiltrationMachine_waterModel_FI = AccessTools.Field(typeof(FiltrationMachine), nameof(FiltrationMachine.waterModel));
             static readonly FieldInfo FiltrationMachine_saltModel_FI = AccessTools.Field(typeof(FiltrationMachine), nameof(FiltrationMachine.saltModel));
@@ -501,19 +501,8 @@ namespace GRandomizer.RandomizerControllers
 
                 static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                 {
-                    foreach (CodeInstruction instruction in instructions)
-                    {
-                        yield return instruction;
-
-                        if (instruction.LoadsField(FiltrationMachine_saltModel_FI))
-                        {
-                            yield return new CodeInstruction(OpCodes.Call, Hooks.Get_saltModel_Hook_MI);
-                        }
-                        else if (instruction.LoadsField(FiltrationMachine_waterModel_FI))
-                        {
-                            yield return new CodeInstruction(OpCodes.Call, Hooks.Get_waterModel_Hook_MI);
-                        }
-                    }
+                    return instructions.HookField(FiltrationMachine_saltModel_FI, Hooks.Get_saltModel_Hook_MI, HookFieldFlags.Ldfld)
+                                       .HookField(FiltrationMachine_waterModel_FI, Hooks.Get_waterModel_Hook_MI, HookFieldFlags.Ldfld);
                 }
 
                 static class Hooks
@@ -521,13 +510,13 @@ namespace GRandomizer.RandomizerControllers
                     public static readonly MethodInfo Get_saltModel_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_saltModel_Hook(default));
                     static GameObject Get_saltModel_Hook(GameObject saltModel)
                     {
-                        return IsEnabled() ? overrideSaltModel : saltModel;
+                        return IsEnabled() ? _overrideSaltModel : saltModel;
                     }
 
                     public static readonly MethodInfo Get_waterModel_Hook_MI = SymbolExtensions.GetMethodInfo(() => Get_waterModel_Hook(default));
                     static GameObject Get_waterModel_Hook(GameObject waterModel)
                     {
-                        return IsEnabled() ? overrideWaterModel : waterModel;
+                        return IsEnabled() ? _overrideWaterModel : waterModel;
                     }
                 }
             }
@@ -642,17 +631,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                FieldInfo Stalker_toothPrefab_FI = AccessTools.Field(typeof(Stalker), nameof(Stalker.toothPrefab));
-
-                foreach (CodeInstruction instruction in instructions)
-                {
-                    yield return instruction;
-
-                    if (instruction.LoadsField(Stalker_toothPrefab_FI))
-                    {
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.Get_toothPrefab_Hook_MI);
-                    }
-                }
+                return instructions.HookField(AccessTools.Field(typeof(Stalker), nameof(Stalker.toothPrefab)), Hooks.Get_toothPrefab_Hook_MI, HookFieldFlags.Ldfld);
             }
 
             static class Hooks

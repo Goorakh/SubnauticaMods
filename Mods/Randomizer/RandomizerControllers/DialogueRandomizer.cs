@@ -176,23 +176,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
             {
-                FieldInfo EntryData_key_FI = AccessTools.Field(typeof(PDALog.EntryData), nameof(PDALog.EntryData.key));
-
-                foreach (CodeInstruction instruction in instructions)
-                {
-                    if (instruction.LoadsField(EntryData_key_FI))
-                    {
-                        yield return new CodeInstruction(OpCodes.Dup); // Dup instance
-
-                        yield return instruction;
-
-                        yield return new CodeInstruction(OpCodes.Call, Hooks.EntryData_getkey_Hook_MI);
-                    }
-                    else
-                    {
-                        yield return instruction;
-                    }
-                }
+                return instructions.HookField(AccessTools.Field(typeof(PDALog.EntryData), nameof(PDALog.EntryData.key)), Hooks.EntryData_getkey_Hook_MI, HookFieldFlags.Ldfld | HookFieldFlags.IncludeInstance);
             }
 
             static class Hooks
@@ -200,7 +184,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo EntryData_getkey_Hook_MI = SymbolExtensions.GetMethodInfo(() => EntryData_getkey_Hook(default, default));
                 static string EntryData_getkey_Hook(PDALog.EntryData entryData, string key)
                 {
-                    if (_isInitialized && mode > RandomDialogueMode.Off && entryData != null && entryData.sound != null)
+                    if (_isInitialized && mode > RandomDialogueMode.Off && entryData != null && entryData.sound.Exists())
                     {
                         if (_lineReplacements.Get.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
                         {

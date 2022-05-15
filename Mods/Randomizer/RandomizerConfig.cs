@@ -1,4 +1,5 @@
 ﻿using GRandomizer.RandomizerControllers;
+using GRandomizer.Util;
 using SMLHelper.V2.Json;
 using SMLHelper.V2.Options;
 using SMLHelper.V2.Options.Attributes;
@@ -26,7 +27,7 @@ namespace GRandomizer
 
         void RandomLocalization_OnChange(ToggleChangedEventArgs e)
         {
-            if (Language.main != null)
+            if (Language.main.Exists())
             {
                 // Refresh all the localized text
                 LocalizationRandomizer.SetCurrentLanguage_Patch.InvokeOnLanguageChanged();
@@ -47,5 +48,8 @@ namespace GRandomizer
 
         [Choice("Randomize Dialogue", new string[] { "Off", "Same Speaker", "Random" })]
         public RandomDialogueMode RandomDialogue = RandomDialogueMode.Random;
+
+        [Toggle("Ping Randomizer")]
+        public bool PingRandomizer = true;
     }
 }

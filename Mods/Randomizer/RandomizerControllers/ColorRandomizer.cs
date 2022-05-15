@@ -1,6 +1,7 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -37,7 +38,7 @@ namespace GRandomizer.RandomizerControllers
 
             void Update()
             {
-                if (_isInitialized && (!_component || _component == null))
+                if (_isInitialized && !_component.Exists())
                 {
                     Destroy(this);
                 }
@@ -55,27 +56,41 @@ namespace GRandomizer.RandomizerControllers
                 return colorReplacer;
             }
 
-            static Color rotateColor(Color original, Vector3 offset)
+            static Color rotateColor(Color original, Vector3 offset, float alpha)
             {
                 return new Color(Mathf.Abs(Mathf.Sin((original.r + offset.x) * (2f * Mathf.PI))),
                                  Mathf.Abs(Mathf.Sin((original.g + offset.y) * (2f * Mathf.PI))),
                                  Mathf.Abs(Mathf.Sin((original.b + offset.z) * (2f * Mathf.PI))),
-                                 original.a);
+                                 float.IsNaN(alpha) ? original.a : alpha);
             }
 
+            public Color GetReplacement(Color original, float alpha)
+            {
+                return rotateColor(original, _colorOffset, alpha);
+            }
             public Color GetReplacement(Color original)
             {
-                return rotateColor(original, _colorOffset);
+                return GetReplacement(original, float.NaN);
             }
 
+            public static Color GetReplacement(Color original, Behaviour component, float alpha)
+            {
+                return component.Exists() ? getOrAddComponent(component).GetReplacement(original, alpha) : GetGlobalReplacement(original, alpha);
+            }
             public static Color GetReplacement(Color original, Behaviour component)
             {
-                return component.Exists() ? GetGlobalReplacement(original) : getOrAddComponent(component).GetReplacement(original);
+                return GetReplacement(original, component, float.NaN);
             }
 
+            public static void ReplaceColor(ref Color color, Behaviour component, float alpha)
+            {
+                color = GetReplacement(color, component, alpha);
+            }
+
+            public static readonly MethodInfo ReplaceColor_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColor(ref Discard<Color>.Value, default));
             public static void ReplaceColor(ref Color color, Behaviour component)
             {
-                color = GetReplacement(color, component);
+                ReplaceColor(ref color, component, float.NaN);
             }
 
             public static readonly MethodInfo tryGetReplacement_MI = SymbolExtensions.GetMethodInfo(() => tryGetReplacement(default, default));
@@ -84,18 +99,28 @@ namespace GRandomizer.RandomizerControllers
                 return IsEnabled() ? GetReplacement(original, component) : original;
             }
 
+            public static Color GetGlobalReplacement(Color original, float alpha)
+            {
+                return rotateColor(original, _globalColorOffset, alpha);
+            }
             public static Color GetGlobalReplacement(Color original)
             {
-                return rotateColor(original, _globalColorOffset);
+                return GetGlobalReplacement(original, float.NaN);
             }
 
-            public static void ReplaceColor(ref Color color)
+            public static void ReplaceColorGlobal(ref Color color, float alpha)
             {
-                color = GetGlobalReplacement(color);
+                color = GetGlobalReplacement(color, alpha);
             }
 
-            public static readonly MethodInfo tryGetGlobalReplacement_MI = SymbolExtensions.GetMethodInfo(() => tryGetGlobalReplacement(default));
-            static Color tryGetGlobalReplacement(Color original)
+            public static readonly MethodInfo ReplaceColorGlobal_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColorGlobal(ref Discard<Color>.Value));
+            public static void ReplaceColorGlobal(ref Color color)
+            {
+                ReplaceColorGlobal(ref color, float.NaN);
+            }
+
+            public static readonly MethodInfo TryGetGlobalReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetGlobalReplacement(default));
+            public static Color TryGetGlobalReplacement(Color original)
             {
                 return IsEnabled() ? GetGlobalReplacement(original) : original;
             }
@@ -151,12 +176,12 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        static void randomizeGradient(Gradient gradient)
+        static void randomizeGradient(Gradient gradient, Behaviour behaviour)
         {
             GradientColorKey[] colorKeys = gradient.colorKeys;
             for (int i = 0; i < colorKeys.Length; i++)
             {
-                colorKeys[i].color = Utils.Random.Color(colorKeys[i].color.a);
+                colorKeys[i].color = ColorReplacer.GetReplacement(colorKeys[i].color, behaviour);
             }
 
             GradientAlphaKey[] alphaKeys = gradient.alphaKeys;
@@ -168,6 +193,70 @@ namespace GRandomizer.RandomizerControllers
             gradient.SetKeys(colorKeys, alphaKeys);
         }
 
+        static void randomizeParticleSystemMinMaxGradient(ref ParticleSystem.MinMaxGradient minmax)
+        {
+            switch (minmax.m_Mode)
+            {
+                case ParticleSystemGradientMode.Color:
+                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMax);
+                    break;
+                case ParticleSystemGradientMode.Gradient:
+                    randomizeGradient(minmax.m_GradientMax, null);
+                    break;
+                case ParticleSystemGradientMode.TwoColors:
+                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMin);
+                    ColorReplacer.ReplaceColorGlobal(ref minmax.m_ColorMax);
+                    break;
+                case ParticleSystemGradientMode.TwoGradients:
+                    randomizeGradient(minmax.m_GradientMin, null);
+                    randomizeGradient(minmax.m_GradientMax, null);
+                    break;
+            }
+        }
+
+        static void randomizeParticleSystem(ParticleSystem ps)
+        {
+            ParticleSystem.MainModule main = ps.main;
+
+            ParticleSystem.MinMaxGradient startColor = main.startColor;
+            randomizeParticleSystemMinMaxGradient(ref startColor);
+            main.startColor = startColor;
+
+            ParticleSystem.ColorOverLifetimeModule colorOverLifetime = ps.colorOverLifetime;
+            if (colorOverLifetime.enabled)
+            {
+                ParticleSystem.MinMaxGradient colorOverLifetimeColor = colorOverLifetime.color;
+                randomizeParticleSystemMinMaxGradient(ref colorOverLifetimeColor);
+                colorOverLifetime.color = colorOverLifetimeColor;
+            }
+
+            ParticleSystem.ColorBySpeedModule colorBySpeed = ps.colorBySpeed;
+            if (colorBySpeed.enabled)
+            {
+                ParticleSystem.MinMaxGradient colorBySpeedColor = colorBySpeed.color;
+                randomizeParticleSystemMinMaxGradient(ref colorBySpeedColor);
+                colorBySpeed.color = colorBySpeedColor;
+            }
+
+            ParticleSystem.LightsModule lights = ps.lights;
+            if (lights.enabled && lights.light.Exists())
+            {
+                randomizeLight(lights.light);
+            }
+
+            ParticleSystem.TrailModule trails = ps.trails;
+            if (trails.enabled)
+            {
+                ParticleSystem.MinMaxGradient trailsColorOverLifetime = trails.colorOverLifetime;
+                randomizeParticleSystemMinMaxGradient(ref trailsColorOverLifetime);
+                trails.colorOverLifetime = trailsColorOverLifetime;
+
+                ParticleSystem.MinMaxGradient trailsColorOverTrail = trails.colorOverTrail;
+                randomizeParticleSystemMinMaxGradient(ref trailsColorOverTrail);
+                trails.colorOverTrail = trailsColorOverTrail;
+            }
+        }
+
         [HarmonyPatch(typeof(uFogGradient), nameof(uFogGradient.Start))]
         static class uFogGradient_Start_Patch
         {
@@ -175,7 +264,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    randomizeGradient(__instance.FogColor);
+                    randomizeGradient(__instance.FogColor, __instance);
                 }
             }
         }
@@ -189,8 +278,8 @@ namespace GRandomizer.RandomizerControllers
                 {
 #if VERBOSE
                     Dictionary<FieldInfo, object> originalFieldValues = (from field in __instance.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
-                                                                      where !field.FieldType.IsClass
-                                                                      select new KeyValuePair<FieldInfo, object>(field, field.GetValue(__instance))).ToDictionary();
+                                                                         where !field.FieldType.IsClass
+                                                                         select new KeyValuePair<FieldInfo, object>(field, field.GetValue(__instance))).ToDictionary();
 #endif
 
                     __instance.SunDirection = UnityEngine.Random.Range(-180f, 180f);
@@ -208,20 +297,20 @@ namespace GRandomizer.RandomizerControllers
                     __instance.Wavelengths = Utils.Abs(Utils.Random.Rotation * __instance.Wavelengths) * UnityEngine.Random.Range(1f / 2f, 2f);
 
                     __instance.SkyTint = Utils.Random.Color(__instance.SkyTint.a);
-                    __instance.m_GroundColor = Utils.Random.Color(__instance.m_GroundColor.a);
+                    ColorReplacer.ReplaceColor(ref __instance.m_GroundColor, __instance);
 
                     __instance.skyFogDensity = Mathf.Pow(UnityEngine.Random.value, 5f) / 1000f;
-                    randomizeGradient(__instance.skyFogColor);
+                    randomizeGradient(__instance.skyFogColor, __instance);
 
                     __instance.planetRadius = UnityEngine.Random.Range(0f, 1000f);
                     __instance.planetZenith = UnityEngine.Random.Range(0f, 360f);
                     __instance.planetDistance *= UnityEngine.Random.Range(1f / 3f, 3f);
-                    __instance.planetRimColor = Utils.Random.Color(__instance.planetRimColor.a);
-                    __instance.planetAmbientLight = Utils.Random.Color(__instance.planetAmbientLight.a);
+                    ColorReplacer.ReplaceColor(ref __instance.planetRimColor, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.planetAmbientLight, __instance);
                     __instance.planetOrbitSpeed *= UnityEngine.Random.Range(1f / 3f, 3f);
                     __instance.planetLightWrap = UnityEngine.Random.Range(0, 1f);
-                    __instance.planetInnerCorona = Utils.Random.Color(UnityEngine.Random.value);
-                    __instance.planetOuterCorona = Utils.Random.Color(UnityEngine.Random.value);
+                    ColorReplacer.ReplaceColor(ref __instance.planetInnerCorona, __instance, UnityEngine.Random.value);
+                    ColorReplacer.ReplaceColor(ref __instance.planetOuterCorona, __instance, UnityEngine.Random.value);
 
                     __instance.cloudsRotateSpeed *= UnityEngine.Random.Range(1f / 3f, 3f);
                     __instance.cloudNightBrightness = Mathf.Pow(UnityEngine.Random.Range(0f, 1f), 2f);
@@ -235,16 +324,16 @@ namespace GRandomizer.RandomizerControllers
                     __instance.cloudsScatteringMultiplier = UnityEngine.Random.Range(0f, 10f);
                     __instance.cloudsScatteringExponent = UnityEngine.Random.Range(0f, 30f);
 
-                    randomizeGradient(__instance.meanSkyColor);
+                    randomizeGradient(__instance.meanSkyColor, __instance);
 
                     __instance.secondaryLightPow = UnityEngine.Random.Range(0f, 10f);
 
-                    randomizeGradient(__instance.NightZenithColor);
-                    __instance.NightHorizonColor = Utils.Random.Color(__instance.NightHorizonColor.a);
+                    randomizeGradient(__instance.NightZenithColor, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.NightHorizonColor, __instance);
                     __instance.StarIntensity = UnityEngine.Random.Range(0f, 10f);
 
-                    __instance.MoonInnerCorona = Utils.Random.Color(UnityEngine.Random.value);
-                    __instance.MoonOuterCorona = Utils.Random.Color(UnityEngine.Random.value);
+                    ColorReplacer.ReplaceColor(ref __instance.MoonInnerCorona, __instance, UnityEngine.Random.value);
+                    ColorReplacer.ReplaceColor(ref __instance.MoonOuterCorona, __instance, UnityEngine.Random.value);
                     __instance.MoonSize = UnityEngine.Random.Range(0f, 1f);
 
                     __instance.directLightFraction = UnityEngine.Random.value;
@@ -254,8 +343,8 @@ namespace GRandomizer.RandomizerControllers
                     __instance.endSequenceSunSizeMultiplier = UnityEngine.Random.Range(0f, 1.5f);
                     __instance.endSequencePlanetRadius *= UnityEngine.Random.Range(0.7f, 1.3f);
 
-                    __instance.endSequenceLightColor = Utils.Random.Color(__instance.endSequenceLightColor.a);
-                    __instance.endSequenceSunBurstColor = Utils.Random.Color(__instance.endSequenceSunBurstColor.a);
+                    ColorReplacer.ReplaceColor(ref __instance.endSequenceLightColor, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.endSequenceSunBurstColor, __instance);
 
 #if VERBOSE
                     foreach (KeyValuePair<FieldInfo, object> original in originalFieldValues)
@@ -278,9 +367,9 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    randomizeGradient(__instance.SkyColor);
-                    randomizeGradient(__instance.EquatorColor);
-                    randomizeGradient(__instance.GroundColor);
+                    randomizeGradient(__instance.SkyColor, null);
+                    randomizeGradient(__instance.EquatorColor, null);
+                    randomizeGradient(__instance.GroundColor, null);
                 }
             }
         }
@@ -292,7 +381,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    randomizeGradient(__instance.LightColor);
+                    randomizeGradient(__instance.LightColor, null);
                 }
             }
         }
@@ -305,14 +394,14 @@ namespace GRandomizer.RandomizerControllers
                 if (IsEnabled())
                 {
                     List<GameObject> skyPrefabs = (from biome in __instance.biomeSettings
-                                                   where biome != null && biome.skyPrefab != null
+                                                   where biome != null && biome.skyPrefab.Exists()
                                                    select biome.skyPrefab).ToList();
 
                     foreach (WaterBiomeManager.BiomeSettings biome in __instance.biomeSettings)
                     {
                         if (biome != null)
                         {
-                            if (biome.skyPrefab != null)
+                            if (biome.skyPrefab.Exists())
                             {
 #if VERBOSE
                                 int skyIndex = UnityEngine.Random.Range(0, skyPrefabs.Count);
@@ -328,9 +417,9 @@ namespace GRandomizer.RandomizerControllers
 #endif
                             biome.settings.absorption = Utils.Abs(Utils.Random.Rotation * biome.settings.absorption) * UnityEngine.Random.Range(0.3f, 2f);
                             biome.settings.scattering *= UnityEngine.Random.Range(-2f, 2f);
-                            biome.settings.scatteringColor = ColorReplacer.GetReplacement(biome.settings.scatteringColor, __instance);
+                            ColorReplacer.ReplaceColor(ref biome.settings.scatteringColor, __instance);
                             biome.settings.murkiness *= UnityEngine.Random.Range(0f, 2f);
-                            biome.settings.emissive = ColorReplacer.GetReplacement(biome.settings.emissive, __instance);
+                            ColorReplacer.ReplaceColor(ref biome.settings.emissive, __instance);
                             biome.settings.emissiveScale *= UnityEngine.Random.Range(-2f, 2f);
                             biome.settings.startDistance *= UnityEngine.Random.Range(0.5f, 3f);
                             biome.settings.sunlightScale *= UnityEngine.Random.Range(-2f, 2f);
@@ -476,7 +565,7 @@ namespace GRandomizer.RandomizerControllers
                     foreach (object obj in __instance.floodlightsHolder.transform)
                     {
                         Light light = ((Transform)obj).GetComponent<Light>();
-                        if (light != null)
+                        if (light.Exists())
                         {
                             randomizeLight(light);
                         }
@@ -610,6 +699,364 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
+        static class MainMenuPrimaryOption_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<MainMenuPrimaryOption>(_ => _.Start());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                MethodInfo Material_get_color_MI = AccessTools.DeclaredPropertyGetter(typeof(Material), nameof(Material.color));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    yield return instruction;
+
+                    if (instruction.Calls(Material_get_color_MI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldarg_0);
+                        yield return new CodeInstruction(OpCodes.Call, ColorReplacer.tryGetReplacement_MI);
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class MapDisplay_GetColorForFraction_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<MapDisplay>(_ => _.GetColorForFraction(default));
+            }
+
+            static Color Postfix(Color __result, MapDisplay __instance)
+            {
+                if (IsEnabled())
+                {
+                    return ColorReplacer.GetReplacement(__result, __instance);
+                }
+                else
+                {
+                    return __result;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class MapRoomCamera_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<MapRoomCamera>(_ => _.Start());
+            }
+
+            static void Prefix(MapRoomCamera __instance)
+            {
+                if (IsEnabled())
+                {
+                    randomizeGradient(__instance.gradientInner, __instance);
+                    randomizeGradient(__instance.gradientOuter, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class MapRoomCameraScreenFX_Awake_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<MapRoomCameraScreenFX>(_ => _.Awake());
+            }
+
+            static void Prefix(MapRoomCameraScreenFX __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class mset_Logo_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<mset.Logo>(_ => _.Start());
+            }
+
+            static void Prefix(mset.Logo __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class NightVision_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<NightVision>(_ => _.Start());
+            }
+
+            static void Prefix(NightVision __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.luminence, __instance);
+                    __instance.noiseFactor *= UnityEngine.Random.Range(0.5f, 2f);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class NotificationManager_Awake_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<NotificationManager>(_ => _.Awake());
+            }
+
+            // NotificationManager.notificationColor is readonly so we sadly have to use reflection to change it
+            // Also can't patch the initialized value because static constructors can't be patched
+            static readonly FieldInfo NotificationManager_notificationColor_FI = AccessTools.DeclaredField(typeof(NotificationManager), nameof(NotificationManager.notificationColor));
+
+            static void Postfix()
+            {
+                if (IsEnabled())
+                {
+                    Color original = (Color)NotificationManager_notificationColor_FI.GetValue(null);
+                    NotificationManager_notificationColor_FI.SetValue(null, ColorReplacer.GetGlobalReplacement(original));
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class PingManager_Patch
+        {
+            static IEnumerable<MethodInfo> TargetMethods()
+            {
+                return AccessTools.GetDeclaredMethods(typeof(PingManager));
+            }
+
+            static bool _hasReplacedPingColors = false;
+            static readonly FieldInfo PingManager_colorOptions_FI = AccessTools.DeclaredField(typeof(PingManager), nameof(PingManager.colorOptions));
+
+            static void Prefix()
+            {
+                if (IsEnabled() && !_hasReplacedPingColors)
+                {
+                    Color[] colorOptions = (Color[])PingManager_colorOptions_FI.GetValue(null);
+                    PingManager_colorOptions_FI.SetValue(null, Array.ConvertAll(colorOptions, ColorReplacer.GetGlobalReplacement));
+
+                    _hasReplacedPingColors = true;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class PlaceTool_Patch
+        {
+            static IEnumerable<MethodInfo> TargetMethods()
+            {
+                return AccessTools.GetDeclaredMethods(typeof(PlaceTool));
+            }
+
+            static bool _hasReplacedColors = false;
+            static readonly FieldInfo PlaceTool_placeColorAllow_FI = AccessTools.DeclaredField(typeof(PlaceTool), nameof(PlaceTool.placeColorAllow));
+            static readonly FieldInfo PlaceTool_placeColorDeny_FI = AccessTools.DeclaredField(typeof(PlaceTool), nameof(PlaceTool.placeColorDeny));
+
+            static void Prefix()
+            {
+                if (IsEnabled() && !_hasReplacedColors)
+                {
+                    PlaceTool_placeColorAllow_FI.SetValue(null, ColorReplacer.GetGlobalReplacement((Color)PlaceTool_placeColorAllow_FI.GetValue(null)));
+                    PlaceTool_placeColorDeny_FI.SetValue(null, ColorReplacer.GetGlobalReplacement((Color)PlaceTool_placeColorDeny_FI.GetValue(null)));
+
+                    _hasReplacedColors = true;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class RadiationsScreenFX_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<RadiationsScreenFX>(_ => _.Start());
+            }
+
+            static void Prefix(RadiationsScreenFX __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
+                    __instance.noiseFactor *= UnityEngine.Random.Range(0.5f, 2f);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class RocketPreflightCheckScreenElement_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<RocketPreflightCheckScreenElement>(_ => _.Start());
+            }
+
+            static void Prefix(RocketPreflightCheckScreenElement __instance)
+            {
+                if (IsEnabled())
+                {
+                    __instance.localizedCheckText.color = ColorReplacer.GetReplacement(__instance.localizedCheckText.color, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class ScannerTool_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<ScannerTool>(_ => _.Start());
+            }
+
+            static void Prefix(ScannerTool __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.scanCircuitColor, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.scanOrganicColor, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class SonarVision_Awake_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<SonarVision>(_ => _.Awake());
+            }
+
+            static void Prefix(SonarVision __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class HookMaterialGetColor_Patch
+        {
+            static IEnumerable<MethodBase> TargetMethods()
+            {
+                yield return AccessTools.DeclaredMethod(typeof(StasisSphere), nameof(StasisSphere.Awake));
+                yield return SymbolExtensions.GetMethodInfo<TelepathyScreenFX>(_ => _.SpawnGhost());
+                yield return SymbolExtensions.GetMethodInfo<Trail_v2>(_ => _.Awake());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+            {
+                return instructions.HookGetMaterialValue<Color>(new LocalGenerator(generator), ColorReplacer.TryGetGlobalReplacement);
+            }
+        }
+
+        [HarmonyPatch]
+        static class SubFloodAlarm_Awake_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<SubFloodAlarm>(_ => _.Awake());
+            }
+
+            static void Prefix(SubFloodAlarm __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.redAlarm, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.blueAlarm, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class SwitchColorChange_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<SwitchColorChange>(_ => _.Start());
+            }
+
+            static void Prefix(SwitchColorChange __instance)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref __instance.startColor, __instance);
+                    ColorReplacer.ReplaceColor(ref __instance.endColor, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class IBuilderGhostModel_UpdateGhostModelColor_Patch
+        {
+            static IEnumerable<MethodBase> TargetMethods()
+            {
+                return typeof(IBuilderGhostModel).GetImplementations(false, SymbolExtensions.GetMethodInfo<IBuilderGhostModel>(_ => _.UpdateGhostModelColor(default, ref Discard<Color>.Value)));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+            {
+                bool useInstance = !original.IsStatic && typeof(Behaviour).IsAssignableFrom(original.DeclaringType);
+                int colorArgIndex = original.FindArgumentIndex(typeof(Color).MakeByRefType());
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.opcode == OpCodes.Ret)
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldarg, colorArgIndex);
+
+                        if (useInstance)
+                        {
+                            yield return new CodeInstruction(OpCodes.Ldarg_0);
+                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.ReplaceColor_MI);
+                        }
+                        else
+                        {
+                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.ReplaceColorGlobal_MI);
+                        }
+                    }
+
+                    yield return instruction;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class ColorBlock_Patch
+        {
+            static IEnumerable<MethodBase> TargetMethods()
+            {
+                return from m in typeof(ColorBlock).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly)
+                       where m.ReturnType == typeof(Color) && m.GetParameters().Length == 0
+                       select m;
+            }
+
+            static Color Postfix(Color __result)
+            {
+                return IsEnabled() ? ColorReplacer.GetGlobalReplacement(__result) : __result;
+            }
+        }
+
+        [HarmonyPatch]
         static class Generic_ReplaceColor_Patch
         {
             struct PatchInfo
@@ -618,7 +1065,7 @@ namespace GRandomizer.RandomizerControllers
                 public enum Flags : byte
                 {
                     None = 0,
-                    Field = 1 << 0, // Replace value of all Ld(s)fld instructions where the field type is Color or Color32
+                    LoadField = 1 << 0, // Replace value of all Ld(s)fld instructions where the field type is Color or Color32
                     Call = 1 << 1, // Replace the return value on all methods returning Color or Color32
                     ConstColorProperty = 1 << 2, // Replace the return value of only the static Color properties like Color.black, Color.red, etc.
                     Constructor = 1 << 3, // Replace the "return value" of any invoked Color or Color32 constructor
@@ -641,7 +1088,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<ActionProgress>(_ => _.DrawDestroyProgressBar())),
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<AnteChamber>(_ => _.CacheMaterials())),
-                    new PatchInfo(PatchInfo.Flags.Field, SymbolExtensions.GetMethodInfo(() => Builder.Update())),
+                    new PatchInfo(PatchInfo.Flags.LoadField, SymbolExtensions.GetMethodInfo(() => Builder.Update())),
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<Constructable>(_ => _.ReplaceMaterials(default))),
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<ConstructorBuildBot>(_ => _.Start())),
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<CrafterGhostModel>(_ => _.UpdateModel(default))),
@@ -662,6 +1109,39 @@ namespace GRandomizer.RandomizerControllers
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<IntroLifepodDirector>(_ => _.OnProtoDeserializeObjectTree(default))),
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<KeypadDoorConsole>(_ => _.NumberButtonPress(default))),
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<KeypadDoorConsole>(_ => _.ResetNumberField())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuContinueGameHandler>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuLoadButton>(_ => _.onCursorEnter())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuLoadButton>(_ => _.onCursorLeave())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuLoadMenu>(_ => _.DeselectItem())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuLoadMenu>(_ => _.SelectItem(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<MainMenuLoadPanel>(_ => _.UpdateLoadButtonState(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<MainMenuPrimaryOption>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(MapDisplay))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<MemoryWarning>(_ => _.CheckMemory())),
+                    new PatchInfo(PatchInfo.Flags.LoadField, SymbolExtensions.GetMethodInfo<OVRBoundary>(_ => _.SetLookAndFeel(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<OVRGridCube>(_ => _.CreateCubeGrid())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(OVRPlatformMenu))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(OVRScreenFade))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(PDAMap))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<PlayerTimeCapsule>(_ => _.OnSubmitResult(default, default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<PrecursorActivatedPillar>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<PrecursorActivatedPillar>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<PrecursorDisableGunTerminal>(_ => _.SetLightAccessGranted())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<PrecursorDisableGunTerminal>(_ => _.SetLightAccessDenied())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<RocketPreflightCheckScreenElement>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<RocketPreflightCheckScreenElement>(_ => _.SetPreflightCheckComplete(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<RocketPreflightCheckScreenElement>(_ => _.SetPreflightCheckIncomplete(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<ScannerTool>(_ => _.UpdateScreen(default, default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<StasisSphere>(_ => _.UpdateMaterials())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<TelepathyScreenFX>(_ => _.UpdateGhostMaterials())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<Terraformer>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<TerrainDebugGUI>(_ => _.LayoutPerfGUI())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<TestDrone>(_ => _.OnEcoEvent(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<TestVertexColors>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<ThermalPlant>(_ => _.UpdateUI())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(TopographicDisplay))),
+                    new PatchInfo(PatchInfo.Flags.Call, SymbolExtensions.GetMethodInfo<Transfuser>(_ => _.CreateHeldSerum(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(TwoPointLine))),
                 }.ToDictionary(p => p.Target);
             });
 
@@ -676,7 +1156,7 @@ namespace GRandomizer.RandomizerControllers
                 MethodInfo Color32ToColor_MI = AccessTools.DeclaredMethod(typeof(Color32), "op_Implicit", new Type[] { typeof(Color32) });
 
                 PatchInfo patchInfo = _patches.Get[original];
-                bool isBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType);
+                bool isUsableBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType) && !original.IsConstructor;
 
                 foreach (CodeInstruction instruction in instructions)
                 {
@@ -685,13 +1165,13 @@ namespace GRandomizer.RandomizerControllers
                     if (instruction.operand is MemberInfo member)
                     {
                         bool isColor32 = false;
-                        bool useInstance = isBehaviour && !original.IsStatic;
+                        bool useInstance = isUsableBehaviour && !original.IsStatic;
 
                         bool isHookableFieldInfo()
                         {
                             if (original.DeclaringType.IsAssignableFrom(member.DeclaringType))
                             {
-                                if ((patchInfo.PatchFlags & PatchInfo.Flags.Field) != 0 && instruction.opcode.IsAny(OpCodes.Ldfld, OpCodes.Ldsfld) && member is FieldInfo fi)
+                                if ((patchInfo.PatchFlags & PatchInfo.Flags.LoadField) != 0 && instruction.opcode.IsAny(OpCodes.Ldfld, OpCodes.Ldsfld) && member is FieldInfo fi)
                                 {
                                     if (fi.FieldType == typeof(Color) || (isColor32 = fi.FieldType == typeof(Color32)))
                                     {
@@ -742,11 +1222,34 @@ namespace GRandomizer.RandomizerControllers
                             }
                             else
                             {
-                                yield return new CodeInstruction(OpCodes.Call, ColorReplacer.tryGetGlobalReplacement_MI);
+                                yield return new CodeInstruction(OpCodes.Call, ColorReplacer.TryGetGlobalReplacement_MI);
                             }
 
                             if (isColor32)
                                 yield return new CodeInstruction(OpCodes.Call, ColorToColor32_MI);
+                        }
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class VFXController_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<VFXController>(_ => _.Start());
+            }
+
+            static void Prefix(VFXController __instance)
+            {
+                if (IsEnabled())
+                {
+                    foreach (VFXController.VFXEmitter emitter in __instance.emitters)
+                    {
+                        if (emitter != null && emitter.fxPS.Exists())
+                        {
+                            randomizeParticleSystem(emitter.fxPS);
                         }
                     }
                 }

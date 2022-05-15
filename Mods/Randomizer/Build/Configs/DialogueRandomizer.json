@@ -1184,10 +1184,6 @@
 				"SubtitleID": "RadioPowerOn"
 			},
 			{
-				"SoundID": "event:/main_menu/intro",
-				"SubtitleID": null
-			},
-			{
 				"SoundID": "event:/player/story/Deepgrandreef",
 				"SubtitleID": null
 			},

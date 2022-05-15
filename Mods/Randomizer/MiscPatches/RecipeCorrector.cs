@@ -271,10 +271,7 @@ namespace GRandomizer.MiscPatches
         {
             static IEnumerable<MethodInfo> TargetMethods()
             {
-                return from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                       from type in assembly.GetTypes()
-                       where type.ImplementInterface(typeof(IIngredient))
-                       select AccessTools.PropertyGetter(type, nameof(IIngredient.techType));
+                return typeof(IIngredient).GetImplementations(false, AccessTools.PropertyGetter(typeof(IIngredient), nameof(IIngredient.techType)));
             }
 
             static TechType Postfix(TechType __result)

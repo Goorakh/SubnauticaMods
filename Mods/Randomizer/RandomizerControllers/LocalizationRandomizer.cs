@@ -20,7 +20,7 @@ namespace GRandomizer.RandomizerControllers
         {
             static void Postfix(bool __result, Language __instance)
             {
-                if (__result && __instance != null && __instance.strings != null && __instance.strings.Count > 0)
+                if (__result && __instance.Exists() && __instance.strings != null && __instance.strings.Count > 0)
                 {
                     Dictionary<int, List<string>> formatCountToStrings = new Dictionary<int, List<string>>();
                     foreach (string localizedString in __instance.strings.Values)

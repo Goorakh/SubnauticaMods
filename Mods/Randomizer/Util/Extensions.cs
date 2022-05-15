@@ -153,7 +153,7 @@ namespace GRandomizer.Util
             if (obj.HasComponent<FlashLight>())
             {
                 Transform cone = obj.transform.Find("lights_parent/x_flashlightCone");
-                if (cone != null)
+                if (cone.Exists())
                     cone.gameObject.SetActive(false);
             }
 
@@ -257,103 +257,6 @@ namespace GRandomizer.Util
             return result;
         }
 
-        public static int GetLocalIndex(this CodeInstruction instruction)
-        {
-            if (instruction.opcode == OpCodes.Ldloc_0 || instruction.opcode == OpCodes.Stloc_0)
-            {
-                return 0;
-            }
-            else if (instruction.opcode == OpCodes.Ldloc_1 || instruction.opcode == OpCodes.Stloc_1)
-            {
-                return 1;
-            }
-            else if (instruction.opcode == OpCodes.Ldloc_2 || instruction.opcode == OpCodes.Stloc_2)
-            {
-                return 2;
-            }
-            else if (instruction.opcode == OpCodes.Ldloc_3 || instruction.opcode == OpCodes.Stloc_3)
-            {
-                return 3;
-            }
-            else if (instruction.opcode == OpCodes.Ldloc || instruction.opcode == OpCodes.Ldloc_S || instruction.opcode == OpCodes.Ldloca || instruction.opcode == OpCodes.Ldloca_S ||
-                     instruction.opcode == OpCodes.Stloc || instruction.opcode == OpCodes.Stloc_S)
-            {
-                if (AccessTools.IsInteger(instruction.operand.GetType()))
-                {
-                    return Convert.ToInt32(instruction.operand);
-                }
-                else if (instruction.operand is LocalBuilder localBuilder)
-                {
-                    return localBuilder.LocalIndex;
-                }
-                else
-                {
-                    throw new NotImplementedException($"Operand of type {instruction.operand.GetType().FullName} is not implemented");
-                }
-            }
-            else
-            {
-                throw new ArgumentException($"OpCode did not match Stloc* or Ldloc* OpCodes ({instruction.opcode.Name})", nameof(instruction));
-            }
-        }
-
-        public static int GetArgumentIndex(this CodeInstruction instruction)
-        {
-            if (instruction.opcode == OpCodes.Ldarg_0)
-            {
-                return 0;
-            }
-            else if (instruction.opcode == OpCodes.Ldarg_1)
-            {
-                return 1;
-            }
-            else if (instruction.opcode == OpCodes.Ldarg_2)
-            {
-                return 2;
-            }
-            else if (instruction.opcode == OpCodes.Ldarg_3)
-            {
-                return 3;
-            }
-            else if (instruction.opcode == OpCodes.Ldarg || instruction.opcode == OpCodes.Ldarg_S || instruction.opcode == OpCodes.Ldarga || instruction.opcode == OpCodes.Ldarga_S ||
-                     instruction.opcode == OpCodes.Starg || instruction.opcode == OpCodes.Starg_S)
-            {
-                if (AccessTools.IsInteger(instruction.operand.GetType()))
-                {
-                    return Convert.ToInt32(instruction.operand);
-                }
-                else
-                {
-                    throw new NotImplementedException($"Operand of type {instruction.operand.GetType().FullName} is not implemented");
-                }
-            }
-            else
-            {
-                throw new ArgumentException($"OpCode did not match Starg* or Ldarg* OpCodes ({instruction.opcode.Name})", nameof(instruction));
-            }
-        }
-
-        public static bool IsAny(this OpCode op, params OpCode[] opcodes)
-        {
-            return opcodes.Any(o => op == o);
-        }
-
-        public static Type GetMethodReturnType(this MethodBase mb)
-        {
-            if (mb is MethodInfo mi)
-            {
-                return mi.ReturnType;
-            }
-            else if (mb is ConstructorInfo ci)
-            {
-                return ci.DeclaringType;
-            }
-            else
-            {
-                throw new NotImplementedException($"{mb.GetType().FullName} is not implemented");
-            }
-        }
-
         public static T GetRandomOrDefault<T>(this IEnumerable<T> collection)
         {
             return collection.ElementAt(UnityEngine.Random.Range(0, collection.Count()));
@@ -414,6 +317,11 @@ namespace GRandomizer.Util
             }
 
             return result;
+        }
+
+        public static MethodInfo FindMethod(this IEnumerable<MethodInfo> methods, Type returnType, Type[] parameters)
+        {
+            return methods.Single(mi => mi.ReturnType == returnType && mi.GetParameters().Select(m => m.ParameterType).SequenceEqual(parameters));
         }
     }
 }

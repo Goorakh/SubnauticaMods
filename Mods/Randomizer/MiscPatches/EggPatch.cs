@@ -63,10 +63,7 @@ namespace GRandomizer.MiscPatches
             yield return SymbolExtensions.GetMethodInfo(() => CraftData.GetCookedData(default));
             yield return SymbolExtensions.GetMethodInfo(() => CraftData.GetHarvestOutputData(default));
 
-            foreach (MethodInfo get_techType in from assembly in AppDomain.CurrentDomain.GetAssemblies()
-                                                from type in assembly.GetTypes()
-                                                where type.ImplementInterface(typeof(IIngredient))
-                                                select AccessTools.PropertyGetter(type, nameof(IIngredient.techType)))
+            foreach (MethodInfo get_techType in typeof(IIngredient).GetImplementations(false, AccessTools.PropertyGetter(typeof(IIngredient), nameof(IIngredient.techType))))
             {
                 yield return get_techType;
             }

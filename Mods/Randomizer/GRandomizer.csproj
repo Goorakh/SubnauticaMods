@@ -92,6 +92,7 @@
   <ItemGroup>
     <Compile Include="MiscPatches\AddPickupableComponentIfMissing.cs" />
     <Compile Include="MiscPatches\EggPatch.cs" />
+    <Compile Include="MiscPatches\EnsurePickupableHasCollider_Patch.cs" />
     <Compile Include="MiscPatches\EnsurePickupable_Patch.cs" />
     <Compile Include="MiscPatches\SubtitlePatcher.cs" />
     <Compile Include="Mod.cs" />
@@ -111,6 +112,7 @@
     <Compile Include="RandomizerControllers\ItemSizeRandomizer.cs" />
     <Compile Include="RandomizerControllers\LocalizationRandomizer.cs" />
     <Compile Include="RandomizerControllers\LootRandomizer.cs" />
+    <Compile Include="RandomizerControllers\PingRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Util\Discard.cs" />
@@ -118,13 +120,17 @@
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\Extensions.cs" />
     <Compile Include="Util\GRConstants.cs" />
+    <Compile Include="Util\HookFieldFlags.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />
     <Compile Include="Util\LocalGenerator.cs" />
     <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
+    <Compile Include="Util\PatchingExtensions.cs" />
     <Compile Include="Util\SoundPatcher.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
+    <Compile Include="Util\TypeCollection.cs" />
+    <Compile Include="Util\TypeFlags.cs" />
     <Compile Include="Util\WeightedSet.cs" />
   </ItemGroup>
   <ItemGroup>

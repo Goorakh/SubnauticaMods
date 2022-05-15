@@ -51,7 +51,7 @@ namespace GRandomizer
         static void logLevel(QModManager.Utility.Logger.Level level, string log, bool showOnScreen, int stackOffset)
         {
             MethodBase callerMethod = new StackTrace().GetFrame(2 + stackOffset)?.GetMethod();
-            string methodTag = callerMethod != null ? callerMethod.Name : "null";
+            string methodTag = callerMethod?.Name ?? "null";
 
             QModManager.Utility.Logger.Log(level, $"[{methodTag}]: {log}", null, showOnScreen);
         }

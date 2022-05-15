@@ -5,6 +5,7 @@ using QModManager.API.ModLoading;
 using QModManager.Utility;
 using SMLHelper.V2.Handlers;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace GRandomizer
@@ -59,7 +60,9 @@ namespace GRandomizer
             Utils.LogInfo($"Patching {modName}");
             Harmony harmony = new Harmony(modName);
             harmony.PatchAll(assembly);
-            Utils.LogInfo("Patched successfully!");
+            Utils.LogInfo($"{harmony.GetPatchedMethods().Count()} methods patched successfully!");
+
+            TypeCollection.Clear();
         }
     }
 }

@@ -17,7 +17,11 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccessDictionary<TechType, float> _craftTimes = new InitializeOnAccessDictionary<TechType, float>(key =>
         {
-            return (float)Math.Round((Mathf.Pow(UnityEngine.Random.value, 6f) + (1f / 60f)) * 60f, 1);
+            const float pow = 6f;
+            const float mult = 60f;
+            const float min = 0.450266661567f; // (0.5/mult)^(1/pow) => minimum value is 0.5
+
+            return (float)Math.Round(Mathf.Pow(((1f - min) * UnityEngine.Random.value) + min, pow) * mult, 1);
         });
 
         [HarmonyPatch]

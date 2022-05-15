@@ -5,12 +5,10 @@
 	Randomize crashfish powder
 	Replace creepvine seed cluster model
 	Replace table coral chunk models to match replaced item
-	Randomize color of scanning effect
-	Replace encyclopedia text for replaced audio logs (replace with override line subtitle)
+	Randomzie fire extinguisher smoke effects (Generic particle system color randomizer?)
 
 Done/Ready to test:
-	Correct some recipes when resources are randomized (creepvine seed cluster, things from outcrops, seeds, etc), make sure this is compatible with recipe randomizers
-	Coffee vending machines don't drop properly, they get placed in the world with no way for the player to pick it up
-	Replace ghost model when titanium (and other resources) are being constructed in the fabricator
 	Figure out a better structure for ColorRandomizer instead of patching 500 different methods
 	Randomize gas pods
+	Replace encyclopedia text for replaced audio logs (replace with override line subtitle)
+	Randomize color of scanning effect

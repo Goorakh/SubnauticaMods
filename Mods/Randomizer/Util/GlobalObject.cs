@@ -36,7 +36,7 @@ namespace GRandomizer.Util
 
         public static void CreateIfMissing()
         {
-            if (_instance == null)
+            if (!_instance.Exists())
             {
                 _instance = new GameObject("GRandomizer_GlobalObject");
 #if DEBUG

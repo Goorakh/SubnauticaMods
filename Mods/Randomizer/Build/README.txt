@@ -20,6 +20,8 @@ Hello! Thank you for downloading the GRandomizer.
 	Randomizes creature spawns. Currently very basic, will be expanded and improved upon in future versions.
 - Dialogue randomizer:
 	Randomizes all in-game dialogue, can be configured to either be completely random or keeping the same speaker
+- Ping randomizer:
+	Randomizes beacon icons (lifepod, vehicles, signals, etc.)
 
 Due to this being the first ever public release, do not expect anything close to being finished, it is still a big work in progress.
 If you have any feedback or bug reports, please DM me on discord (Gorakh#0821), along with your log file (qmodmanager_log-Subnautica.txt) and all other relevant information (screenshots, video, etc)
