@@ -177,7 +177,13 @@ namespace GRandomizer.Util
         {
             bool Ldfld = (flags & HookFieldFlags.Ldfld) != 0;
             bool Stfld = (flags & HookFieldFlags.Stfld) != 0;
-            bool IncludeInstance = (flags & HookFieldFlags.IncludeInstance) != 0 && !field.IsStatic;
+            bool IncludeInstance = (flags & HookFieldFlags.IncludeInstance) != 0;
+
+            if (IncludeInstance && field.IsStatic)
+            {
+                Utils.LogWarning($"{nameof(flags)} include {nameof(HookFieldFlags.IncludeInstance)} but {field.Name} is static");
+                IncludeInstance = false;
+            }
 
             if (Stfld)
             {
@@ -188,13 +194,13 @@ namespace GRandomizer.Util
 
                 if (field.IsLiteral)
                 {
-                    Utils.LogWarning($"flags include {nameof(HookFieldFlags.Stfld)} but {field.Name} is const");
+                    Utils.LogWarning($"{nameof(flags)} include {nameof(HookFieldFlags.Stfld)} but {field.Name} is const");
                     Stfld = false;
                 }
 
                 if (localGen == null)
                 {
-                    Utils.LogError($"flags include {nameof(HookFieldFlags.Stfld)} but {nameof(localGen)} is null");
+                    Utils.LogError($"{nameof(flags)} include {nameof(HookFieldFlags.Stfld)} but {nameof(localGen)} is null");
                     Stfld = false;
                 }
             }
