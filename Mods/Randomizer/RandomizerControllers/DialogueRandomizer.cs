@@ -39,6 +39,12 @@ namespace GRandomizer.RandomizerControllers
             Dictionary<string, SpeechSequence> sequences = new Dictionary<string, SpeechSequence>();
 
             JObject obj = ConfigReader.ReadFromFile<JObject>("Configs/DialogueRandomizer::Lines");
+            if (obj == null)
+            {
+                Utils.LogError("Invalid config! Configs/DialogueRandomizer.json has no 'Lines' property");
+                return new Dictionary<string, SpeechSequence>();
+            }
+
             foreach (KeyValuePair<string, JToken> speakerHeader in obj)
             {
                 foreach (JToken lineDataToken in (JArray)speakerHeader.Value)
