@@ -95,7 +95,7 @@ namespace GRandomizer.RandomizerControllers
             HashSet<TechType> obtainableTypes = getObtainableItems().Except(getBlacklistedItems()).ToHashSet();
 
             int removed;
-            if ((removed = obtainableTypes.RemoveWhere(type => !CraftData.GetPrefabForTechType(type).Exists())) > 0)
+            if ((removed = obtainableTypes.RemoveWhere(type => CraftData.GetPrefabForTechType(type) == null)) > 0)
             {
                 Utils.LogWarning($"Removing {removed} item types due to null prefab", true);
             }
@@ -370,6 +370,8 @@ namespace GRandomizer.RandomizerControllers
                         return renderers;
 
                     TechType techType = __instance.GetDominantResourceType();
+                    if (techType == TechType.None)
+                        return renderers;
 
                     for (int i = 0; i < renderers.Length; i++)
                     {
