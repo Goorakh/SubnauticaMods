@@ -17,6 +17,7 @@ namespace GRandomizer.RandomizerControllers
 {
     static class ColorRandomizer
     {
+        static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
         static bool IsEnabled()
         {
             return Mod.Config.RandomColors;
@@ -86,9 +87,18 @@ namespace GRandomizer.RandomizerControllers
             {
                 color = GetReplacement(color, component, alpha);
             }
+            public static void ReplaceColor(ref Color32 color, Behaviour component, float alpha)
+            {
+                color = GetReplacement(color, component, alpha);
+            }
 
             public static readonly MethodInfo ReplaceColor_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColor(ref Discard<Color>.Value, default));
             public static void ReplaceColor(ref Color color, Behaviour component)
+            {
+                ReplaceColor(ref color, component, float.NaN);
+            }
+            public static readonly MethodInfo ReplaceColor32_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColor(ref Discard<Color32>.Value, default));
+            public static void ReplaceColor(ref Color32 color, Behaviour component)
             {
                 ReplaceColor(ref color, component, float.NaN);
             }
@@ -112,9 +122,18 @@ namespace GRandomizer.RandomizerControllers
             {
                 color = GetGlobalReplacement(color, alpha);
             }
+            public static void ReplaceColorGlobal(ref Color32 color, float alpha)
+            {
+                color = GetGlobalReplacement(color, alpha);
+            }
 
             public static readonly MethodInfo ReplaceColorGlobal_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColorGlobal(ref Discard<Color>.Value));
             public static void ReplaceColorGlobal(ref Color color)
+            {
+                ReplaceColorGlobal(ref color, float.NaN);
+            }
+            public static readonly MethodInfo ReplaceColor32Global_MI = SymbolExtensions.GetMethodInfo(() => ReplaceColorGlobal(ref Discard<Color32>.Value));
+            public static void ReplaceColorGlobal(ref Color32 color)
             {
                 ReplaceColorGlobal(ref color, float.NaN);
             }
@@ -176,6 +195,7 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
+        static readonly MethodInfo randomizeGradient_MI = SymbolExtensions.GetMethodInfo(() => randomizeGradient(default, default));
         static void randomizeGradient(Gradient gradient, Behaviour behaviour)
         {
             GradientColorKey[] colorKeys = gradient.colorKeys;
@@ -280,18 +300,6 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        [HarmonyPatch(typeof(uFogGradient), nameof(uFogGradient.Start))]
-        static class uFogGradient_Start_Patch
-        {
-            static void Prefix(uFogGradient __instance)
-            {
-                if (IsEnabled())
-                {
-                    randomizeGradient(__instance.FogColor, __instance);
-                }
-            }
-        }
-
         [HarmonyPatch(typeof(uSkyManager), nameof(uSkyManager.Awake))]
         static class uSkyManager_Awake_Patch
         {
@@ -383,32 +391,6 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        [HarmonyPatch(typeof(uSkyAmbient), MethodType.Constructor)]
-        static class uSkyAmbient_ctor_Patch
-        {
-            static void Postfix(uSkyAmbient __instance)
-            {
-                if (IsEnabled())
-                {
-                    randomizeGradient(__instance.SkyColor, null);
-                    randomizeGradient(__instance.EquatorColor, null);
-                    randomizeGradient(__instance.GroundColor, null);
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(uSkyLight), MethodType.Constructor)]
-        static class uSkyLight_ctor_Patch
-        {
-            static void Postfix(uSkyLight __instance)
-            {
-                if (IsEnabled())
-                {
-                    randomizeGradient(__instance.LightColor, null);
-                }
-            }
-        }
-
         [HarmonyPatch(typeof(WaterBiomeManager), "Start")]
         static class WaterBiomeManager_Start_Patch
         {
@@ -470,6 +452,100 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
+        static class WaterSurface_Start_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<WaterSurface>(_ => _.Start());
+            }
+
+            static void Prefix(WaterSurface __instance)
+            {
+                if (!IsEnabled())
+                    return;
+
+#if VERBOSE
+                Dictionary<FieldInfo, object> originalFieldValues = (from field in __instance.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+                                                                     where !field.FieldType.IsClass
+                                                                     select new KeyValuePair<FieldInfo, object>(field, field.GetValue(__instance))).ToDictionary();
+#endif
+
+                __instance.refractionIndex = UnityEngine.Random.Range(1f, 2f);
+                __instance.underWaterRefractionIndex = UnityEngine.Random.Range(1f, 2f);
+                __instance.underWaterRefractionDepthScale *= UnityEngine.Random.Range(0.5f, 2f);
+                __instance.causticsFramesPerSecond = (int)(__instance.causticsFramesPerSecond * UnityEngine.Random.Range(1f / 3f, 3f));
+                __instance.maxCausticsValue *= UnityEngine.Random.Range(1f / 2f, 2f);
+
+                ColorReplacer.ReplaceColorGlobal(ref __instance.reflectionColor);
+                ColorReplacer.ReplaceColorGlobal(ref __instance.refractionColor);
+                ColorReplacer.ReplaceColorGlobal(ref __instance.backLightTint);
+
+                __instance.sunReflectionGloss *= UnityEngine.Random.Range(1f / 3f, 3f);
+                __instance.sunReflectionAmount *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.waveHeightThicknessScale *= UnityEngine.Random.Range(1f / 2f, 2f);
+
+                __instance.foamSmoothing *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.foamRate *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.foamScale *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.foamDecay *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.foamDistance *= UnityEngine.Random.Range(1f / 2f, 2f);
+
+                ColorReplacer.ReplaceColorGlobal(ref __instance.subSurfaceFoamColor);
+
+                __instance.subSurfaceFoamScale *= UnityEngine.Random.Range(1f / 2f, 2f);
+
+                if (__instance.sunLight)
+                {
+                    randomizeLight(__instance.sunLight);
+                }
+
+                __instance.pixelStrideZCutoff *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.pixelZSizeOffset *= UnityEngine.Random.Range(1f / 2f, 2f);
+                __instance.maxRayDistance *= UnityEngine.Random.Range(1f / 2f, 2f);
+                
+                __instance.screenEdgeFadeStart = UnityEngine.Random.Range(0f, 1f);
+                __instance.eyeFadeStart = UnityEngine.Random.Range(0f, 1f);
+                __instance.eyeFadeEnd = UnityEngine.Random.Range(0f, 1f);
+                __instance.screenSpaceRefractionIndex = UnityEngine.Random.Range(1f, 2f);
+                __instance.screenSpaceInternalReflectionFlatness = UnityEngine.Random.Range(0f, 1f);
+
+#if VERBOSE
+                foreach (KeyValuePair<FieldInfo, object> original in originalFieldValues)
+                {
+                    object newValue = original.Key.GetValue(__instance);
+                    if (!Equals(original.Value, newValue))
+                    {
+                        Utils.DebugLog($"{__instance.name} WaterSurface.{original.Key.Name}: {original.Value} -> {newValue}");
+                    }
+                }
+#endif
+            }
+        }
+
+        [HarmonyPatch]
+        static class uSkyLight_OnEnable_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<uSkyLight>(_ => _.OnEnable());
+            }
+
+            static void Prefix(uSkyLight __instance)
+            {
+                if (IsEnabled())
+                {
+                    __instance.SunIntensity = UnityEngine.Random.Range(0f, 4f);
+                    __instance.MoonIntensity = UnityEngine.Random.Range(0f, 2f);
+                    __instance.ambientLight *= UnityEngine.Random.Range(0.5f, 2f);
+
+                    randomizeGradient(__instance.Ambient.SkyColor, __instance);
+                    randomizeGradient(__instance.Ambient.EquatorColor, __instance);
+                    randomizeGradient(__instance.Ambient.GroundColor, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
         static class GraphicRegistry_RegisterGraphicForCanvas_Patch
         {
             static MethodInfo TargetMethod()
@@ -520,55 +596,18 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class BloomCreature_Awake_Patch
+        static class GL_Color_Patch
         {
             static MethodInfo TargetMethod()
             {
-                return SymbolExtensions.GetMethodInfo<BloomCreature>(_ => _.Awake());
+                return SymbolExtensions.GetMethodInfo(() => GL.Color(default));
             }
 
-            static void Prefix(BloomCreature __instance)
+            static void Prefix(ref Color c)
             {
                 if (IsEnabled())
                 {
-                    ColorReplacer.ReplaceColor(ref __instance.attractColor, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class Charger_Awake_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<Charger>(_ => _.Awake());
-            }
-
-            static void Prefix(Charger __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.colorEmpty, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.colorHalf, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.colorFull, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class CyclopsHUDSonarPing_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<CyclopsHUDSonarPing>(_ => _.Start());
-            }
-
-            static void Prefix(CyclopsHUDSonarPing __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.passiveColor, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.aggressiveColor, __instance);
+                    ColorReplacer.ReplaceColorGlobal(ref c);
                 }
             }
         }
@@ -598,75 +637,6 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class CyclopsSmokeScreenFX_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<CyclopsSmokeScreenFX>(_ => _.Start());
-            }
-
-            static void Prefix(CyclopsSmokeScreenFX __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class DiveReel_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<DiveReel>(_ => _.Start());
-            }
-
-            static void Prefix(DiveReel __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.baseColor, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.lowAmmoColor, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class ExplosionScreenFX_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<ExplosionScreenFX>(_ => _.Start());
-            }
-
-            static void Prefix(ExplosionScreenFX __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class FakeSunShafts_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<FakeSunShafts>(_ => _.Start());
-            }
-
-            static void Prefix(FakeSunShafts __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.beamColor, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
         static class ToggleLights_OnEnable_Patch
         {
             static MethodInfo TargetMethod()
@@ -682,41 +652,6 @@ namespace GRandomizer.RandomizerControllers
                     {
                         randomizeLight(light);
                     }
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class GenericConsole_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<GenericConsole>(_ => _.Start());
-            }
-
-            static void Prefix(GenericConsole __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.colorUnused, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.colorUsed, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class GUITextShadow_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<GUITextShadow>(_ => _.Start());
-            }
-
-            static void Prefix(GUITextShadow __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.shadowColor, __instance);
                 }
             }
         }
@@ -768,58 +703,6 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class MapRoomCamera_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<MapRoomCamera>(_ => _.Start());
-            }
-
-            static void Prefix(MapRoomCamera __instance)
-            {
-                if (IsEnabled())
-                {
-                    randomizeGradient(__instance.gradientInner, __instance);
-                    randomizeGradient(__instance.gradientOuter, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class MapRoomCameraScreenFX_Awake_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<MapRoomCameraScreenFX>(_ => _.Awake());
-            }
-
-            static void Prefix(MapRoomCameraScreenFX __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class mset_Logo_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<mset.Logo>(_ => _.Start());
-            }
-
-            static void Prefix(mset.Logo __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
         static class NightVision_Start_Patch
         {
             static MethodInfo TargetMethod()
@@ -831,77 +714,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    ColorReplacer.ReplaceColor(ref __instance.luminence, __instance);
                     __instance.noiseFactor *= UnityEngine.Random.Range(0.5f, 2f);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class NotificationManager_Awake_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<NotificationManager>(_ => _.Awake());
-            }
-
-            // NotificationManager.notificationColor is readonly so we sadly have to use reflection to change it
-            // Also can't patch the initialized value because static constructors can't be patched
-            static readonly FieldInfo NotificationManager_notificationColor_FI = AccessTools.DeclaredField(typeof(NotificationManager), nameof(NotificationManager.notificationColor));
-
-            static void Postfix()
-            {
-                if (IsEnabled())
-                {
-                    Color original = (Color)NotificationManager_notificationColor_FI.GetValue(null);
-                    NotificationManager_notificationColor_FI.SetValue(null, ColorReplacer.GetGlobalReplacement(original));
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class PingManager_Patch
-        {
-            static IEnumerable<MethodInfo> TargetMethods()
-            {
-                return AccessTools.GetDeclaredMethods(typeof(PingManager));
-            }
-
-            static bool _hasReplacedPingColors = false;
-            static readonly FieldInfo PingManager_colorOptions_FI = AccessTools.DeclaredField(typeof(PingManager), nameof(PingManager.colorOptions));
-
-            static void Prefix()
-            {
-                if (IsEnabled() && !_hasReplacedPingColors)
-                {
-                    Color[] colorOptions = (Color[])PingManager_colorOptions_FI.GetValue(null);
-                    PingManager_colorOptions_FI.SetValue(null, Array.ConvertAll(colorOptions, ColorReplacer.GetGlobalReplacement));
-
-                    _hasReplacedPingColors = true;
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class PlaceTool_Patch
-        {
-            static IEnumerable<MethodInfo> TargetMethods()
-            {
-                return AccessTools.GetDeclaredMethods(typeof(PlaceTool));
-            }
-
-            static bool _hasReplacedColors = false;
-            static readonly FieldInfo PlaceTool_placeColorAllow_FI = AccessTools.DeclaredField(typeof(PlaceTool), nameof(PlaceTool.placeColorAllow));
-            static readonly FieldInfo PlaceTool_placeColorDeny_FI = AccessTools.DeclaredField(typeof(PlaceTool), nameof(PlaceTool.placeColorDeny));
-
-            static void Prefix()
-            {
-                if (IsEnabled() && !_hasReplacedColors)
-                {
-                    PlaceTool_placeColorAllow_FI.SetValue(null, ColorReplacer.GetGlobalReplacement((Color)PlaceTool_placeColorAllow_FI.GetValue(null)));
-                    PlaceTool_placeColorDeny_FI.SetValue(null, ColorReplacer.GetGlobalReplacement((Color)PlaceTool_placeColorDeny_FI.GetValue(null)));
-
-                    _hasReplacedColors = true;
                 }
             }
         }
@@ -918,7 +731,6 @@ namespace GRandomizer.RandomizerControllers
             {
                 if (IsEnabled())
                 {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
                     __instance.noiseFactor *= UnityEngine.Random.Range(0.5f, 2f);
                 }
             }
@@ -942,41 +754,6 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class ScannerTool_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<ScannerTool>(_ => _.Start());
-            }
-
-            static void Prefix(ScannerTool __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.scanCircuitColor, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.scanOrganicColor, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class SonarVision_Awake_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<SonarVision>(_ => _.Awake());
-            }
-
-            static void Prefix(SonarVision __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.color, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
         static class HookMaterialGetColor_Patch
         {
             static IEnumerable<MethodBase> TargetMethods()
@@ -984,47 +761,17 @@ namespace GRandomizer.RandomizerControllers
                 yield return AccessTools.DeclaredMethod(typeof(StasisSphere), nameof(StasisSphere.Awake));
                 yield return SymbolExtensions.GetMethodInfo<TelepathyScreenFX>(_ => _.SpawnGhost());
                 yield return SymbolExtensions.GetMethodInfo<Trail_v2>(_ => _.Awake());
+                yield return SymbolExtensions.GetMethodInfo<SubFire>(_ => _.Start());
+                yield return SymbolExtensions.GetMethodInfo<VehicleInterface_Terrain>(_ => _.InitializeHologram());
+                yield return SymbolExtensions.GetMethodInfo<VFXExtinguishableFire.FireElement>(_ => _.Init());
+                yield return SymbolExtensions.GetMethodInfo<VFXSeamothDamages>(_ => _.Start());
+                yield return SymbolExtensions.GetMethodInfo<VFXSpotlight>(_ => _.Initialize());
+                yield return SymbolExtensions.GetMethodInfo<VFXTechLight>(_ => _.Awake());
             }
 
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
             {
                 return instructions.HookGetMaterialValue<Color>(new LocalGenerator(generator), ColorReplacer.TryGetGlobalReplacement);
-            }
-        }
-
-        [HarmonyPatch]
-        static class SubFloodAlarm_Awake_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<SubFloodAlarm>(_ => _.Awake());
-            }
-
-            static void Prefix(SubFloodAlarm __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.redAlarm, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.blueAlarm, __instance);
-                }
-            }
-        }
-
-        [HarmonyPatch]
-        static class SwitchColorChange_Start_Patch
-        {
-            static MethodInfo TargetMethod()
-            {
-                return SymbolExtensions.GetMethodInfo<SwitchColorChange>(_ => _.Start());
-            }
-
-            static void Prefix(SwitchColorChange __instance)
-            {
-                if (IsEnabled())
-                {
-                    ColorReplacer.ReplaceColor(ref __instance.startColor, __instance);
-                    ColorReplacer.ReplaceColor(ref __instance.endColor, __instance);
-                }
             }
         }
 
@@ -1080,7 +827,313 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
-        static class Generic_ReplaceColor_Patch
+        static class uGUI_ItemsContainer_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<uGUI_ItemsContainer>(_ => _.Awake());
+            }
+
+            static bool _hasReplacedColors = false;
+
+            static readonly FieldInfo containerColors_FI = AccessTools.DeclaredField(typeof(uGUI_ItemsContainer), nameof(uGUI_ItemsContainer.containerColors));
+
+            static void Prefix()
+            {
+                if (IsEnabled() && !_hasReplacedColors)
+                {
+                    Dictionary<ItemsContainerType, Color> containerColors = (Dictionary<ItemsContainerType, Color>)containerColors_FI.GetValue(null);
+
+                    Dictionary<ItemsContainerType, Color> newContainerColors = new Dictionary<ItemsContainerType, Color>();
+                    foreach (ItemsContainerType containerType in containerColors.Keys)
+                    {
+                        newContainerColors[containerType] = ColorReplacer.GetGlobalReplacement(containerColors[containerType]);
+                    }
+
+                    containerColors_FI.SetValue(null, newContainerColors);
+
+                    _hasReplacedColors = true;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class uSky_StarField_InitializeStarfield_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<uSky.StarField>(_ => _.InitializeStarfield());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                MethodInfo Mesh_set_colors_MI = AccessTools.DeclaredPropertySetter(typeof(Mesh), nameof(Mesh.colors));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.Calls(Mesh_set_colors_MI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.Mesh_set_colors_MI);
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo Mesh_set_colors_MI = SymbolExtensions.GetMethodInfo(() => Mesh_set_colors(default));
+                static Color[] Mesh_set_colors(Color[] original)
+                {
+                    if (IsEnabled())
+                    {
+                        for (int i = 0; i < original.Length; i++)
+                        {
+                            original[i] = ColorReplacer.GetGlobalReplacement(original[i]);
+                        }
+                    }
+
+                    return original;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class Utils_DrawOutline_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo(() => global::Utils.DrawOutline(default, default, default, default, default, default));
+            }
+
+            static void Prefix(ref Color outColor, ref Color inColor)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColorGlobal(ref outColor);
+                    ColorReplacer.ReplaceColorGlobal(ref inColor);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class Utils_DrawShadow_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo(() => global::Utils.DrawShadow(default, default, default, default, default, default));
+            }
+
+            static void Prefix(ref Color txtColor, ref Color shadowColor)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColorGlobal(ref txtColor);
+                    ColorReplacer.ReplaceColorGlobal(ref shadowColor);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class VFXOverlayMaterial_ApplyAndForgetOverlay_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<VFXOverlayMaterial>(_ => _.ApplyAndForgetOverlay(default, default, default, default));
+            }
+
+            static void Prefix(VFXOverlayMaterial __instance, ref Color lerpToColor)
+            {
+                if (IsEnabled())
+                {
+                    ColorReplacer.ReplaceColor(ref lerpToColor, __instance);
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class Generic_ReplaceColorField_Patch
+        {
+            struct PatchInfo
+            {
+                public readonly MethodBase[] PatchTargets;
+                public readonly FieldInfo[] StaticFields;
+                public readonly FieldInfo[] InstanceFields;
+                public int StaticHasReplacedIndex;
+
+                public PatchInfo(MethodBase patchTarget, params string[] fieldNames) : this(new MethodBase[] { patchTarget }, fieldNames)
+                {
+                }
+
+                public PatchInfo(MethodBase[] patchTargets, params string[] fieldNames) : this(patchTargets, fieldNames.Select(name => AccessTools.DeclaredField(patchTargets.First().DeclaringType, name)).ToArray())
+                {
+                    Type firstType = patchTargets.First().DeclaringType;
+                    if (!patchTargets.All(m => m.DeclaringType == firstType))
+                    {
+                        throw new ArgumentException($"Not all methods have the same declaring type: {string.Join(", ", patchTargets.Select(m => m.FullName))}");
+                    }
+                }
+
+                public PatchInfo(MethodBase[] patchTargets, params FieldInfo[] fields)
+                {
+                    PatchTargets = patchTargets;
+                    StaticFields = fields.Where(f => f.IsStatic).ToArray();
+                    InstanceFields = fields.Where(f => !f.IsStatic).ToArray();
+                    StaticHasReplacedIndex = -1;
+                }
+            }
+
+            static readonly FieldInfo _hasReplacedValues_FI = AccessTools.DeclaredField(typeof(Generic_ReplaceColorField_Patch), nameof(_hasReplacedValues));
+            static bool[] _hasReplacedValues;
+
+            static readonly InitializeOnAccess<Dictionary<MethodBase, PatchInfo>> _patches = new InitializeOnAccess<Dictionary<MethodBase, PatchInfo>>(() =>
+            {
+                PatchInfo[] patches = new PatchInfo[]
+                {
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<uGUI_LogEntry>(_ => _.Initialize(default)), nameof(uGUI_LogEntry.buttonColorDefault), nameof(uGUI_LogEntry.buttonColorNotification), nameof(uGUI_LogEntry.backgroundColorDefault), nameof(uGUI_LogEntry.backgroundColorNotification), nameof(uGUI_LogEntry.iconColorDefault), nameof(uGUI_LogEntry.iconColorNotification)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<uSkyLight>(_ => _.OnEnable()), nameof(uSkyLight.LightColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<uFogGradient>(_ => _.Start()), nameof(uFogGradient.FogColor)),
+                    new PatchInfo(AccessTools.DeclaredMethod(typeof(uGUI_GalleryTab), nameof(uGUI_GalleryTab.Awake)), nameof(uGUI_GalleryTab.colorNormal), nameof(uGUI_GalleryTab.colorHover), nameof(uGUI_GalleryTab.colorPress)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<uGUI_DepthCompass>(_ => _.Start()), nameof(uGUI_DepthCompass.textColorNormal), nameof(uGUI_DepthCompass.textColorDanger)),
+                    new PatchInfo(AccessTools.DeclaredMethod(typeof(uGUI_Bar), nameof(uGUI_Bar.Awake)), nameof(uGUI_Bar.colorIcon), nameof(uGUI_Bar.colorBar)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SwitchColorChange>(_ => _.Start()), nameof(SwitchColorChange.startColor), nameof(SwitchColorChange.endColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SubFloodAlarm>(_ => _.Awake()), nameof(SubFloodAlarm.redAlarm), nameof(SubFloodAlarm.blueAlarm)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<VFXAnimator>(_ => _.Awake()), nameof(VFXAnimator.colorEnd)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SonarVision>(_ => _.Awake()), nameof(SonarVision.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<ScannerTool>(_ => _.Start()), nameof(ScannerTool.scanCircuitColor), nameof(ScannerTool.scanOrganicColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<RadiationsScreenFX>(_ => _.Start()), nameof(RadiationsScreenFX.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<PlaceTool>(_ => _.LateUpdate()), nameof(PlaceTool.placeColorAllow), nameof(PlaceTool.placeColorDeny)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<NotificationManager>(_ => _.Awake()), nameof(NotificationManager.notificationColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<NightVision>(_ => _.Start()), nameof(NightVision.luminence)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<mset.Logo>(_ => _.Start()), nameof(mset.Logo.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<MapRoomCameraScreenFX>(_ => _.Awake()), nameof(MapRoomCameraScreenFX.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<MapRoomCamera>(_ => _.Start()), nameof(MapRoomCamera.gradientInner), nameof(MapRoomCamera.gradientOuter)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<GUITextShadow>(_ => _.Start()), nameof(GUITextShadow.shadowColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<GenericConsole>(_ => _.Start()), nameof(GenericConsole.colorUsed), nameof(GenericConsole.colorUnused)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<FakeSunShafts>(_ => _.Start()), nameof(FakeSunShafts.beamColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<ExplosionScreenFX>(_ => _.Start()), nameof(ExplosionScreenFX.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<DiveReel>(_ => _.Start()), nameof(DiveReel.baseColor), nameof(DiveReel.lowAmmoColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<CyclopsSmokeScreenFX>(_ => _.Start()), nameof(CyclopsSmokeScreenFX.color)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<CyclopsHUDSonarPing>(_ => _.Start()), nameof(CyclopsHUDSonarPing.passiveColor), nameof(CyclopsHUDSonarPing.aggressiveColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<Charger>(_ => _.Awake()), nameof(Charger.colorEmpty), nameof(Charger.colorHalf), nameof(Charger.colorFull)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<BloomCreature>(_ => _.Awake()), nameof(BloomCreature.attractColor)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo(() => PingManager.NotifyColor(default)), nameof(PingManager.colorOptions)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<VFXLerpColor>(_ => _.Awake()), nameof(VFXLerpColor.colorEnd)),
+                };
+
+                _hasReplacedValues = new bool[patches.Length];
+
+                int staticFieldsCount = 0;
+
+                Dictionary<MethodBase, PatchInfo> dict = new Dictionary<MethodBase, PatchInfo>();
+                for (int i = 0; i < patches.Length; i++)
+                {
+                    if (patches[i].StaticFields.Length > 0)
+                        patches[i].StaticHasReplacedIndex = staticFieldsCount++;
+
+                    foreach (MethodBase patchTarget in patches[i].PatchTargets)
+                    {
+                        dict[patchTarget] = patches[i];
+                    }
+                }
+
+                return dict;
+            });
+
+            static IEnumerable<MethodBase> TargetMethods()
+            {
+                return _patches.Get.Keys;
+            }
+
+            public static readonly Dictionary<Type, MethodInfo> HookMethodsByType = new Dictionary<Type, MethodInfo>
+            {
+                {
+                    typeof(Color),
+                    ColorReplacer.ReplaceColor_MI
+                },
+                {
+                    typeof(Color32),
+                    ColorReplacer.ReplaceColor32_MI
+                },
+                {
+                    typeof(Gradient),
+                    randomizeGradient_MI
+                }
+            };
+
+            static readonly MethodInfo replaceArrayValues_MI = AccessTools.DeclaredMethod(typeof(Generic_ReplaceColorField_Patch), nameof(replaceArrayValues));
+            static void replaceArrayValues<T>(Array array, Behaviour instance)
+            {
+                MethodInfo hookMethod = HookMethodsByType[typeof(T)];
+
+                for (int i = 0; i < array.Length; i++)
+                {
+                    array.SetValue(hookMethod.Invoke(null, new object[] { array.GetValue(i), instance }), i);
+                }
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original, ILGenerator generator)
+            {
+                LocalGenerator localGen = new LocalGenerator(generator);
+
+                PatchInfo patchInfo = _patches.Get[original];
+                bool isUsableBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType) && !original.IsConstructor && !original.IsStatic;
+
+                List<CodeInstruction> prefix = new List<CodeInstruction>();
+
+                Label skipPrefix = generator.DefineLabel();
+
+                // if (!IsEnabled())
+                prefix.Add(new CodeInstruction(OpCodes.Call, IsEnabled_MI));
+                prefix.Add(new CodeInstruction(OpCodes.Brfalse, skipPrefix));
+
+                CodeInstruction callHook(Type fieldType)
+                {
+                    return new CodeInstruction(OpCodes.Call, fieldType.IsArray ? replaceArrayValues_MI.MakeGenericMethod(fieldType.GetElementType()) : HookMethodsByType[fieldType]);
+                }
+
+                if (patchInfo.StaticHasReplacedIndex != -1)
+                {
+                    Label skipStaticFields = generator.DefineLabel();
+
+                    // if (!_hasReplacedValues[patchInfo.HasReplacedIndex])
+                    prefix.Add(new CodeInstruction(OpCodes.Ldsfld, _hasReplacedValues_FI));
+                    prefix.Add(new CodeInstruction(OpCodes.Ldc_I4, patchInfo.StaticHasReplacedIndex));
+                    prefix.Add(new CodeInstruction(OpCodes.Ldelem_U1));
+                    prefix.Add(new CodeInstruction(OpCodes.Brtrue, skipStaticFields));
+
+                    foreach (FieldInfo field in patchInfo.StaticFields)
+                    {
+                        prefix.Add(new CodeInstruction(field.FieldType.IsValueType ? OpCodes.Ldsflda : OpCodes.Ldsfld, field));
+                        prefix.Add(new CodeInstruction(OpCodes.Ldnull));
+                        prefix.Add(callHook(field.FieldType));
+                    }
+
+                    // _hasReplacedValues[patchInfo.HasReplacedIndex] = true;
+                    prefix.Add(new CodeInstruction(OpCodes.Ldsfld, _hasReplacedValues_FI));
+                    prefix.Add(new CodeInstruction(OpCodes.Ldc_I4, patchInfo.StaticHasReplacedIndex));
+                    prefix.Add(new CodeInstruction(OpCodes.Ldc_I4_1));
+                    prefix.Add(new CodeInstruction(OpCodes.Stelem_I1));
+
+                    prefix.Add(new CodeInstruction(OpCodes.Nop).WithLabels(skipStaticFields));
+                }
+
+                foreach (FieldInfo field in patchInfo.InstanceFields)
+                {
+                    prefix.Add(new CodeInstruction(OpCodes.Ldarg_0));
+                    prefix.Add(new CodeInstruction(field.FieldType.IsValueType ? OpCodes.Ldflda : OpCodes.Ldfld, field));
+                    prefix.Add(new CodeInstruction(isUsableBehaviour ? OpCodes.Ldarg_0 : OpCodes.Ldnull));
+                    prefix.Add(callHook(field.FieldType));
+                }
+
+                prefix.Add(new CodeInstruction(OpCodes.Nop).WithLabels(skipPrefix));
+
+                return Enumerable.Concat(prefix, instructions);
+            }
+        }
+
+        [HarmonyPatch]
+        static class Generic_ReplaceColorValue_Patch
         {
             struct PatchInfo
             {
@@ -1141,7 +1194,6 @@ namespace GRandomizer.RandomizerControllers
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<MainMenuPrimaryOption>(_ => _.Start())),
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(MapDisplay))),
                     new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<MemoryWarning>(_ => _.CheckMemory())),
-                    new PatchInfo(PatchInfo.Flags.LoadField, SymbolExtensions.GetMethodInfo<OVRBoundary>(_ => _.SetLookAndFeel(default))),
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<OVRGridCube>(_ => _.CreateCubeGrid())),
                     new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(OVRPlatformMenu))),
                     new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(OVRScreenFade))),
@@ -1165,6 +1217,49 @@ namespace GRandomizer.RandomizerControllers
                     new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(TopographicDisplay))),
                     new PatchInfo(PatchInfo.Flags.Call, SymbolExtensions.GetMethodInfo<Transfuser>(_ => _.CreateHeldSerum(default))),
                     new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(TwoPointLine))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<SubFire>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_BasicColorSwap>(_ => _.makeTextBlack())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_BasicColorSwap>(_ => _.makeTextWhite())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_BindingText>(_ => _.SetColor(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(uGUI_CircularBar))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_Compass>(_ => _.UpdateLabels())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(uGUI_EquipmentSlot))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_EscapePod>(_ => _.Awake())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_FeedbackCollector>(_ => _.FeedbackUpdate())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_FeedbackCollector>(_ => _.MessageFeedbackSent())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_FeedbackCollector>(_ => _.MessageStreamingError())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_FeedbackCollector>(_ => _.OnValueChange(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(uGUI_FeedbackCollector))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(uGUI_IconGrid))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(uGUI_ItemIcon))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_MapRoomCancel>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_MapRoomCancel>(_ => _.OnPointerEnter(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_MapRoomCancel>(_ => _.OnPointerExit(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_MapRoomCancel>(_ => _.OnPointerClick(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor | PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(uGUI_MapRoomScanner))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerDeath>(_ => _.CutToBlack())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerDeath>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerDeath>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerSleep>(_ => _.BeginFadeIn())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerSleep>(_ => _.Start())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<uGUI_PlayerSleep>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_PowerIndicator>(_ => _.UpdatePower())),
+                    new PatchInfo(PatchInfo.Flags.Constructor | PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(uGUI_SignInput))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(uGUI_TimeCapsuleTab))),
+                    new PatchInfo(PatchInfo.Flags.Constructor | PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<VehicleInterface_EnergyBar>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<VehicleInterface_GlowEffect>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, AccessTools.DeclaredConstructor(typeof(VehicleInterface_MapController))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<VehicleInterface_MapController>(_ => _.Update())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(VFXConstructing))),
+                    new PatchInfo(PatchInfo.Flags.Constructor | PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<uGUI_LogEntry>(_ => _.Initialize(default))),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredMethod(typeof(uGUI_PopupNotification), nameof(uGUI_PopupNotification.Awake))),
+                    new PatchInfo(PatchInfo.Flags.Constructor | PatchInfo.Flags.ConstColorProperty, AccessTools.EnumeratorMoveNext(SymbolExtensions.GetMethodInfo<uGUI_SceneIntro>(_ => _.IntroSequence()))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty | PatchInfo.Flags.LoadField, SymbolExtensions.GetMethodInfo<VFXPrecursorGunElevator>(_ => _.UpdateWallLights())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<VFXSandSharkDune>(_ => _.Awake())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, SymbolExtensions.GetMethodInfo<VFXScan>(_ => _.StartScan(default))),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<VFXSunbeam>(_ => _.UpdateSequence())),
+                    new PatchInfo(PatchInfo.Flags.ConstColorProperty, SymbolExtensions.GetMethodInfo<VFXSunbeam>(_ => _.GetCloudsColor())),
+                    new PatchInfo(PatchInfo.Flags.Constructor, AccessTools.DeclaredConstructor(typeof(VFXWeatherManager))),
                 }.ToDictionary(p => p.Target);
             });
 
@@ -1173,22 +1268,23 @@ namespace GRandomizer.RandomizerControllers
                 return _patches.Get.Keys;
             }
 
-            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original, ILGenerator generator)
             {
                 MethodInfo ColorToColor32_MI = AccessTools.DeclaredMethod(typeof(Color32), "op_Implicit", new Type[] { typeof(Color) });
                 MethodInfo Color32ToColor_MI = AccessTools.DeclaredMethod(typeof(Color32), "op_Implicit", new Type[] { typeof(Color32) });
 
                 PatchInfo patchInfo = _patches.Get[original];
-                bool isUsableBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType) && !original.IsConstructor;
+                bool isUsableBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType) && !original.IsConstructor && !original.IsStatic;
+
+                LocalGenerator localGen = new LocalGenerator(generator);
 
                 foreach (CodeInstruction instruction in instructions)
                 {
-                    yield return instruction;
-
                     if (instruction.operand is MemberInfo member)
                     {
                         bool isColor32 = false;
-                        bool useInstance = isUsableBehaviour && !original.IsStatic;
+                        bool useInstance = isUsableBehaviour;
+                        bool isCallConstructor = false;
 
                         bool isHookableFieldInfo()
                         {
@@ -1224,33 +1320,73 @@ namespace GRandomizer.RandomizerControllers
                                         return mi.IsSpecialName && mi.IsStatic && mi.DeclaringType == mi.ReturnType && mi.GetParameters().Length == 0;
                                     }
                                 }
-                                else if ((patchInfo.PatchFlags & PatchInfo.Flags.Constructor) != 0 && instruction.opcode == OpCodes.Newobj && mb is ConstructorInfo ci && (ci.DeclaringType == typeof(Color) || (isColor32 = ci.DeclaringType == typeof(Color32))))
+                                else if ((patchInfo.PatchFlags & PatchInfo.Flags.Constructor) != 0 && mb is ConstructorInfo ci && (ci.DeclaringType == typeof(Color) || (isColor32 = ci.DeclaringType == typeof(Color32))))
                                 {
-                                    return true;
+                                    if (instruction.opcode == OpCodes.Newobj || (isCallConstructor = instruction.opcode == OpCodes.Call))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
 
                             return false;
                         }
 
-                        if (isHookableFieldInfo() || isHookableMethodBase())
+                        if (isHookableMethodBase() || isHookableFieldInfo())
                         {
-                            if (isColor32)
-                                yield return new CodeInstruction(OpCodes.Call, Color32ToColor_MI);
-
-                            if (useInstance)
+                            if (isCallConstructor)
                             {
-                                yield return new CodeInstruction(OpCodes.Ldarg_0);
-                                yield return new CodeInstruction(OpCodes.Call, ColorReplacer.tryGetReplacement_MI);
+                                ConstructorInfo constructor = (ConstructorInfo)instruction.operand;
+
+                                ParameterInfo[] constructorParameters = constructor.GetParameters();
+                                LocalBuilder[] parameterLocals = new LocalBuilder[constructorParameters.Length];
+                                for (int i = constructorParameters.Length - 1; i >= 0; i--)
+                                {
+                                    yield return new CodeInstruction(OpCodes.Stloc, parameterLocals[i] = localGen.GetLocal(constructorParameters[i].ParameterType, false));
+                                }
+
+                                yield return new CodeInstruction(OpCodes.Dup); // Dup instance (ref)
+
+                                for (int i = 0; i < parameterLocals.Length; i++)
+                                {
+                                    yield return new CodeInstruction(OpCodes.Ldloc, parameterLocals[i]);
+                                    localGen.ReleaseLocal(parameterLocals[i]);
+                                }
+
+                                yield return instruction;
+
+                                yield return new CodeInstruction(useInstance ? OpCodes.Ldarg_0 : OpCodes.Ldnull);
+                                yield return new CodeInstruction(OpCodes.Call, isColor32 ? ColorReplacer.ReplaceColor32_MI : ColorReplacer.ReplaceColor_MI);
                             }
                             else
                             {
-                                yield return new CodeInstruction(OpCodes.Call, ColorReplacer.TryGetGlobalReplacement_MI);
-                            }
+                                yield return instruction;
 
-                            if (isColor32)
-                                yield return new CodeInstruction(OpCodes.Call, ColorToColor32_MI);
+                                if (isColor32)
+                                    yield return new CodeInstruction(OpCodes.Call, Color32ToColor_MI);
+
+                                if (useInstance)
+                                {
+                                    yield return new CodeInstruction(OpCodes.Ldarg_0);
+                                    yield return new CodeInstruction(OpCodes.Call, ColorReplacer.tryGetReplacement_MI);
+                                }
+                                else
+                                {
+                                    yield return new CodeInstruction(OpCodes.Call, ColorReplacer.TryGetGlobalReplacement_MI);
+                                }
+
+                                if (isColor32)
+                                    yield return new CodeInstruction(OpCodes.Call, ColorToColor32_MI);
+                            }
                         }
+                        else
+                        {
+                            yield return instruction;
+                        }
+                    }
+                    else
+                    {
+                        yield return instruction;
                     }
                 }
             }
