@@ -2,7 +2,7 @@
   "Id": "gorakh_grandomizer",
   "DisplayName": "GRandomizer",
   "Author": "Gorakh",
-  "Version": "0.0.1.1",
+  "Version": "0.0.1.2",
   "Enable": true,
   "Game": "Subnautica",
   "AssemblyName": "GRandomizer.dll",
