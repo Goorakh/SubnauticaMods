@@ -176,22 +176,15 @@ namespace GRandomizer.RandomizerControllers
             RenderSettings.ambientIntensity = UnityEngine.Random.Range(0f, 2f);
             RenderSettings.ambientLight = Utils.Random.Color(RenderSettings.ambientLight.a);
 
-            if (RenderSettings.sun.Exists())
-            {
-                randomizeLight(RenderSettings.sun);
-            }
+            randomizeLight(RenderSettings.sun);
         }
 
+        static readonly MethodInfo randomizeLight_MI = SymbolExtensions.GetMethodInfo(() => randomizeLight(default));
         static void randomizeLight(Light light)
         {
-            light.color = Utils.Random.Color(light.color.a);
-
-            if (light.type == LightType.Spot && UnityEngine.Random.value < 0.3f)
+            if (light.Exists())
             {
-                float mult = UnityEngine.Random.Range(0.5f, 1.5f);
-
-                light.spotAngle = Mathf.Clamp(light.spotAngle * mult, 0f, 180f);
-                light.innerSpotAngle = Mathf.Clamp(light.innerSpotAngle * mult, 0f, 180f);
+                light.color = Utils.Random.Color(light.color.a);
             }
         }
 
@@ -213,91 +206,639 @@ namespace GRandomizer.RandomizerControllers
             gradient.SetKeys(colorKeys, alphaKeys);
         }
 
-        static ParticleSystem.MinMaxGradient randomizeParticleSystemMinMaxGradient(ParticleSystem.MinMaxGradient minmax)
+        static readonly MethodInfo randomizeAnimationCurve_MI = SymbolExtensions.GetMethodInfo(() => randomizeAnimationCurve(default));
+        static void randomizeAnimationCurve(AnimationCurve curve)
         {
-            switch (minmax.m_Mode)
+            Keyframe[] keyframes = curve.keys;
+
+            if (keyframes.Length > 0)
             {
-                case ParticleSystemGradientMode.Color:
-                    minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
-                    break;
-                case ParticleSystemGradientMode.Gradient:
-                    randomizeGradient(minmax.m_GradientMax, null);
-                    break;
-                case ParticleSystemGradientMode.TwoColors:
-                    minmax.colorMin = ColorReplacer.GetGlobalReplacement(minmax.colorMin);
-                    minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
-                    break;
-                case ParticleSystemGradientMode.TwoGradients:
-                    randomizeGradient(minmax.m_GradientMin, null);
-                    randomizeGradient(minmax.m_GradientMax, null);
-                    break;
+                float minValue = keyframes.Min(k => k.m_Value);
+                float maxValue = keyframes.Max(k => k.m_Value);
+
+                for (int i = 0; i < keyframes.Length; i++)
+                {
+                    float time = keyframes[i].m_Time;
+
+                    switch (UnityEngine.Random.Range(0, 4)) // [0,1,2,3]
+                    {
+                        case 0:
+                            keyframes[i] = new Keyframe(time, UnityEngine.Random.Range(minValue, maxValue));
+                            break;
+                        case 1:
+                            keyframes[i] = new Keyframe(time, UnityEngine.Random.Range(minValue, maxValue), UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f));
+                            break;
+                        case 2:
+                            keyframes[i] = new Keyframe(time, UnityEngine.Random.Range(minValue, maxValue), UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.value, UnityEngine.Random.value)
+                            {
+                                m_WeightedMode = UnityEngine.Random.Range((int)WeightedMode.None, (int)WeightedMode.Both + 1)
+                            };
+                            break;
+                        case 3:
+                            break; // Do nothing
+                    }
+                }
             }
 
-            return minmax;
+            curve.keys = keyframes;
         }
+
+        static readonly ParticleSystemShapeType[] ParticleSystemShapeType_Options = new ParticleSystemShapeType[]
+        {
+            ParticleSystemShapeType.Sphere,
+            ParticleSystemShapeType.Hemisphere,
+            ParticleSystemShapeType.Cone,
+            ParticleSystemShapeType.Box,
+            ParticleSystemShapeType.ConeVolume,
+            ParticleSystemShapeType.Circle,
+            ParticleSystemShapeType.SingleSidedEdge,
+            ParticleSystemShapeType.BoxShell,
+            ParticleSystemShapeType.BoxEdge,
+            ParticleSystemShapeType.Donut,
+            ParticleSystemShapeType.Rectangle
+        };
+
+        static readonly ParticleSystemSimulationSpace[] ParticleSystemSimulationSpace_Options = new ParticleSystemSimulationSpace[]
+        {
+            ParticleSystemSimulationSpace.Local,
+            ParticleSystemSimulationSpace.World
+        };
 
         static void randomizeParticleSystem(ParticleSystem ps)
         {
+            ParticleSystem.MinMaxGradient randomizeMinMaxGradient(ParticleSystem.MinMaxGradient minmax)
+            {
+                switch (minmax.m_Mode)
+                {
+                    case ParticleSystemGradientMode.Color:
+                        minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
+                        break;
+                    case ParticleSystemGradientMode.Gradient:
+                        randomizeGradient(minmax.m_GradientMax, null);
+                        break;
+                    case ParticleSystemGradientMode.TwoColors:
+                        minmax.colorMin = ColorReplacer.GetGlobalReplacement(minmax.colorMin);
+                        minmax.colorMax = ColorReplacer.GetGlobalReplacement(minmax.colorMax);
+                        break;
+                    case ParticleSystemGradientMode.TwoGradients:
+                        randomizeGradient(minmax.m_GradientMin, null);
+                        randomizeGradient(minmax.m_GradientMax, null);
+                        break;
+                }
+
+                return minmax;
+            }
+
+            ParticleSystem.MinMaxCurve randomizeMinMaxCurve(ParticleSystem.MinMaxCurve minmax)
+            {
+                switch (minmax.m_Mode)
+                {
+                    case ParticleSystemCurveMode.Constant:
+                        minmax.m_ConstantMax *= UnityEngine.Random.Range(0.5f, 2f);
+                        break;
+                    case ParticleSystemCurveMode.Curve:
+                        minmax.m_CurveMultiplier *= UnityEngine.Random.Range(0.5f, 2f);
+                        randomizeAnimationCurve(minmax.m_CurveMax);
+                        break;
+                    case ParticleSystemCurveMode.TwoCurves:
+                        minmax.m_CurveMultiplier *= UnityEngine.Random.Range(0.5f, 2f);
+                        randomizeAnimationCurve(minmax.m_CurveMin);
+                        randomizeAnimationCurve(minmax.m_CurveMax);
+                        break;
+                    case ParticleSystemCurveMode.TwoConstants:
+                        minmax.m_ConstantMin *= UnityEngine.Random.Range(0.5f, 2f);
+                        minmax.m_ConstantMax *= Mathf.Max(minmax.m_ConstantMin, UnityEngine.Random.Range(0.5f, 2f));
+                        break;
+                }
+
+                return minmax;
+            }
+
             #region main
             ParticleSystem.MainModule main = ps.main;
 
             main.duration *= UnityEngine.Random.Range(0.75f, 1.25f);
+
+            main.startDelay = randomizeMinMaxCurve(main.startDelay);
             main.startDelayMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+
+            main.startLifetime = randomizeMinMaxCurve(main.startLifetime);
             main.startLifetimeMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+
+            main.startSpeed = randomizeMinMaxCurve(main.startSpeed);
             main.startSpeedMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
 
-            if (main.startSize3D)
+            if (main.startSize3D ^= Utils.Random.Boolean())
             {
+                main.startSizeX = randomizeMinMaxCurve(main.startSizeX);
                 main.startSizeXMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+
+                main.startSizeY = randomizeMinMaxCurve(main.startSizeY);
                 main.startSizeYMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+
+                main.startSizeZ = randomizeMinMaxCurve(main.startSizeZ);
                 main.startSizeZMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
             }
             else
             {
+                main.startSize = randomizeMinMaxCurve(main.startSize);
                 main.startSizeMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
             }
 
-            if (main.startRotation3D)
+            if (main.startRotation3D ^= Utils.Random.Boolean())
             {
+                main.startRotationX = randomizeMinMaxCurve(main.startRotationX);
                 main.startRotationXMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+
+                main.startRotationY = randomizeMinMaxCurve(main.startRotationY);
                 main.startRotationYMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
+
+                main.startRotationZ = randomizeMinMaxCurve(main.startRotationZ);
                 main.startRotationZMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
             }
             else
             {
+                main.startRotation = randomizeMinMaxCurve(main.startRotation);
                 main.startRotationMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
             }
 
-            main.startColor = randomizeParticleSystemMinMaxGradient(main.startColor);
+            main.startColor = randomizeMinMaxGradient(main.startColor);
+
+            main.gravityModifier = randomizeMinMaxCurve(main.gravityModifier);
+            main.gravityModifierMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
 
             main.simulationSpeed *= UnityEngine.Random.Range(0.3f, 1.7f);
-
             #endregion
 
+            #region emission
+            ParticleSystem.EmissionModule emission = ps.emission;
+            if (emission.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                emission.rateOverTime = randomizeMinMaxCurve(emission.rateOverTime);
+                emission.rateOverTimeMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+
+                emission.rateOverDistance = randomizeMinMaxCurve(emission.rateOverDistance);
+                emission.rateOverDistanceMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
+            }
+            #endregion
+
+            #region shape
+            ParticleSystem.ShapeModule shape = ps.shape;
+            bool shapeWasEnabled = shape.enabled;
+            if (shape.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (!shapeWasEnabled)
+                {
+                    shape.shapeType = ParticleSystemShapeType_Options.GetRandom();
+                }
+
+                shape.randomDirectionAmount = UnityEngine.Random.Range(0f, 1f);
+                shape.sphericalDirectionAmount = UnityEngine.Random.Range(0f, 1f);
+                shape.randomPositionAmount = UnityEngine.Random.Range(0f, 1f);
+
+                shape.alignToDirection = UnityEngine.Random.value >= 0.5f;
+
+                shape.radius *= UnityEngine.Random.Range(0.1f, 4f);
+                shape.radiusMode = Utils.Random.EnumValue<ParticleSystemShapeMultiModeValue>();
+                shape.radiusSpread = UnityEngine.Random.Range(0f, 3f);
+
+                shape.radiusSpeed = randomizeMinMaxCurve(shape.radiusSpeed);
+                shape.radiusSpeedMultiplier *= UnityEngine.Random.Range(0.5f, 2f);
+
+                switch (shape.shapeType)
+                {
+                    case ParticleSystemShapeType.Sphere:
+                    case ParticleSystemShapeType.Cone:
+                    case ParticleSystemShapeType.Circle:
+                        shape.radiusThickness = UnityEngine.Random.Range(0f, 1f);
+                        break;
+                }
+
+                shape.angle = UnityEngine.Random.Range(0f, 180f);
+
+                switch (shape.shapeType)
+                {
+                    case ParticleSystemShapeType.ConeVolume:
+                        shape.length = UnityEngine.Random.Range(0f, 6f);
+                        break;
+                }
+
+                switch (shape.shapeType)
+                {
+                    case ParticleSystemShapeType.SingleSidedEdge:
+                    case ParticleSystemShapeType.BoxShell:
+                    case ParticleSystemShapeType.BoxEdge:
+                        shape.boxThickness = Utils.Abs(UnityEngine.Random.insideUnitSphere) * UnityEngine.Random.Range(0.1f, 4f);
+                        break;
+                }
+
+                if (shape.mesh.Exists() || shape.meshRenderer.Exists() || shape.skinnedMeshRenderer.Exists())
+                {
+                    shape.meshShapeType = Utils.Random.EnumValue<ParticleSystemMeshShapeType>();
+                    shape.normalOffset *= UnityEngine.Random.Range(1f / 3f, 3f);
+                    shape.meshSpawnMode = Utils.Random.EnumValue<ParticleSystemShapeMultiModeValue>();
+                    shape.meshSpawnSpread = UnityEngine.Random.Range(0f, 3f);
+                    shape.meshSpawnSpeed = randomizeMinMaxCurve(shape.meshSpawnSpeed);
+                    shape.meshSpawnSpeedMultiplier *= UnityEngine.Random.Range(0.5f, 2f);
+                }
+
+                shape.arc = UnityEngine.Random.Range(0f, 180f);
+                shape.arcMode = Utils.Random.EnumValue<ParticleSystemShapeMultiModeValue>();
+                shape.arcSpread = UnityEngine.Random.Range(0f, 3f);
+                shape.arcSpeed = randomizeMinMaxCurve(shape.arcSpeed);
+                shape.arcSpeedMultiplier *= UnityEngine.Random.Range(0.5f, 2f);
+
+                switch (shape.shapeType)
+                {
+                    case ParticleSystemShapeType.Donut:
+                        shape.donutRadius = UnityEngine.Random.Range(0f, 5f);
+                        break;
+                }
+
+                shape.position = UnityEngine.Random.insideUnitSphere * UnityEngine.Random.Range(0.1f, 5f);
+                shape.rotation = Utils.Random.Rotation.eulerAngles;
+                shape.scale = Utils.Abs(UnityEngine.Random.insideUnitSphere) * UnityEngine.Random.Range(0.1f, 4f);
+
+                if (shape.texture.Exists())
+                {
+                    shape.textureClipChannel = Utils.Random.EnumValue<ParticleSystemShapeTextureChannel>();
+                    shape.textureClipThreshold = UnityEngine.Random.value;
+                }
+            }
+            #endregion
+
+            #region velocityOverLifetime
+            ParticleSystem.VelocityOverLifetimeModule velocityOverLifetime = ps.velocityOverLifetime;
+            bool velocityOverLifetimeWasEnabled = velocityOverLifetime.enabled;
+            if (velocityOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (!velocityOverLifetimeWasEnabled)
+                {
+                    velocityOverLifetime.space = ParticleSystemSimulationSpace_Options.GetRandom();
+                }
+
+                velocityOverLifetime.x = randomizeMinMaxCurve(velocityOverLifetime.x);
+                velocityOverLifetime.y = randomizeMinMaxCurve(velocityOverLifetime.y);
+                velocityOverLifetime.z = randomizeMinMaxCurve(velocityOverLifetime.z);
+
+                velocityOverLifetime.xMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.yMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                velocityOverLifetime.orbitalX = randomizeMinMaxCurve(velocityOverLifetime.orbitalX);
+                velocityOverLifetime.orbitalY = randomizeMinMaxCurve(velocityOverLifetime.orbitalY);
+                velocityOverLifetime.orbitalZ = randomizeMinMaxCurve(velocityOverLifetime.orbitalZ);
+
+                velocityOverLifetime.orbitalXMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.orbitalYMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.orbitalZMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                velocityOverLifetime.orbitalOffsetX = randomizeMinMaxCurve(velocityOverLifetime.orbitalOffsetX);
+                velocityOverLifetime.orbitalOffsetY = randomizeMinMaxCurve(velocityOverLifetime.orbitalOffsetY);
+                velocityOverLifetime.orbitalOffsetZ = randomizeMinMaxCurve(velocityOverLifetime.orbitalOffsetZ);
+
+                velocityOverLifetime.orbitalOffsetXMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.orbitalOffsetYMultiplier = UnityEngine.Random.Range(0f, 3f);
+                velocityOverLifetime.orbitalOffsetZMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                velocityOverLifetime.radial = randomizeMinMaxCurve(velocityOverLifetime.radial);
+                velocityOverLifetime.radialMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                velocityOverLifetime.speedModifier = randomizeMinMaxCurve(velocityOverLifetime.speedModifier);
+                velocityOverLifetime.speedModifierMultiplier = UnityEngine.Random.Range(0f, 3f);
+            }
+            #endregion
+
+            #region limitVelocityOverLifetime
+            ParticleSystem.LimitVelocityOverLifetimeModule limitVelocityOverLifetime = ps.limitVelocityOverLifetime;
+            bool limitVelocityOverLifetimeWasEnabled = limitVelocityOverLifetime.enabled;
+            if (limitVelocityOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (!limitVelocityOverLifetimeWasEnabled)
+                {
+                    limitVelocityOverLifetime.space = ParticleSystemSimulationSpace_Options.GetRandom();
+                }
+
+                if (limitVelocityOverLifetime.separateAxes ^= Utils.Random.Boolean())
+                {
+                    limitVelocityOverLifetime.limitX = randomizeMinMaxCurve(limitVelocityOverLifetime.limitX);
+                    limitVelocityOverLifetime.limitXMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                    limitVelocityOverLifetime.limitY = randomizeMinMaxCurve(limitVelocityOverLifetime.limitY);
+                    limitVelocityOverLifetime.limitYMultiplier = UnityEngine.Random.Range(0f, 3f);
+
+                    limitVelocityOverLifetime.limitZ = randomizeMinMaxCurve(limitVelocityOverLifetime.limitZ);
+                    limitVelocityOverLifetime.limitZMultiplier = UnityEngine.Random.Range(0f, 3f);
+                }
+                else
+                {
+                    limitVelocityOverLifetime.limit = randomizeMinMaxCurve(limitVelocityOverLifetime.limit);
+                    limitVelocityOverLifetime.limitMultiplier = UnityEngine.Random.Range(0f, 3f);
+                }
+
+                limitVelocityOverLifetime.dampen = UnityEngine.Random.value;
+
+                limitVelocityOverLifetime.drag = randomizeMinMaxCurve(limitVelocityOverLifetime.drag);
+                limitVelocityOverLifetime.dragMultiplier = UnityEngine.Random.Range(0f, 3f);
+            }
+            #endregion
+
+            #region inheritVelocity
+            ParticleSystem.InheritVelocityModule inheritVelocity = ps.inheritVelocity;
+            if (inheritVelocity.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                inheritVelocity.mode = Utils.Random.EnumValue<ParticleSystemInheritVelocityMode>();
+
+                inheritVelocity.curve = randomizeMinMaxCurve(inheritVelocity.curve);
+                inheritVelocity.curveMultiplier = UnityEngine.Random.Range(0f, 3f);
+            }
+            #endregion
+
+            #region forceOverLifetime
+            ParticleSystem.ForceOverLifetimeModule forceOverLifetime = ps.forceOverLifetime;
+            bool forceOverLifetimeWasEnabled = forceOverLifetime.enabled;
+            if (forceOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (!forceOverLifetimeWasEnabled)
+                {
+                    forceOverLifetime.space = ParticleSystemSimulationSpace_Options.GetRandom();
+                }
+
+                forceOverLifetime.x = randomizeMinMaxCurve(forceOverLifetime.x);
+                forceOverLifetime.y = randomizeMinMaxCurve(forceOverLifetime.y);
+                forceOverLifetime.z = randomizeMinMaxCurve(forceOverLifetime.z);
+
+                forceOverLifetime.xMultiplier = UnityEngine.Random.Range(0f, 2f);
+                forceOverLifetime.yMultiplier = UnityEngine.Random.Range(0f, 2f);
+                forceOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 2f);
+            }
+            #endregion
+
+            #region colorOverLifetime
             ParticleSystem.ColorOverLifetimeModule colorOverLifetime = ps.colorOverLifetime;
-            if (colorOverLifetime.enabled)
+            if (colorOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
             {
-                colorOverLifetime.color = randomizeParticleSystemMinMaxGradient(colorOverLifetime.color);
+                colorOverLifetime.color = randomizeMinMaxGradient(colorOverLifetime.color);
             }
+            #endregion
 
+            #region colorBySpeed
             ParticleSystem.ColorBySpeedModule colorBySpeed = ps.colorBySpeed;
-            if (colorBySpeed.enabled)
+            bool colorBySpeedWasEnabled = colorBySpeed.enabled;
+            if (colorBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
             {
-                colorBySpeed.color = randomizeParticleSystemMinMaxGradient(colorBySpeed.color);
-            }
+                colorBySpeed.color = randomizeMinMaxGradient(colorBySpeed.color);
 
+                if (!colorBySpeedWasEnabled)
+                {
+                    float min = UnityEngine.Random.Range(0f, 5f);
+                    colorBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
+                }
+            }
+            #endregion
+
+            #region sizeOverLifetime
+            ParticleSystem.SizeOverLifetimeModule sizeOverLifetime = ps.sizeOverLifetime;
+            if (sizeOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (sizeOverLifetime.separateAxes ^= Utils.Random.Boolean())
+                {
+                    sizeOverLifetime.x = randomizeMinMaxCurve(sizeOverLifetime.x);
+                    sizeOverLifetime.xMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    sizeOverLifetime.y = randomizeMinMaxCurve(sizeOverLifetime.y);
+                    sizeOverLifetime.yMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    sizeOverLifetime.z = randomizeMinMaxCurve(sizeOverLifetime.z);
+                    sizeOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+                else
+                {
+                    sizeOverLifetime.size = randomizeMinMaxCurve(sizeOverLifetime.size);
+                    sizeOverLifetime.sizeMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+            }
+            #endregion
+
+            #region sizeBySpeed
+            ParticleSystem.SizeBySpeedModule sizeBySpeed = ps.sizeBySpeed;
+            bool sizeBySpeedWasEnabled = sizeBySpeed.enabled;
+            if (sizeBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (sizeBySpeed.separateAxes ^= Utils.Random.Boolean())
+                {
+                    sizeBySpeed.x = randomizeMinMaxCurve(sizeBySpeed.x);
+                    sizeBySpeed.xMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    sizeBySpeed.y = randomizeMinMaxCurve(sizeBySpeed.y);
+                    sizeBySpeed.yMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    sizeBySpeed.z = randomizeMinMaxCurve(sizeBySpeed.z);
+                    sizeBySpeed.zMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+                else
+                {
+                    sizeBySpeed.size = randomizeMinMaxCurve(sizeBySpeed.size);
+                    sizeBySpeed.sizeMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+
+                if (!sizeBySpeedWasEnabled)
+                {
+                    float min = UnityEngine.Random.Range(0f, 5f);
+                    sizeBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
+                }
+            }
+            #endregion
+
+            #region rotationOverLifetime
+            ParticleSystem.RotationOverLifetimeModule rotationOverLifetime = ps.rotationOverLifetime;
+            if (rotationOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                rotationOverLifetime.x = randomizeMinMaxCurve(rotationOverLifetime.x);
+                rotationOverLifetime.xMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                if (rotationOverLifetime.separateAxes ^= Utils.Random.Boolean())
+                {
+                    rotationOverLifetime.y = randomizeMinMaxCurve(rotationOverLifetime.y);
+                    rotationOverLifetime.yMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    rotationOverLifetime.z = randomizeMinMaxCurve(rotationOverLifetime.z);
+                    rotationOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+            }
+            #endregion
+
+            #region rotationBySpeed
+            ParticleSystem.RotationBySpeedModule rotationBySpeed = ps.rotationBySpeed;
+            bool rotationBySpeedWasEnabled = rotationBySpeed.enabled;
+            if (rotationBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                rotationBySpeed.x = randomizeMinMaxCurve(rotationBySpeed.x);
+                rotationBySpeed.xMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                if (rotationBySpeed.separateAxes ^= Utils.Random.Boolean())
+                {
+                    rotationBySpeed.y = randomizeMinMaxCurve(rotationBySpeed.y);
+                    rotationBySpeed.yMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    rotationBySpeed.z = randomizeMinMaxCurve(rotationBySpeed.z);
+                    rotationBySpeed.zMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+
+                if (!rotationBySpeedWasEnabled)
+                {
+                    float min = UnityEngine.Random.Range(0f, 5f);
+                    rotationBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
+                }
+            }
+            #endregion
+
+            #region externalForces
+            // TODO (maybe?)
+            #endregion
+
+            #region noise
+            ParticleSystem.NoiseModule noise = ps.noise;
+            if (noise.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                if (noise.separateAxes ^= Utils.Random.Boolean())
+                {
+                    noise.strengthX = randomizeMinMaxCurve(noise.strengthX);
+                    noise.strengthXMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    noise.strengthY = randomizeMinMaxCurve(noise.strengthY);
+                    noise.strengthYMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    noise.strengthZ = randomizeMinMaxCurve(noise.strengthZ);
+                    noise.strengthZMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+                else
+                {
+                    noise.strength = randomizeMinMaxCurve(noise.strength);
+                    noise.strengthMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+
+                noise.frequency = UnityEngine.Random.Range(0f, 2f);
+
+                noise.damping ^= Utils.Random.Boolean();
+
+                noise.scrollSpeed = randomizeMinMaxCurve(noise.scrollSpeed);
+                noise.scrollSpeedMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                if (noise.remapEnabled ^= Utils.Random.Boolean())
+                {
+                    noise.remap = randomizeMinMaxCurve(noise.remap);
+                    noise.remapMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    noise.remapX = randomizeMinMaxCurve(noise.remapX);
+                    noise.remapXMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    noise.remapY = randomizeMinMaxCurve(noise.remapY);
+                    noise.remapYMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                    noise.remapZ = randomizeMinMaxCurve(noise.remapZ);
+                    noise.remapZMultiplier = UnityEngine.Random.Range(0f, 2f);
+                }
+
+                noise.positionAmount = randomizeMinMaxCurve(noise.positionAmount);
+                noise.rotationAmount = randomizeMinMaxCurve(noise.rotationAmount);
+                noise.sizeAmount = randomizeMinMaxCurve(noise.sizeAmount);
+            }
+            #endregion
+
+            #region collision
+            // TODO (maybe?)
+            #endregion
+
+            #region trigger
+            // TODO (maybe?)
+            #endregion
+
+            #region subEmitters
+            // TODO (maybe?)
+            #endregion
+
+            #region textureSheetAnimation
+            ParticleSystem.TextureSheetAnimationModule textureSheetAnimation = ps.textureSheetAnimation;
+            if (textureSheetAnimation.enabled)
+            {
+                switch (textureSheetAnimation.timeMode = Utils.Random.EnumValue<ParticleSystemAnimationTimeMode>())
+                {
+                    case ParticleSystemAnimationTimeMode.FPS:
+                        textureSheetAnimation.fps = UnityEngine.Random.Range(0f, 60f);
+                        break;
+                }
+
+                textureSheetAnimation.numTilesX = UnityEngine.Random.Range(1, 4);
+                textureSheetAnimation.numTilesY = UnityEngine.Random.Range(1, 4);
+
+                textureSheetAnimation.animation = Utils.Random.EnumValue<ParticleSystemAnimationType>();
+
+                textureSheetAnimation.uvChannelMask = Utils.Random.EnumFlag<UVChannelFlags>();
+            }
+            #endregion
+
+            #region lights
             ParticleSystem.LightsModule lights = ps.lights;
             if (lights.enabled && lights.light.Exists())
             {
-                randomizeLight(lights.light);
-            }
+                lights.ratio = UnityEngine.Random.value;
+                lights.useRandomDistribution = Utils.Random.Boolean();
 
-            ParticleSystem.TrailModule trails = ps.trails;
-            if (trails.enabled)
-            {
-                trails.colorOverLifetime = randomizeParticleSystemMinMaxGradient(trails.colorOverLifetime);
-                trails.colorOverTrail = randomizeParticleSystemMinMaxGradient(trails.colorOverTrail);
+                randomizeLight(lights.light);
+
+                lights.useParticleColor = Utils.Random.Boolean();
+                lights.sizeAffectsRange = Utils.Random.Boolean();
+                lights.alphaAffectsIntensity = Utils.Random.Boolean();
+
+                lights.range = randomizeMinMaxCurve(lights.range);
+                lights.rangeMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                lights.intensity = randomizeMinMaxCurve(lights.intensity);
+                lights.intensityMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                lights.maxLights = UnityEngine.Random.Range(0, 100);
             }
+            #endregion
+
+            #region trails
+            ParticleSystem.TrailModule trails = ps.trails;
+            if (trails.enabled ^= Utils.Random.Boolean(0.2f))
+            {
+                trails.mode = Utils.Random.EnumValue<ParticleSystemTrailMode>();
+                trails.ratio = UnityEngine.Random.value;
+
+                trails.lifetime = randomizeMinMaxCurve(trails.lifetime);
+                trails.lifetimeMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                trails.minVertexDistance = UnityEngine.Random.Range(0f, 10f);
+
+                trails.textureMode = Utils.Random.EnumValue<ParticleSystemTrailTextureMode>();
+
+                trails.worldSpace = Utils.Random.Boolean();
+                trails.dieWithParticles = Utils.Random.Boolean();
+                trails.sizeAffectsWidth = Utils.Random.Boolean();
+                trails.sizeAffectsLifetime = Utils.Random.Boolean();
+                trails.inheritParticleColor = Utils.Random.Boolean();
+
+                trails.colorOverLifetime = randomizeMinMaxGradient(trails.colorOverLifetime);
+
+                trails.widthOverTrail = randomizeMinMaxCurve(trails.widthOverTrail);
+                trails.widthOverTrailMultiplier = UnityEngine.Random.Range(0f, 2f);
+
+                trails.colorOverTrail = randomizeMinMaxGradient(trails.colorOverTrail);
+
+                trails.generateLightingData = Utils.Random.Boolean();
+
+                trails.ribbonCount = UnityEngine.Random.Range(1, 5);
+
+                trails.shadowBias = UnityEngine.Random.value;
+
+                trails.splitSubEmitterRibbons = Utils.Random.Boolean();
+
+                trails.attachRibbonsToTransform = Utils.Random.Boolean();
+            }
+            #endregion
         }
 
         [HarmonyPatch(typeof(uSkyManager), nameof(uSkyManager.Awake))]
@@ -515,7 +1056,7 @@ namespace GRandomizer.RandomizerControllers
                     object newValue = original.Key.GetValue(__instance);
                     if (!Equals(original.Value, newValue))
                     {
-                        Utils.DebugLog($"{__instance.name} WaterSurface.{original.Key.Name}: {original.Value} -> {newValue}");
+                        Utils.DebugLog($"WaterSurface.{original.Key.Name}: {original.Value} -> {newValue}");
                     }
                 }
 #endif
@@ -952,6 +1493,30 @@ namespace GRandomizer.RandomizerControllers
         }
 
         [HarmonyPatch]
+        static class LightingController_Update_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<LightingController>(_ => _.Update());
+            }
+
+            static readonly HashSet<int> _randomizerLightingControllers = new HashSet<int>();
+            static void Prefix(LightingController __instance)
+            {
+                if (IsEnabled() && _randomizerLightingControllers.Add(__instance.GetInstanceID()))
+                {
+                    if (__instance.lights != null)
+                    {
+                        foreach (MultiStatesLight light in __instance.lights)
+                        {
+                            randomizeLight(light.light);
+                        }
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch]
         static class Generic_ReplaceColorField_Patch
         {
             struct PatchInfo
@@ -1019,6 +1584,16 @@ namespace GRandomizer.RandomizerControllers
                     new PatchInfo(SymbolExtensions.GetMethodInfo<BloomCreature>(_ => _.Awake()), nameof(BloomCreature.attractColor)),
                     new PatchInfo(SymbolExtensions.GetMethodInfo(() => PingManager.NotifyColor(default)), nameof(PingManager.colorOptions)),
                     new PatchInfo(SymbolExtensions.GetMethodInfo<VFXLerpColor>(_ => _.Awake()), nameof(VFXLerpColor.colorEnd)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<CyclopsSmokeScreenFXController>(_ => _.Start()), nameof(CyclopsSmokeScreenFXController.intensityRemapCurve)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<DayNightLight>(_ => _.Awake()), nameof(DayNightLight.colorR), nameof(DayNightLight.colorG), nameof(DayNightLight.colorB), nameof(DayNightLight.intensity), nameof(DayNightLight.sunFraction), nameof(DayNightLight.replaceColor), nameof(DayNightLight.light)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<EcoManager>(_ => _.Start()), nameof(EcoManager.kSeasonalPhytoPlankton)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<EMPBlast>(_ => _.Start()), nameof(EMPBlast.blastRadius), nameof(EMPBlast.blastHeight)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<EndCreditsManager>(_ => _.Start()), nameof(EndCreditsManager.fadeCurve)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<EnergyEffect>(_ => _.Start()), nameof(EnergyEffect.powerAnim)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<EscapePodCinematicControl>(_ => _.OnIntroStart()), nameof(EscapePodCinematicControl.skyIntensityCurve)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SeamothTorpedoWhirlpool>(_ => _.Awake()), nameof(SeamothTorpedoWhirlpool.explosion), nameof(SeamothTorpedoWhirlpool.rotation)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SubFire>(_ => _.Start()), nameof(SubFire.smokeImpostorRemap)),
+                    new PatchInfo(SymbolExtensions.GetMethodInfo<SunOrbit>(_ => _.Awake()), nameof(SunOrbit.dayNightCurve)),
                 };
 
                 _hasReplacedValues = new bool[patches.Length];
@@ -1058,6 +1633,14 @@ namespace GRandomizer.RandomizerControllers
                 {
                     typeof(Gradient),
                     randomizeGradient_MI
+                },
+                {
+                    typeof(AnimationCurve),
+                    randomizeAnimationCurve_MI
+                },
+                {
+                    typeof(Light),
+                    randomizeLight_MI
                 }
             };
 
@@ -1065,10 +1648,12 @@ namespace GRandomizer.RandomizerControllers
             static void replaceArrayValues<T>(Array array, Behaviour instance)
             {
                 MethodInfo hookMethod = HookMethodsByType[typeof(T)];
+                bool useInstance = hookMethod.GetParameters().Last().ParameterType == typeof(Behaviour);
 
                 for (int i = 0; i < array.Length; i++)
                 {
-                    array.SetValue(hookMethod.Invoke(null, new object[] { array.GetValue(i), instance }), i);
+                    object value = array.GetValue(i);
+                    array.SetValue(hookMethod.Invoke(null, useInstance ? new object[] { value, instance } : new object[] { value }), i);
                 }
             }
 
@@ -1087,9 +1672,14 @@ namespace GRandomizer.RandomizerControllers
                 prefix.Add(new CodeInstruction(OpCodes.Call, IsEnabled_MI));
                 prefix.Add(new CodeInstruction(OpCodes.Brfalse, skipPrefix));
 
-                CodeInstruction callHook(Type fieldType)
+                IEnumerable<CodeInstruction> callHook(Type fieldType, bool includeInstance)
                 {
-                    return new CodeInstruction(OpCodes.Call, fieldType.IsArray ? replaceArrayValues_MI.MakeGenericMethod(fieldType.GetElementType()) : HookMethodsByType[fieldType]);
+                    MethodInfo hookMethod = fieldType.IsArray ? replaceArrayValues_MI.MakeGenericMethod(fieldType.GetElementType()) : HookMethodsByType[fieldType];
+
+                    if (hookMethod.GetParameters().Last().ParameterType == typeof(Behaviour))
+                        yield return new CodeInstruction(includeInstance ? OpCodes.Ldarg_0 : OpCodes.Ldnull);
+
+                    yield return new CodeInstruction(OpCodes.Call, hookMethod);
                 }
 
                 if (patchInfo.StaticHasReplacedIndex != -1)
@@ -1105,8 +1695,7 @@ namespace GRandomizer.RandomizerControllers
                     foreach (FieldInfo field in patchInfo.StaticFields)
                     {
                         prefix.Add(new CodeInstruction(field.FieldType.IsValueType ? OpCodes.Ldsflda : OpCodes.Ldsfld, field));
-                        prefix.Add(new CodeInstruction(OpCodes.Ldnull));
-                        prefix.Add(callHook(field.FieldType));
+                        prefix.AddRange(callHook(field.FieldType, false));
                     }
 
                     // _hasReplacedValues[patchInfo.HasReplacedIndex] = true;
@@ -1122,8 +1711,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     prefix.Add(new CodeInstruction(OpCodes.Ldarg_0));
                     prefix.Add(new CodeInstruction(field.FieldType.IsValueType ? OpCodes.Ldflda : OpCodes.Ldfld, field));
-                    prefix.Add(new CodeInstruction(isUsableBehaviour ? OpCodes.Ldarg_0 : OpCodes.Ldnull));
-                    prefix.Add(callHook(field.FieldType));
+                    prefix.AddRange(callHook(field.FieldType, isUsableBehaviour));
                 }
 
                 prefix.Add(new CodeInstruction(OpCodes.Nop).WithLabels(skipPrefix));

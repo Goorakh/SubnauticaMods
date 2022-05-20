@@ -63,6 +63,11 @@ namespace GRandomizer
 
         public static class Random
         {
+            public static bool Boolean(float chance = 0.5f)
+            {
+                return UnityEngine.Random.value <= chance;
+            }
+
             public static Color Color(float a = 1f)
             {
                 return new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value, a);
@@ -73,6 +78,24 @@ namespace GRandomizer
             public static T EnumValue<T>() where T : Enum
             {
                 return (T)Enum.GetValues(typeof(T)).GetRandomOrDefault();
+            }
+
+            public unsafe static T EnumFlag<T>() where T : unmanaged
+            {
+                Type enumType = typeof(T);
+                if (!enumType.IsEnum)
+                    throw new ArgumentException($"{nameof(T)} is not an enum type");
+
+                if (enumType.GetCustomAttribute(typeof(FlagsAttribute)) == null)
+                    throw new ArgumentException($"{nameof(T)} is not a flags enum type");
+
+                long value = 0;
+                for (int i = 0; i < sizeof(T); i++)
+                {
+                    value |= (Boolean() ? 1L : 0L) << i;
+                }
+
+                return *(T*)(&value + (sizeof(long) - sizeof(T)));
             }
         }
     }
