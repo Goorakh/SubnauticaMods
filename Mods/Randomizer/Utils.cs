@@ -21,11 +21,6 @@ namespace GRandomizer
             return new Vector3(Mathf.Abs(vector3.x), Mathf.Abs(vector3.y), Mathf.Abs(vector3.z));
         }
 
-        public static TechType[] GetAllDefinedTechTypes()
-        {
-            return (TechType[])Enum.GetValues(typeof(TechType));
-        }
-
         public static void LogError(string log, bool showOnScreen = false, int stackOffset = 0)
         {
             logLevel(QModManager.Utility.Logger.Level.Error, log, showOnScreen, stackOffset);
@@ -54,11 +49,6 @@ namespace GRandomizer
             string methodTag = callerMethod?.Name ?? "null";
 
             QModManager.Utility.Logger.Log(level, $"[{methodTag}]: {log}", null, showOnScreen);
-        }
-
-        public static float Clamp01RollOver(float value)
-        {
-            return (value % 1f) + (value < 0f ? 1f : 0f);
         }
 
         public static class Random
