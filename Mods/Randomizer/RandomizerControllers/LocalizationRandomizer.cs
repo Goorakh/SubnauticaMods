@@ -27,14 +27,7 @@ namespace GRandomizer.RandomizerControllers
                     {
                         int formatCount = Utils.GetStringFormatCount(localizedString);
 
-                        if (formatCountToStrings.TryGetValue(formatCount, out List<string> formattedStrings))
-                        {
-                            formattedStrings.Add(localizedString);
-                        }
-                        else
-                        {
-                            formatCountToStrings[formatCount] = new List<string>() { localizedString };
-                        }
+                        formatCountToStrings.GetOrAddNew(formatCount).Add(localizedString);
                     }
 
                     Dictionary<string, string> newLocalizationDictionary = new Dictionary<string, string>();
