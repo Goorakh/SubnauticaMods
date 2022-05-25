@@ -39,6 +39,7 @@ namespace GRandomizer.Util
             if (!_instance.Exists())
             {
                 _instance = new GameObject("GRandomizer_GlobalObject");
+                _instance.AddComponent<GlobalObject>();
 #if DEBUG
                 _instance.AddComponent<DebugController>();
 #endif
