@@ -5,10 +5,11 @@
 	Randomize crashfish powder
 	Replace creepvine seed cluster model
 	Replace table coral chunk models to match replaced item
-	Randomzie fire extinguisher smoke effects (Generic particle system color randomizer?)
+	Lifepod Randomizer:
+		Figure out how to handle the case of your vehicle getting destroyed.
+			Repair it slowly overtime?
+			Make it invincible?
+		Somehow play the intro with override model
 
 Done/Ready to test:
-	Figure out a better structure for ColorRandomizer instead of patching 500 different methods
 	Randomize gas pods
-	Replace encyclopedia text for replaced audio logs (replace with override line subtitle)
-	Randomize color of scanning effect

@@ -1,5 +1,6 @@
 ﻿using GRandomizer.RandomizerControllers;
 using GRandomizer.Util;
+using GRandomizer.Util.Lifepod;
 using HarmonyLib;
 using QModManager.API.ModLoading;
 using QModManager.Utility;
@@ -61,6 +62,8 @@ namespace GRandomizer
             Harmony harmony = new Harmony(modName);
             harmony.PatchAll(assembly);
             Utils.LogInfo($"{harmony.GetPatchedMethods().Count()} methods patched successfully!");
+
+            LifepodModelInfo.InitializeModelInfoByTypeDictionary();
 
             TypeCollection.Clear();
         }

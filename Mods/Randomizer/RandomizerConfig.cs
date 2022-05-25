@@ -51,5 +51,8 @@ namespace GRandomizer
 
         [Toggle("Ping Randomizer")]
         public bool PingRandomizer = true;
+
+        [Toggle("Lifepod Randomizer")]
+        public bool LifepodRandomizer = true;
     }
 }

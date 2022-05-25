@@ -88,11 +88,14 @@ namespace GRandomizer.Util
         }
 
         // FU Unity
-        public static void DisableAllCollidersOfType<T>(this GameObject obj) where T : Collider
+        public static void DisableAllCollidersOfType<T>(this GameObject obj, ColliderFlags flags = ColliderFlags.NonTrigger) where T : Collider
         {
             foreach (T collider in obj.GetComponentsInChildren<T>())
             {
-                collider.enabled = false;
+                if (((flags & ColliderFlags.NonTrigger) != 0 && !collider.isTrigger) || ((flags & ColliderFlags.Trigger) != 0 && collider.isTrigger))
+                {
+                    collider.enabled = false;
+                }
             }
         }
 
@@ -322,6 +325,88 @@ namespace GRandomizer.Util
         public static MethodInfo FindMethod(this IEnumerable<MethodInfo> methods, Type returnType, Type[] parameters)
         {
             return methods.Single(mi => mi.ReturnType == returnType && mi.GetParameters().Select(m => m.ParameterType).SequenceEqual(parameters));
+        }
+
+        public static T AddComponentCopy<T>(this GameObject obj, T source) where T : Component
+        {
+            T newComp = obj.AddComponent<T>();
+
+            foreach (FieldInfo field in AccessTools.GetDeclaredFields(typeof(T)))
+            {
+                if (field.IsStatic)
+                    continue;
+
+                if ((field.IsPublic || field.GetCustomAttribute<SerializeField>() != null) && (!typeof(Behaviour).IsAssignableFrom(field.FieldType) || field.Name.ToLower().Contains("prefab")))
+                {
+                    field.SetValue(newComp, field.GetValue(source));
+                }
+            }
+
+            return newComp;
+        }
+
+        public static T AddComponentChildCopy<T>(this Transform parent, string childName, T source) where T : Component
+        {
+            GameObject newObj = new GameObject(childName);
+            newObj.SetActive(false);
+            newObj.transform.SetParent(parent);
+
+            T newComp = newObj.AddComponentCopy(source);
+            newObj.SetActive(true);
+
+            return newComp;
+        }
+
+        public static InventoryItem Add(this Equipment equipment, EquipmentType slotType, TechType itemType, string preferredSlotID = null)
+        {
+            string slot = preferredSlotID;
+            if ((slot != null && Equipment.GetSlotType(slot) == slotType && equipment.GetTechTypeInSlot(slot) == TechType.None) || equipment.GetFreeSlot(slotType, out slot))
+            {
+                Pickupable pickupable = CraftData.InstantiateFromPrefab(itemType).GetComponent<Pickupable>().Pickup(false);
+                InventoryItem item = new InventoryItem(pickupable);
+                if (!equipment.AddItem(slot, item, true))
+                {
+                    Utils.LogWarning($"Unable to add {itemType} in slot '{slot}'");
+
+                    if (pickupable.Exists())
+                    {
+                        GameObject.Destroy(pickupable.gameObject);
+                    }
+
+                    return null;
+                }
+
+                return item;
+            }
+            else
+            {
+                Utils.LogWarning($"Equipment has no free slot of type {slotType} (preferred: {preferredSlotID ?? "null"})");
+            }
+
+            return null;
+        }
+
+        public static bool TryFindSeamothStorageForSlotID(this SeaMoth seamoth, string storageModuleSlotID, out ItemsContainer container)
+        {
+            int slotIndex = Array.IndexOf(SeaMoth._slotIDs, storageModuleSlotID);
+            if (slotIndex != -1)
+            {
+                container = seamoth.GetStorageInSlot(slotIndex, TechType.VehicleStorageModule);
+                if (container == null)
+                {
+                    Utils.LogWarning($"Could not find storage container for index {slotIndex}");
+                    return false;
+                }
+
+                return true;
+            }
+            else
+            {
+                Utils.LogWarning($"Could not find seamoth slot index for '{storageModuleSlotID}'");
+            }
+
+            container = null;
+            return false;
         }
     }
 }
