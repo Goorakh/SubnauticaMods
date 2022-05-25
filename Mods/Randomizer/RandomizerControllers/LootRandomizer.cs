@@ -785,7 +785,7 @@ namespace GRandomizer.RandomizerControllers
 
                             newModel.PrepareStaticItem();
                             newModel.RemoveAllComponentsNotIn(gasPod.model);
-                            newModel.DisableRigidbodies();
+                            newModel.SetRigidbodiesKinematic(true);
 
                             newModel.SetActive(true);
 

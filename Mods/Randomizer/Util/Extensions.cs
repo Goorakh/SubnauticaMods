@@ -71,11 +71,11 @@ namespace GRandomizer.Util
             return obj.GetComponentInChildren(componentType, includeInactive).Exists();
         }
 
-        public static void DisableRigidbodies(this GameObject obj)
+        public static void SetRigidbodiesKinematic(this GameObject obj, bool kinematic)
         {
             foreach (Rigidbody rb in obj.GetComponentsInChildren<Rigidbody>(true))
             {
-                rb.isKinematic = true;
+                rb.isKinematic = kinematic;
             }
         }
 
@@ -160,7 +160,7 @@ namespace GRandomizer.Util
                     cone.gameObject.SetActive(false);
             }
 
-            obj.DisableRigidbodies();
+            obj.SetRigidbodiesKinematic(true);
         }
 
         public static void AddVFXFabricatingComponentIfMissing(this GameObject obj, bool checkChildrenForExistingComponent)
@@ -327,20 +327,25 @@ namespace GRandomizer.Util
             return methods.Single(mi => mi.ReturnType == returnType && mi.GetParameters().Select(m => m.ParameterType).SequenceEqual(parameters));
         }
 
+        public static void CopyValuesFrom<T>(this T dest, T source, Predicate<FieldInfo> fieldPredicate = null)
+        {
+            foreach (FieldInfo field in AccessTools.GetDeclaredFields(typeof(T)))
+            {
+                if (field.IsStatic || field.IsLiteral)
+                    continue;
+
+                if (fieldPredicate == null || fieldPredicate(field))
+                {
+                    field.SetValue(dest, field.GetValue(source));
+                }
+            }
+        }
+
         public static T AddComponentCopy<T>(this GameObject obj, T source) where T : Component
         {
             T newComp = obj.AddComponent<T>();
 
-            foreach (FieldInfo field in AccessTools.GetDeclaredFields(typeof(T)))
-            {
-                if (field.IsStatic)
-                    continue;
-
-                if ((field.IsPublic || field.GetCustomAttribute<SerializeField>() != null) && (!typeof(Behaviour).IsAssignableFrom(field.FieldType) || field.Name.ToLower().Contains("prefab")))
-                {
-                    field.SetValue(newComp, field.GetValue(source));
-                }
-            }
+            newComp.CopyValuesFrom(source, fi => ((fi.IsPublic && fi.GetCustomAttribute<NonSerializedAttribute>() == null) || fi.GetCustomAttribute<SerializeField>() != null) && (!typeof(Behaviour).IsAssignableFrom(fi.FieldType) || fi.Name.ToLower().Contains("prefab")));
 
             return newComp;
         }
@@ -407,6 +412,13 @@ namespace GRandomizer.Util
 
             container = null;
             return false;
+        }
+
+        public static void TryDisableChild(this Transform root, string path)
+        {
+            Transform child = root.Find(path);
+            if (child.Exists())
+                child.gameObject.SetActive(false);
         }
     }
 }
