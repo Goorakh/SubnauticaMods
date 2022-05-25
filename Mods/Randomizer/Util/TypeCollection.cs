@@ -22,16 +22,25 @@ namespace GRandomizer.Util
             return _allTypes.Get.Where(t => t.Assembly != thisAssembly).ToArray();
         });
 
+        static InitializeOnAccess<Type[]> _allTypesThisAssembly = new InitializeOnAccess<Type[]>(() =>
+        {
+            return Assembly.GetExecutingAssembly().GetTypes();
+        });
+
         static InitializeOnAccessDictionary<TypeFlags, Type[]> _typesByFilter = new InitializeOnAccessDictionary<TypeFlags, Type[]>(flags =>
         {
             IEnumerable<Type> typesBase;
-            if ((flags & TypeFlags.AllExceptThisAssembly) != 0)
+            if ((flags & TypeFlags.AllAssemblies) != 0)
+            {
+                typesBase = _allTypes.Get;
+            }
+            else if ((flags & TypeFlags.OtherAssemblies) != 0)
             {
                 typesBase = _allTypesExceptThisAssembly.Get;
             }
-            else if ((flags & TypeFlags.AllAssemblies) != 0)
+            else if ((flags & TypeFlags.ThisAssembly) != 0)
             {
-                typesBase = _allTypes.Get;
+                typesBase = _allTypesThisAssembly.Get;
             }
             else
             {

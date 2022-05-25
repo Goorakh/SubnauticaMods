@@ -114,7 +114,8 @@ namespace GRandomizer.Util
             MethodInfo[] methods = new MethodInfo[interfaceMethodNames.Length];
             for (int i = 0; i < methods.Length; i++)
             {
-                methods[i] = AccessTools.FirstMethod(interfaceType, m => m.Name == interfaceMethodNames[i]);
+                string interfaceMethodName = interfaceMethodNames[i];
+                methods[i] = AccessTools.FirstMethod(interfaceType, m => m.Name == interfaceMethodName);
             }
 
             return GetImplementations(interfaceType, allowThisAssembly, methods);
@@ -159,7 +160,7 @@ namespace GRandomizer.Util
             }
 #endif
 
-            return from type in TypeCollection.GetAllTypes(TypeFlags.Class | (allowThisAssembly ? TypeFlags.AllAssemblies : TypeFlags.AllExceptThisAssembly))
+            return from type in TypeCollection.GetAllTypes(TypeFlags.Class | (allowThisAssembly ? TypeFlags.AllAssemblies : TypeFlags.OtherAssemblies))
                    where interfaceType.IsAssignableFrom(type)
                    select type.GetInterfaceMap(interfaceType) into map
                    from interfaceMethod in interfaceMethods

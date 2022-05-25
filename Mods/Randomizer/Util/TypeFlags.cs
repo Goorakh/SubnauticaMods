@@ -6,8 +6,9 @@ namespace GRandomizer.Util
     public enum TypeFlags : byte
     {
         None = 0,
-        AllAssemblies = 1 << 0,
-        AllExceptThisAssembly = 1 << 1,
+        OtherAssemblies = 1 << 0,
+        ThisAssembly = 1 << 1,
+        AllAssemblies = OtherAssemblies | ThisAssembly,
         Interface = 1 << 2,
         Class = 1 << 3,
         ValueType = 1 << 4
