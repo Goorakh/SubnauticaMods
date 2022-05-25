@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Xml.Schema;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod
@@ -30,13 +31,17 @@ namespace GRandomizer.Util.Lifepod
             throw new KeyNotFoundException(string.Format(nameof(LifepodModelType) + ".{0} is not implemented", lifepodModelType));
         }
 
+        public virtual bool DisableTutorial => false;
+
+        protected EscapePod _escapePod;
+
         public GameObject ModelObject { get; private set; }
 
-        public virtual void SetPosition(Vector3 position)
+        public virtual void OnLifepodPositioned()
         {
             if (ModelObject.Exists())
             {
-                ModelObject.transform.position = position;
+                updateModelTransform();
             }
             else
             {
@@ -44,13 +49,39 @@ namespace GRandomizer.Util.Lifepod
             }
         }
 
-        protected abstract GameObject spawnModel(EscapePod escapePod);
+        protected abstract GameObject spawnModel();
 
         public void Replace(EscapePod escapePod)
         {
-            if ((ModelObject = spawnModel(escapePod)) != null)
+            _escapePod = escapePod;
+            ModelObject = spawnModel();
+            prepareForIntro();
+        }
+
+        protected virtual void prepareForIntro()
+        {
+            _escapePod.gameObject.DisableAllCollidersOfType<Collider>();
+
+            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
+            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/root/UISpawn");
+            _escapePod.transform.TryDisableChild("ModulesRoot");
+        }
+
+        protected virtual void updateModelTransform()
+        {
+            ModelObject.transform.position = _escapePod.transform.position;
+            ModelObject.transform.rotation = _escapePod.transform.rotation;
+        }
+
+        public virtual void EndIntro(bool skipped)
+        {
+            _escapePod.gameObject.SetActive(false);
+
+            if (!skipped)
             {
-                escapePod.gameObject.DisableAllCollidersOfType<Collider>();
+                GlobalObject.Schedule(IntroLifepodDirector.main.SetHudToActive, 30f);
+                GlobalObject.Schedule(IntroLifepodDirector.main.OpenPDA, 4.1f);
+                GlobalObject.Schedule(IntroLifepodDirector.main.ResetFirstUse, 8f);
             }
         }
     }

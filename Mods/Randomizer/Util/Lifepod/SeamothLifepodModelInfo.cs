@@ -1,13 +1,23 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Reflection;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod
 {
     [LifepodModelType(LifepodModelType.Seamoth)]
-    public sealed class SeamothLifepodModelInfo : LifepodModelInfo
+    public sealed class SeamothLifepodModelInfo : VehicleLifepodModelInfo
     {
+        public override bool DisableTutorial => true;
+
+        protected override void updateModelTransform()
+        {
+            _vehicle.transform.rotation = (_escapePod.transform.localToWorldMatrix * Matrix4x4.Rotate(Quaternion.Euler(0f, 355f, 0f))).rotation;
+            _vehicle.transform.position = _escapePod.transform.TransformPoint(0.8f, 1.5f, -1.3f);
+        }
+
         // TODO: This is run every time the lifepod is initialized, meaning nothing about the seamoth gets saved. Figure out how to serialize this object in the save data to avoid creating it every time.
-        protected override GameObject spawnModel(EscapePod escapePod)
+        protected override GameObject spawnModel()
         {
             GameObject seamothObj = CraftData.InstantiateFromPrefab(TechType.Seamoth);
 
@@ -16,6 +26,8 @@ namespace GRandomizer.Util.Lifepod
             energyMixin.SpawnDefault(1f);
 
             SeaMoth seamoth = seamothObj.GetComponent<SeaMoth>();
+            _vehicle = seamoth;
+
             seamoth.modules.Add(EquipmentType.SeamothModule, TechType.SeamothSolarCharge, SeaMoth.slot1ID);
             InventoryItem storageModule = seamoth.modules.Add(EquipmentType.SeamothModule, TechType.VehicleStorageModule, SeaMoth.slot3ID);
 
@@ -26,7 +38,7 @@ namespace GRandomizer.Util.Lifepod
                 {
                     int width, height;
 
-                    StorageContainer lifepodStorage = escapePod.storageContainer;
+                    StorageContainer lifepodStorage = _escapePod.storageContainer;
                     if (lifepodStorage.Exists())
                     {
                         width = lifepodStorage.width;
@@ -50,8 +62,6 @@ namespace GRandomizer.Util.Lifepod
             {
                 Utils.LogWarning("Seamoth storage module is not in any slot");
             }
-
-            seamoth.EnterVehicle(Player.main, true, false);
 
             #region Fabricator
             GameObject fabricatorObj = CraftData.InstantiateFromPrefab(TechType.Fabricator);

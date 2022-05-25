@@ -135,6 +135,7 @@
     <Compile Include="Util\Lifepod\LifepodModelType.cs" />
     <Compile Include="Util\Lifepod\LifepodModelTypeAttribute.cs" />
     <Compile Include="Util\Lifepod\SeamothLifepodModelInfo.cs" />
+    <Compile Include="Util\Lifepod\VehicleLifepodModelInfo.cs" />
     <Compile Include="Util\LocalGenerator.cs" />
     <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
