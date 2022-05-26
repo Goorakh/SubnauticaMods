@@ -103,6 +103,23 @@ namespace GRandomizer.RandomizerControllers
                 ReplaceColor(ref color, component, float.NaN);
             }
 
+            public static readonly MethodInfo TryReplaceColor_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceColor(ref Discard<Color>.Value, default));
+            public static void TryReplaceColor(ref Color color, Behaviour component)
+            {
+                if (IsEnabled())
+                {
+                    ReplaceColor(ref color, component);
+                }
+            }
+            public static readonly MethodInfo TryReplaceColor32_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceColor(ref Discard<Color32>.Value, default));
+            public static void TryReplaceColor(ref Color32 color, Behaviour component)
+            {
+                if (IsEnabled())
+                {
+                    ReplaceColor(ref color, component);
+                }
+            }
+
             public static readonly MethodInfo tryGetReplacement_MI = SymbolExtensions.GetMethodInfo(() => tryGetReplacement(default, default));
             static Color tryGetReplacement(Color original, Behaviour component)
             {
@@ -136,6 +153,23 @@ namespace GRandomizer.RandomizerControllers
             public static void ReplaceColorGlobal(ref Color32 color)
             {
                 ReplaceColorGlobal(ref color, float.NaN);
+            }
+
+            public static readonly MethodInfo TryReplaceColorGlobal_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceColorGlobal(ref Discard<Color>.Value));
+            public static void TryReplaceColorGlobal(ref Color color)
+            {
+                if (IsEnabled())
+                {
+                    ReplaceColorGlobal(ref color);
+                }
+            }
+            public static readonly MethodInfo TryReplaceColor32Global_MI = SymbolExtensions.GetMethodInfo(() => TryReplaceColorGlobal(ref Discard<Color32>.Value));
+            public static void TryReplaceColorGlobal(ref Color32 color)
+            {
+                if (IsEnabled())
+                {
+                    ReplaceColorGlobal(ref color);
+                }
             }
 
             public static readonly MethodInfo TryGetGlobalReplacement_MI = SymbolExtensions.GetMethodInfo(() => TryGetGlobalReplacement(default));
@@ -1338,11 +1372,11 @@ namespace GRandomizer.RandomizerControllers
                         if (useInstance)
                         {
                             yield return new CodeInstruction(OpCodes.Ldarg_0);
-                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.ReplaceColor_MI);
+                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.TryReplaceColor_MI);
                         }
                         else
                         {
-                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.ReplaceColorGlobal_MI);
+                            yield return new CodeInstruction(OpCodes.Call, ColorReplacer.TryReplaceColorGlobal_MI);
                         }
                     }
 
@@ -1659,8 +1693,6 @@ namespace GRandomizer.RandomizerControllers
 
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original, ILGenerator generator)
             {
-                LocalGenerator localGen = new LocalGenerator(generator);
-
                 PatchInfo patchInfo = _patches.Get[original];
                 bool isUsableBehaviour = typeof(Behaviour).IsAssignableFrom(original.DeclaringType) && !original.IsConstructor && !original.IsStatic;
 
@@ -1944,7 +1976,7 @@ namespace GRandomizer.RandomizerControllers
                                 yield return instruction;
 
                                 yield return new CodeInstruction(useInstance ? OpCodes.Ldarg_0 : OpCodes.Ldnull);
-                                yield return new CodeInstruction(OpCodes.Call, isColor32 ? ColorReplacer.ReplaceColor32_MI : ColorReplacer.ReplaceColor_MI);
+                                yield return new CodeInstruction(OpCodes.Call, isColor32 ? ColorReplacer.TryReplaceColor32_MI : ColorReplacer.TryReplaceColor_MI);
                             }
                             else
                             {
