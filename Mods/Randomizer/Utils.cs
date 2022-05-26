@@ -74,10 +74,10 @@ namespace GRandomizer
             {
                 Type enumType = typeof(T);
                 if (!enumType.IsEnum)
-                    throw new ArgumentException($"{nameof(T)} is not an enum type");
+                    throw new ArgumentException($"{enumType.Name} is not an enum type");
 
                 if (enumType.GetCustomAttribute(typeof(FlagsAttribute)) == null)
-                    throw new ArgumentException($"{nameof(T)} is not a flags enum type");
+                    throw new ArgumentException($"{enumType.Name} is not a flags enum type");
 
                 long value = 0;
                 for (int i = 0; i < sizeof(T); i++)
