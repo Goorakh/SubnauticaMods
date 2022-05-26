@@ -7,13 +7,13 @@ using UnityEngine;
 
 namespace GRandomizer.Util
 {
-    public class SeamothFabricator : MonoBehaviour
+    public class VehicleFabricator : MonoBehaviour
     {
-        public SeaMoth Seamoth;
+        public Vehicle Vehicle;
 
         void Awake()
         {
-            Seamoth = GetComponentInParent<SeaMoth>();
+            Vehicle = GetComponentInParent<Vehicle>();
         }
     }
 }

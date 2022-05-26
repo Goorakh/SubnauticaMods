@@ -26,10 +26,10 @@ namespace GRandomizer.MiscPatches
             {
                 if (GameModeUtils.RequiresPower() && __instance.powerRelay == null)
                 {
-                    SeamothFabricator seamothFabricator = __instance.GetComponent<SeamothFabricator>();
-                    if (seamothFabricator.Exists() && seamothFabricator.Seamoth.Exists())
+                    VehicleFabricator vehicleFabricator = __instance.GetComponent<VehicleFabricator>();
+                    if (vehicleFabricator.Exists() && vehicleFabricator.Vehicle.Exists())
                     {
-                        __result |= seamothFabricator.Seamoth.HasEnoughEnergy(CRAFT_COST);
+                        __result |= vehicleFabricator.Vehicle.HasEnoughEnergy(CRAFT_COST);
                     }
                 }
 
@@ -68,10 +68,10 @@ namespace GRandomizer.MiscPatches
                 {
                     if (GameModeUtils.RequiresPower() && __instance.powerRelay == null)
                     {
-                        SeamothFabricator seamothFabricator = __instance.GetComponent<SeamothFabricator>();
-                        if (seamothFabricator.Exists() && seamothFabricator.Seamoth.Exists())
+                        VehicleFabricator vehicleFabricator = __instance.GetComponent<VehicleFabricator>();
+                        if (vehicleFabricator.Exists() && vehicleFabricator.Vehicle.Exists())
                         {
-                            __result |= seamothFabricator.Seamoth.ConsumeEnergy(CRAFT_COST);
+                            __result |= vehicleFabricator.Vehicle.ConsumeEnergy(CRAFT_COST);
                         }
                     }
 

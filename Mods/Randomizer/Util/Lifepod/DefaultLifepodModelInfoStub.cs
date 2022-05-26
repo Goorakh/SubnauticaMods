@@ -13,8 +13,11 @@ namespace GRandomizer.Util.Lifepod
         {
         }
 
-        protected override GameObject spawnModel()
+        protected override GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio)
         {
+            fabricator = null;
+            medicalCabinet = null;
+            radio = null;
             return null;
         }
     }

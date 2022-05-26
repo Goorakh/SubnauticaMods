@@ -10,14 +10,10 @@ namespace GRandomizer.Util.Lifepod
     {
         public override bool DisableTutorial => true;
 
-        protected override void updateModelTransform()
-        {
-            _vehicle.transform.rotation = (_escapePod.transform.localToWorldMatrix * Matrix4x4.Rotate(Quaternion.Euler(0f, 355f, 0f))).rotation;
-            _vehicle.transform.position = _escapePod.transform.TransformPoint(0.8f, 1.5f, -1.3f);
-        }
+        public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.8f, 1.5f, -1.3f), new Vector3(0f, 355f, 0f));
 
         // TODO: This is run every time the lifepod is initialized, meaning nothing about the seamoth gets saved. Figure out how to serialize this object in the save data to avoid creating it every time.
-        protected override GameObject spawnModel()
+        protected override GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio)
         {
             GameObject seamothObj = CraftData.InstantiateFromPrefab(TechType.Seamoth);
 
@@ -64,61 +60,45 @@ namespace GRandomizer.Util.Lifepod
             }
 
             #region Fabricator
-            GameObject fabricatorObj = CraftData.InstantiateFromPrefab(TechType.Fabricator);
-            fabricatorObj.transform.SetParent(seamothObj.transform, false);
-            fabricatorObj.transform.localPosition = new Vector3(1f, -1f, 1f);
-            fabricatorObj.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            fabricatorObj.transform.localScale = Vector3.one;
+            fabricator = CraftData.InstantiateFromPrefab(TechType.Fabricator);
+            fabricator.transform.SetParent(seamothObj.transform, false);
+            fabricator.transform.localPosition = new Vector3(1f, -1f, 1f);
+            fabricator.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            fabricator.transform.localScale = Vector3.one;
 
-            Constructable fabricatorConstructable = fabricatorObj.GetComponent<Constructable>();
+            Constructable fabricatorConstructable = fabricator.GetComponent<Constructable>();
             if (fabricatorConstructable.Exists())
                 fabricatorConstructable.deconstructionAllowed = false;
 
             // Used by patches to make fabricator draw from the seamoth's energy since it has no PowerRelay component
-            fabricatorObj.AddComponent<SeamothFabricator>();
+            fabricator.AddComponent<VehicleFabricator>();
             #endregion
 
             #region Radio
-            GameObject radioObj = CraftData.InstantiateFromPrefab(TechType.Radio);
-            radioObj.transform.SetParent(seamothObj.transform, false);
-            radioObj.transform.localPosition = new Vector3(-1f, -0.85f, 0.85f);
-            radioObj.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            radioObj.transform.localScale = Vector3.one;
+            radio = CraftData.InstantiateFromPrefab(TechType.Radio);
+            radio.transform.SetParent(seamothObj.transform, false);
+            radio.transform.localPosition = new Vector3(-1f, -0.85f, 0.85f);
+            radio.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
+            radio.transform.localScale = Vector3.one;
 
-            Constructable radioConstructable = radioObj.GetComponent<Constructable>();
+            Constructable radioConstructable = radio.GetComponent<Constructable>();
             if (radioConstructable.Exists())
                 radioConstructable.deconstructionAllowed = false;
             #endregion
 
             #region Medical cabinet
-            GameObject medicalCabinetObj = CraftData.InstantiateFromPrefab(TechType.MedicalCabinet);
-            medicalCabinetObj.transform.SetParent(seamothObj.transform, false);
-            medicalCabinetObj.transform.localPosition = new Vector3(0f, -1.15f, 0.5f);
-            medicalCabinetObj.transform.localEulerAngles = new Vector3(87f, 0f, 0f);
-            medicalCabinetObj.transform.localScale = Vector3.one;
+            medicalCabinet = CraftData.InstantiateFromPrefab(TechType.MedicalCabinet);
+            medicalCabinet.transform.SetParent(seamothObj.transform, false);
+            medicalCabinet.transform.localPosition = new Vector3(0f, -1.15f, 0.5f);
+            medicalCabinet.transform.localEulerAngles = new Vector3(87f, 0f, 0f);
+            medicalCabinet.transform.localScale = Vector3.one;
 
-            Constructable medicalCabinetConstructable = medicalCabinetObj.GetComponent<Constructable>();
+            Constructable medicalCabinetConstructable = medicalCabinet.GetComponent<Constructable>();
             if (medicalCabinetConstructable.Exists())
                 medicalCabinetConstructable.deconstructionAllowed = false;
 
-            medicalCabinetObj.GetComponent<MedicalCabinet>().ForceSpawnMedKit();
+            medicalCabinet.GetComponent<MedicalCabinet>().ForceSpawnMedKit();
             #endregion
-
-            const bool DEBUG_DAMAGE = false;
-            if (GameModeUtils.RequiresSurvival() || DEBUG_DAMAGE)
-            {
-                LiveMixin radioLiveMixin = radioObj.GetComponent<LiveMixin>();
-                if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
-                {
-                    radioLiveMixin.TakeDamage(80f);
-                }
-
-                LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
-                if (playerLiveMixin && playerLiveMixin.IsFullHealth())
-                {
-                    playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
-                }
-            }
 
             return seamothObj;
         }

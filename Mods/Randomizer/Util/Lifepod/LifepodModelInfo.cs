@@ -33,6 +33,8 @@ namespace GRandomizer.Util.Lifepod
 
         public virtual bool DisableTutorial => false;
 
+        public virtual FakeParentData FakeParentData => null;
+
         protected EscapePod _escapePod;
 
         public GameObject ModelObject { get; private set; }
@@ -49,12 +51,30 @@ namespace GRandomizer.Util.Lifepod
             }
         }
 
-        protected abstract GameObject spawnModel();
+        protected abstract GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio);
 
         public void Replace(EscapePod escapePod)
         {
             _escapePod = escapePod;
-            ModelObject = spawnModel();
+
+            ModelObject = spawnModel(out _, out _, out GameObject radio);
+
+            const bool DEBUG_DAMAGE = false;
+            if (GameModeUtils.RequiresSurvival() || DEBUG_DAMAGE)
+            {
+                LiveMixin radioLiveMixin = radio.GetComponent<LiveMixin>();
+                if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
+                {
+                    radioLiveMixin.TakeDamage(80f);
+                }
+
+                LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
+                if (playerLiveMixin && playerLiveMixin.IsFullHealth())
+                {
+                    playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
+                }
+            }
+
             prepareForIntro();
         }
 
@@ -69,15 +89,24 @@ namespace GRandomizer.Util.Lifepod
 
         protected virtual void updateModelTransform()
         {
-            ModelObject.transform.position = _escapePod.transform.position;
-            ModelObject.transform.rotation = _escapePod.transform.rotation;
+            FakeParentData fakeParentData = FakeParentData;
+            if (fakeParentData != null)
+            {
+                ModelObject.transform.rotation = (_escapePod.transform.localToWorldMatrix * Matrix4x4.Rotate(fakeParentData.LocalRotation)).rotation;
+                ModelObject.transform.position = _escapePod.transform.TransformPoint(fakeParentData.LocalPosition);
+            }
+            else
+            {
+                ModelObject.transform.position = _escapePod.transform.position;
+                ModelObject.transform.rotation = _escapePod.transform.rotation;
+            }
         }
 
         public virtual void EndIntro(bool skipped)
         {
             _escapePod.gameObject.SetActive(false);
 
-            if (!skipped)
+            if (!skipped && DisableTutorial)
             {
                 GlobalObject.Schedule(IntroLifepodDirector.main.SetHudToActive, 30f);
                 GlobalObject.Schedule(IntroLifepodDirector.main.OpenPDA, 4.1f);
