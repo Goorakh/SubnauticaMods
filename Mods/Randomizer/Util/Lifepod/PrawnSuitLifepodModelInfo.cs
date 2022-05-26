@@ -14,7 +14,7 @@ namespace GRandomizer.Util.Lifepod
 
         public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.87f, 0.35f, -1.65f), new Vector3(0f, 355f, 0f));
 
-        protected override GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio)
+        protected override void spawnModel(Action<LifepodModelData> onComplete)
         {
             GameObject prawnObj = CraftData.InstantiateFromPrefab(TechType.Exosuit);
 
@@ -36,48 +36,16 @@ namespace GRandomizer.Util.Lifepod
                 container.AddItem(CraftData.InstantiateFromPrefab(itemType).EnsureComponent<Pickupable>().Pickup(false));
             }
 
-            #region Fabricator
-            fabricator = CraftData.InstantiateFromPrefab(TechType.Fabricator);
-            fabricator.transform.SetParent(prawnObj.transform, false);
-            fabricator.transform.localPosition = new Vector3(0f, 0.1f, -0.6f);
-            fabricator.transform.localEulerAngles = new Vector3(0f, 180f, 0f);
-            fabricator.transform.localScale = Vector3.one;
-
-            Constructable fabricatorConstructable = fabricator.GetComponent<Constructable>();
-            if (fabricatorConstructable.Exists())
-                fabricatorConstructable.deconstructionAllowed = false;
+            GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(0f, 0.1f, -0.6f), new Vector3(0f, 180f, 0f), Vector3.zero);
 
             // Used by patches to make fabricator draw from the prawn's energy since it has no PowerRelay component
             fabricator.AddComponent<VehicleFabricator>();
-            #endregion
 
-            #region Radio
-            radio = CraftData.InstantiateFromPrefab(TechType.Radio);
-            radio.transform.SetParent(prawnObj.transform, false);
-            radio.transform.localPosition = new Vector3(-1.25f, 1f, -0.1f);
-            radio.transform.localEulerAngles = new Vector3(0f, 270f, 0f);
-            radio.transform.localScale = Vector3.one;
+            GameObject radio = spawnStaticBuildable(TechType.Radio, _vehicle.transform, new Vector3(-1.25f, 1f, -0.1f), new Vector3(0f, 270f, 0f), Vector3.one);
 
-            Constructable radioConstructable = radio.GetComponent<Constructable>();
-            if (radioConstructable.Exists())
-                radioConstructable.deconstructionAllowed = false;
-            #endregion
+            GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _vehicle.transform, new Vector3(1.25f, 1.2f, -0.15f), new Vector3(0f, 90f, 0f), Vector3.one);
 
-            #region Medical cabinet
-            medicalCabinet = CraftData.InstantiateFromPrefab(TechType.MedicalCabinet);
-            medicalCabinet.transform.SetParent(prawnObj.transform, false);
-            medicalCabinet.transform.localPosition = new Vector3(1.25f, 1.2f, -0.15f);
-            medicalCabinet.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
-            medicalCabinet.transform.localScale = Vector3.one;
-
-            Constructable medicalCabinetConstructable = medicalCabinet.GetComponent<Constructable>();
-            if (medicalCabinetConstructable.Exists())
-                medicalCabinetConstructable.deconstructionAllowed = false;
-
-            medicalCabinet.GetComponent<MedicalCabinet>().ForceSpawnMedKit();
-            #endregion
-
-            return prawnObj;
+            onComplete?.Invoke(new LifepodModelData(prawnObj, fabricator, medicalCabinet, radio));
         }
     }
 }

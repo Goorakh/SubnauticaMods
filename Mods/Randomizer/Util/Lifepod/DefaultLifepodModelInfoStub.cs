@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod
 {
@@ -13,12 +14,12 @@ namespace GRandomizer.Util.Lifepod
         {
         }
 
-        protected override GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio)
+        public override void OnLifepodPositioned()
         {
-            fabricator = null;
-            medicalCabinet = null;
-            radio = null;
-            return null;
+        }
+
+        protected override void spawnModel(Action<LifepodModelData> onComplete)
+        {
         }
     }
 }

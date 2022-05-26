@@ -130,8 +130,11 @@
     <Compile Include="Util\HookFieldFlags.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />
+    <Compile Include="Util\KeepPositionAndRotation.cs" />
+    <Compile Include="Util\Lifepod\CyclopsLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\DefaultLifepodModelInfoStub.cs" />
     <Compile Include="Util\Lifepod\FakeParentData.cs" />
+    <Compile Include="Util\Lifepod\LifepodModelData.cs" />
     <Compile Include="Util\Lifepod\LifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\LifepodModelType.cs" />
     <Compile Include="Util\Lifepod\LifepodModelTypeAttribute.cs" />

@@ -71,12 +71,19 @@ namespace GRandomizer.Util
             return obj.GetComponentInChildren(componentType, includeInactive).Exists();
         }
 
-        public static void SetRigidbodiesKinematic(this GameObject obj, bool kinematic)
+        public static Rigidbody[] SetRigidbodiesKinematic(this GameObject obj, bool kinematic)
         {
+            List<Rigidbody> rigidbodies = new List<Rigidbody>();
             foreach (Rigidbody rb in obj.GetComponentsInChildren<Rigidbody>(true))
             {
-                rb.isKinematic = kinematic;
+                if (rb.isKinematic != kinematic)
+                {
+                    rb.isKinematic = kinematic;
+                    rigidbodies.Add(rb);
+                }
             }
+
+            return rigidbodies.ToArray();
         }
 
         public static void DisableAllComponentsOfType<T>(this GameObject obj) where T : Behaviour
@@ -88,15 +95,23 @@ namespace GRandomizer.Util
         }
 
         // FU Unity
-        public static void DisableAllCollidersOfType<T>(this GameObject obj, ColliderFlags flags = ColliderFlags.NonTrigger) where T : Collider
+        public static Collider[] DisableAllCollidersOfType<T>(this GameObject obj, ColliderFlags flags = ColliderFlags.NonTrigger) where T : Collider
         {
+            List<Collider> colliders = new List<Collider>();
+
             foreach (T collider in obj.GetComponentsInChildren<T>())
             {
+                if (!collider.enabled)
+                    continue;
+
                 if (((flags & ColliderFlags.NonTrigger) != 0 && !collider.isTrigger) || ((flags & ColliderFlags.Trigger) != 0 && collider.isTrigger))
                 {
                     collider.enabled = false;
+                    colliders.Add(collider);
                 }
             }
+
+            return colliders.ToArray();
         }
 
         public static void RemoveAllComponentsNotIn(this GameObject obj, GameObject other)
@@ -419,6 +434,26 @@ namespace GRandomizer.Util
             Transform child = root.Find(path);
             if (child.Exists())
                 child.gameObject.SetActive(false);
+        }
+
+        public static Transform[] DisableAllChildrenExcept(this Transform root, params string[] exclude)
+        {
+            List<Transform> nonDisabledChildren = new List<Transform>();
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (exclude.Contains(value: child.name))
+                {
+                    nonDisabledChildren.Add(child);
+                }
+                else
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+
+            return nonDisabledChildren.ToArray();
         }
     }
 }

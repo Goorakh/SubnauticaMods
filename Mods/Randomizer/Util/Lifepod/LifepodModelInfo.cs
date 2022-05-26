@@ -51,37 +51,44 @@ namespace GRandomizer.Util.Lifepod
             }
         }
 
-        protected abstract GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio);
+        protected abstract void spawnModel(Action<LifepodModelData> onComplete);
 
         public void Replace(EscapePod escapePod)
         {
             _escapePod = escapePod;
 
-            ModelObject = spawnModel(out _, out _, out GameObject radio);
-
-            const bool DEBUG_DAMAGE = false;
-            if (GameModeUtils.RequiresSurvival() || DEBUG_DAMAGE)
+            spawnModel(modelData =>
             {
-                LiveMixin radioLiveMixin = radio.GetComponent<LiveMixin>();
-                if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
+                ModelObject = modelData.MainModel;
+
+                const bool DEBUG_DAMAGE = false;
+                if (GameModeUtils.RequiresSurvival() || DEBUG_DAMAGE)
                 {
-                    radioLiveMixin.TakeDamage(80f);
+                    if (modelData.Radio.Exists())
+                    {
+                        LiveMixin radioLiveMixin = modelData.Radio.liveMixin;
+                        if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
+                        {
+                            radioLiveMixin.TakeDamage(80f);
+                        }
+                    }
+
+                    LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
+                    if (playerLiveMixin.Exists() && playerLiveMixin.IsFullHealth())
+                    {
+                        playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
+                    }
                 }
 
-                LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
-                if (playerLiveMixin && playerLiveMixin.IsFullHealth())
-                {
-                    playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
-                }
-            }
-
-            prepareForIntro();
+                prepareForIntro();
+            });
         }
 
         protected virtual void prepareForIntro()
         {
             _escapePod.gameObject.DisableAllCollidersOfType<Collider>();
 
+            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_LOD1");
             _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
             _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/root/UISpawn");
             _escapePod.transform.TryDisableChild("ModulesRoot");
@@ -92,7 +99,7 @@ namespace GRandomizer.Util.Lifepod
             FakeParentData fakeParentData = FakeParentData;
             if (fakeParentData != null)
             {
-                ModelObject.transform.rotation = (_escapePod.transform.localToWorldMatrix * Matrix4x4.Rotate(fakeParentData.LocalRotation)).rotation;
+                ModelObject.transform.rotation = _escapePod.transform.rotation * fakeParentData.LocalRotation;
                 ModelObject.transform.position = _escapePod.transform.TransformPoint(fakeParentData.LocalPosition);
             }
             else
@@ -104,14 +111,52 @@ namespace GRandomizer.Util.Lifepod
 
         public virtual void EndIntro(bool skipped)
         {
-            _escapePod.gameObject.SetActive(false);
-
-            if (!skipped && DisableTutorial)
+            if (DisableTutorial || skipped)
             {
-                GlobalObject.Schedule(IntroLifepodDirector.main.SetHudToActive, 30f);
-                GlobalObject.Schedule(IntroLifepodDirector.main.OpenPDA, 4.1f);
-                GlobalObject.Schedule(IntroLifepodDirector.main.ResetFirstUse, 8f);
+                _escapePod.gameObject.SetActive(false);
+
+                if (!skipped)
+                {
+                    GlobalObject.Schedule(IntroLifepodDirector.main.SetHudToActive, 30f);
+                    GlobalObject.Schedule(IntroLifepodDirector.main.OpenPDA, 4.1f);
+                    GlobalObject.Schedule(IntroLifepodDirector.main.ResetFirstUse, 8f);
+                }
+
+                cleanup();
             }
+        }
+
+        public virtual void TutorialFinished()
+        {
+            if (!DisableTutorial)
+            {
+                _escapePod.gameObject.SetActive(false);
+                cleanup();
+            }
+        }
+
+        protected virtual void cleanup()
+        {
+        }
+
+        protected virtual GameObject spawnStaticBuildable(TechType type, Transform parent, Vector3 localPos, Vector3 localEuler, Vector3 localScale)
+        {
+            GameObject obj = CraftData.InstantiateFromPrefab(type);
+            obj.transform.SetParent(parent);
+            obj.transform.localPosition = localPos;
+            obj.transform.localEulerAngles = localEuler;
+            obj.transform.localScale = localScale;
+
+            Constructable constructable = obj.GetComponent<Constructable>();
+            if (constructable.Exists())
+                constructable.deconstructionAllowed = false;
+
+            if (type == TechType.MedicalCabinet)
+            {
+                obj.GetComponent<MedicalCabinet>().ForceSpawnMedKit();
+            }
+
+            return obj;
         }
     }
 }

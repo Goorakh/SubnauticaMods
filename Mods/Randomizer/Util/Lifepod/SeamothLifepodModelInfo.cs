@@ -13,7 +13,7 @@ namespace GRandomizer.Util.Lifepod
         public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.8f, 1.5f, -1.3f), new Vector3(0f, 355f, 0f));
 
         // TODO: This is run every time the lifepod is initialized, meaning nothing about the seamoth gets saved. Figure out how to serialize this object in the save data to avoid creating it every time.
-        protected override GameObject spawnModel(out GameObject fabricator, out GameObject medicalCabinet, out GameObject radio)
+        protected override void spawnModel(Action<LifepodModelData> onComplete)
         {
             GameObject seamothObj = CraftData.InstantiateFromPrefab(TechType.Seamoth);
 
@@ -59,48 +59,16 @@ namespace GRandomizer.Util.Lifepod
                 Utils.LogWarning("Seamoth storage module is not in any slot");
             }
 
-            #region Fabricator
-            fabricator = CraftData.InstantiateFromPrefab(TechType.Fabricator);
-            fabricator.transform.SetParent(seamothObj.transform, false);
-            fabricator.transform.localPosition = new Vector3(1f, -1f, 1f);
-            fabricator.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            fabricator.transform.localScale = Vector3.one;
-
-            Constructable fabricatorConstructable = fabricator.GetComponent<Constructable>();
-            if (fabricatorConstructable.Exists())
-                fabricatorConstructable.deconstructionAllowed = false;
+            GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(1f, -1f, 1f), new Vector3(90f, 0f, 0f), Vector3.one);
 
             // Used by patches to make fabricator draw from the seamoth's energy since it has no PowerRelay component
             fabricator.AddComponent<VehicleFabricator>();
-            #endregion
 
-            #region Radio
-            radio = CraftData.InstantiateFromPrefab(TechType.Radio);
-            radio.transform.SetParent(seamothObj.transform, false);
-            radio.transform.localPosition = new Vector3(-1f, -0.85f, 0.85f);
-            radio.transform.localEulerAngles = new Vector3(90f, 0f, 0f);
-            radio.transform.localScale = Vector3.one;
+            GameObject radio = spawnStaticBuildable(TechType.Radio, _vehicle.transform, new Vector3(-1f, -0.85f, 0.85f), new Vector3(90f, 0f, 0f), Vector3.one);
 
-            Constructable radioConstructable = radio.GetComponent<Constructable>();
-            if (radioConstructable.Exists())
-                radioConstructable.deconstructionAllowed = false;
-            #endregion
+            GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _vehicle.transform, new Vector3(0f, -1.15f, 0.5f), new Vector3(87f, 0f, 0f), Vector3.one);
 
-            #region Medical cabinet
-            medicalCabinet = CraftData.InstantiateFromPrefab(TechType.MedicalCabinet);
-            medicalCabinet.transform.SetParent(seamothObj.transform, false);
-            medicalCabinet.transform.localPosition = new Vector3(0f, -1.15f, 0.5f);
-            medicalCabinet.transform.localEulerAngles = new Vector3(87f, 0f, 0f);
-            medicalCabinet.transform.localScale = Vector3.one;
-
-            Constructable medicalCabinetConstructable = medicalCabinet.GetComponent<Constructable>();
-            if (medicalCabinetConstructable.Exists())
-                medicalCabinetConstructable.deconstructionAllowed = false;
-
-            medicalCabinet.GetComponent<MedicalCabinet>().ForceSpawnMedKit();
-            #endregion
-
-            return seamothObj;
+            onComplete?.Invoke(new LifepodModelData(seamothObj, fabricator, medicalCabinet, radio));
         }
     }
 }
