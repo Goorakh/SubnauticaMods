@@ -1,4 +1,5 @@
 ﻿using GRandomizer.Util;
+using GRandomizer.Util.FabricatorPower;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -26,10 +27,10 @@ namespace GRandomizer.MiscPatches
             {
                 if (GameModeUtils.RequiresPower() && __instance.powerRelay == null)
                 {
-                    VehicleFabricator vehicleFabricator = __instance.GetComponent<VehicleFabricator>();
-                    if (vehicleFabricator.Exists() && vehicleFabricator.Vehicle.Exists())
+                    FabricatorPowerSource powerSource = __instance.GetComponent<FabricatorPowerSource>();
+                    if (powerSource.Exists())
                     {
-                        __result |= vehicleFabricator.Vehicle.HasEnoughEnergy(CRAFT_COST);
+                        __result |= powerSource.HasEnoughPower(CRAFT_COST);
                     }
                 }
 
@@ -68,10 +69,10 @@ namespace GRandomizer.MiscPatches
                 {
                     if (GameModeUtils.RequiresPower() && __instance.powerRelay == null)
                     {
-                        VehicleFabricator vehicleFabricator = __instance.GetComponent<VehicleFabricator>();
-                        if (vehicleFabricator.Exists() && vehicleFabricator.Vehicle.Exists())
+                        FabricatorPowerSource powerSource = __instance.GetComponent<FabricatorPowerSource>();
+                        if (powerSource.Exists())
                         {
-                            __result |= vehicleFabricator.Vehicle.ConsumeEnergy(CRAFT_COST);
+                            __result |= powerSource.ConsumeEnergy(CRAFT_COST);
                         }
                     }
 

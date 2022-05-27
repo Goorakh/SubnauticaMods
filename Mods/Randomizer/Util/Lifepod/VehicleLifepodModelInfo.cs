@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod
@@ -17,6 +18,8 @@ namespace GRandomizer.Util.Lifepod
             base.prepareForIntro();
 
             _vehicle.useRigidbody.isKinematic = true;
+
+            _vehicle.gameObject.AddComponent<VehicleLifepod>();
         }
 
         public override void EndIntro(bool skipped)
@@ -31,6 +34,11 @@ namespace GRandomizer.Util.Lifepod
             yield return new WaitForEndOfFrame();
             _vehicle.useRigidbody.isKinematic = false;
             _vehicle.EnterVehicle(Player.main, true, false);
+        }
+
+        public override void RespawnPlayer(Player player)
+        {
+            _vehicle.EnterVehicle(player, true, false);
         }
     }
 }

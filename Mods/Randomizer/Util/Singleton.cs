@@ -7,13 +7,13 @@ using UnityEngine;
 
 namespace GRandomizer.Util
 {
-    public class VehicleFabricator : MonoBehaviour
+    public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
-        public Vehicle Vehicle;
+        public static T Instance { get; private set; }
 
-        void Awake()
+        protected virtual void Awake()
         {
-            Vehicle = GetComponentInParent<Vehicle>();
+            Instance = (T)this;
         }
     }
 }

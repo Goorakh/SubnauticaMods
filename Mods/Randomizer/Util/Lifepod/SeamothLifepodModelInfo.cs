@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GRandomizer.Util.FabricatorPower;
+using System;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using UnityEngine;
@@ -66,7 +67,7 @@ namespace GRandomizer.Util.Lifepod
             GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(1f, -1f, 1f), new Vector3(90f, 0f, 0f));
 
             // Used by patches to make fabricator draw from the seamoth's energy since it has no PowerRelay component
-            fabricator.AddComponent<VehicleFabricator>();
+            fabricator.AddComponent<VehicleFabricatorPowerSource>();
 
             GameObject radio = spawnStaticBuildable(TechType.Radio, _vehicle.transform, new Vector3(-1f, -0.85f, 0.85f), new Vector3(90f, 0f, 0f));
 

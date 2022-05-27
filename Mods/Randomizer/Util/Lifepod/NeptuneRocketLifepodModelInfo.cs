@@ -1,4 +1,5 @@
 ﻿using GRandomizer.MiscPatches;
+using GRandomizer.Util.FabricatorPower;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,8 +15,8 @@ namespace GRandomizer.Util.Lifepod
         const float ROCKET_HEIGHT = 37.75f;
 
         Rocket _rocket;
-        Transform _ladderTrigger;
-        Transform _launchRocketTrigger;
+
+        Transform[] _objectsToDisableDuringIntro;
 
         public NeptuneRocketLifepodModelInfo(LifepodModelType type) : base(type)
         {
@@ -59,16 +60,19 @@ namespace GRandomizer.Util.Lifepod
                 rocketPreflightCheckManager.rocketReadyDelay = true;
             }
 
-            _ladderTrigger = _rocket.transform.Find("Stage03/BaseRoomLadderTop");
-            if (_ladderTrigger.Exists())
+            _objectsToDisableDuringIntro = new Transform[]
             {
-                _ladderTrigger.gameObject.SetActive(false);
-            }
+                _rocket.transform.Find("Stage03/BaseRoomLadderTop"),
+                _rocket.transform.Find("Stage03/EndSequenceTrigger"),
+                _rocket.transform.Find("Stage03/rocketship_stage_03/Time_capsule/TimeCapsuleTrigger/Collision")
+            };
 
-            _launchRocketTrigger = _rocket.transform.Find("Stage03/EndSequenceTrigger");
-            if (_launchRocketTrigger.Exists())
+            foreach (Transform disableDuringIntro in _objectsToDisableDuringIntro)
             {
-                _launchRocketTrigger.gameObject.SetActive(false);
+                if (disableDuringIntro.Exists())
+                {
+                    disableDuringIntro.gameObject.SetActive(false);
+                }
             }
         }
 
@@ -95,6 +99,7 @@ namespace GRandomizer.Util.Lifepod
             }
 
             GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _rocket.transform, new Vector3(-2.8f, 38.5f, 2.8f), new Vector3(25f, 135f, 0f));
+            fabricator.AddComponent<InfiniteFabricatorPowerSource>();
 
             GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _rocket.transform, new Vector3(0f, 38.4f, -1.3f), new Vector3(355f, 180f, 0f));
 
@@ -123,14 +128,12 @@ namespace GRandomizer.Util.Lifepod
         {
             base.cleanup();
 
-            if (_ladderTrigger.Exists())
+            foreach (Transform disableDuringIntro in _objectsToDisableDuringIntro)
             {
-                _ladderTrigger.gameObject.SetActive(true);
-            }
-
-            if (_launchRocketTrigger.Exists())
-            {
-                _launchRocketTrigger.gameObject.SetActive(true);
+                if (disableDuringIntro.Exists())
+                {
+                    disableDuringIntro.gameObject.SetActive(true);
+                }
             }
 
             KeepPositionAndRotation keepPosRot = _rocket.GetComponent<KeepPositionAndRotation>();
@@ -138,6 +141,11 @@ namespace GRandomizer.Util.Lifepod
             {
                 GameObject.Destroy(keepPosRot);
             }
+        }
+
+        public override void RespawnPlayer(Player player)
+        {
+            player.SetPosition(_rocket.transform.TransformPoint(-2f, 38.5f, 1.75f), _rocket.transform.rotation * Quaternion.Euler(0f, 160f, 0f));
         }
     }
 }

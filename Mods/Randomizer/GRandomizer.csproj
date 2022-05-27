@@ -100,6 +100,7 @@
     <Compile Include="MiscPatches\EnsurePickupable_Patch.cs" />
     <Compile Include="MiscPatches\GhostCrafter_PowerRelay_Patch.cs" />
     <Compile Include="MiscPatches\SubtitlePatcher.cs" />
+    <Compile Include="MiscPatches\Vehicle_EnterVehicle_Patch.cs" />
     <Compile Include="Mod.cs" />
     <Compile Include="MiscPatches\RecipeCorrector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -126,6 +127,8 @@
     <Compile Include="Util\DualDictionary.cs" />
     <Compile Include="Util\ConfigReader.cs" />
     <Compile Include="Util\Extensions.cs" />
+    <Compile Include="Util\Fabricator\FabricatorPowerSource.cs" />
+    <Compile Include="Util\Fabricator\InfiniteFabricatorPowerSource.cs" />
     <Compile Include="Util\GRConstants.cs" />
     <Compile Include="Util\HookFieldFlags.cs" />
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
@@ -141,12 +144,14 @@
     <Compile Include="Util\Lifepod\NeptuneRocketLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\PrawnSuitLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\SeamothLifepodModelInfo.cs" />
+    <Compile Include="Util\Lifepod\VehicleLifepod.cs" />
     <Compile Include="Util\Lifepod\VehicleLifepodModelInfo.cs" />
     <Compile Include="Util\LocalGenerator.cs" />
     <Compile Include="Util\Mutator.cs" />
     <Compile Include="Util\GlobalObject.cs" />
     <Compile Include="Util\PatchingExtensions.cs" />
-    <Compile Include="Util\VehicleFabricator.cs" />
+    <Compile Include="Util\Fabricator\VehicleFabricatorPowerSource.cs" />
+    <Compile Include="Util\Singleton.cs" />
     <Compile Include="Util\SoundPatcher.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\TypeCollection.cs" />

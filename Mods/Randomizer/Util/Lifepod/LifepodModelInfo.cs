@@ -175,5 +175,10 @@ namespace GRandomizer.Util.Lifepod
         {
             return originalPos;
         }
+
+        public virtual void RespawnPlayer(Player player)
+        {
+            Utils.LogError($"Not implemented for {GetType().Name}");
+        }
     }
 }

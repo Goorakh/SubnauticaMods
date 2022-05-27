@@ -45,6 +45,8 @@ namespace GRandomizer.RandomizerControllers
         [HarmonyPatch]
         static class EscapePod_StartAtPosition_Patch
         {
+            public static bool IsSettingPosition = false;
+
             static MethodInfo TargetMethod()
             {
                 return SymbolExtensions.GetMethodInfo<EscapePod>(_ => _.StartAtPosition(default));
@@ -52,6 +54,8 @@ namespace GRandomizer.RandomizerControllers
 
             static void Prefix(ref Vector3 position)
             {
+                IsSettingPosition = true;
+
                 if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
                 {
                     position = _overrideModel.Get.GetOverrideLifepodPosition(position);
@@ -64,6 +68,8 @@ namespace GRandomizer.RandomizerControllers
                 {
                     _overrideModel.Get.OnLifepodPositioned();
                 }
+
+                IsSettingPosition = false;
             }
         }
 
@@ -146,6 +152,66 @@ namespace GRandomizer.RandomizerControllers
                 {
                     _overrideModel.Get.TutorialFinished();
                 }
+            }
+        }
+
+        [HarmonyPatch]
+        static class EscapePod_main_Patch
+        {
+            static IEnumerable<MethodInfo> TargetMethods()
+            {
+                yield return AccessTools.DeclaredMethod(typeof(AvoidEscapePod), nameof(AvoidEscapePod.Evaluate));
+                yield return AccessTools.DeclaredMethod(typeof(AvoidEscapePod), nameof(AvoidEscapePod.StopPerform));
+                yield return AccessTools.DeclaredMethod(typeof(AvoidEscapePod), nameof(AvoidEscapePod.Perform));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                FieldInfo EscapePod_main_FI = AccessTools.DeclaredField(typeof(EscapePod), nameof(EscapePod.main));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    yield return instruction;
+
+                    if (instruction.LoadsField(EscapePod_main_FI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.GetEscapePod_main_MI);
+                    }
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo GetEscapePod_main_MI = SymbolExtensions.GetMethodInfo(() => GetEscapePod_main(default));
+                static MonoBehaviour GetEscapePod_main(EscapePod main)
+                {
+                    if (IsEnabled() && VehicleLifepod.Instance.Exists())
+                    {
+                        return VehicleLifepod.Instance;
+                    }
+
+                    return main;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class EscapePod_RespawnPlayer_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<EscapePod>(_ => _.RespawnPlayer());
+            }
+
+            static bool Prefix()
+            {
+                if (IsEnabled() && !EscapePod_StartAtPosition_Patch.IsSettingPosition && _overrideModel.Get.Type != LifepodModelType.Default)
+                {
+                    _overrideModel.Get.RespawnPlayer(Player.main);
+                    return false;
+                }
+
+                return true;
             }
         }
     }
