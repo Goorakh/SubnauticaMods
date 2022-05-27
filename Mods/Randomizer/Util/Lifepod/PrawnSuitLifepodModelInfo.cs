@@ -36,7 +36,7 @@ namespace GRandomizer.Util.Lifepod
                 container.AddItem(CraftData.InstantiateFromPrefab(itemType).EnsureComponent<Pickupable>().Pickup(false));
             }
 
-            GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(0f, 0.1f, -0.6f), new Vector3(0f, 180f, 0f), Vector3.zero);
+            GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(0f, 0.1f, -0.6f), new Vector3(0f, 180f, 0f), Vector3.one);
 
             // Used by patches to make fabricator draw from the prawn's energy since it has no PowerRelay component
             fabricator.AddComponent<VehicleFabricator>();
