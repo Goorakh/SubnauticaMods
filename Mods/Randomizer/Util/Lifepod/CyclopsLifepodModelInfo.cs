@@ -21,6 +21,7 @@ namespace GRandomizer.Util.Lifepod
         Behaviour[] _behavioursToEnable;
 
         Openable _doorToUnlock;
+        Transform _ladderTrigger;
 
         protected override void prepareForIntro()
         {
@@ -38,6 +39,23 @@ namespace GRandomizer.Util.Lifepod
 
                 _life_pod_seat_01_L = enabledChildren.FirstOrDefault(t => t.name == LIFE_POD_SEAT_01_L);
                 _fire_extinguisher_01_tp = enabledChildren.FirstOrDefault(t => t.name == FIRE_EXTINGUISHER_01_TP);
+            }
+
+            Transform frontExtinguisherRoot = _cyclops.transform.Find("FireExtinguisherHolder_Fore");
+            if (frontExtinguisherRoot.Exists())
+            {
+                FireExtinguisherHolder fireExtinguisherHolder = frontExtinguisherRoot.GetComponent<FireExtinguisherHolder>();
+                if (frontExtinguisherRoot.Exists())
+                {
+                    fireExtinguisherHolder.hasTank = false;
+                    fireExtinguisherHolder.tankObject.SetActive(false);
+                }
+            }
+
+            _ladderTrigger = _cyclops.transform.Find("CyclopsMeshAnimated/LongLadderTopTrigger");
+            if (_ladderTrigger.Exists())
+            {
+                _ladderTrigger.gameObject.SetActive(false);
             }
 
             _cyclops.StartCoroutine(waitThenCloseDoor());
@@ -65,6 +83,7 @@ namespace GRandomizer.Util.Lifepod
                     openable.SetEnabled(openable.openChecker, true);
                     openable.SetEnabled(openable.closeChecker, false);
 
+                    openable.canLock = true;
                     openable.LockDoors();
 
                     _doorToUnlock = openable;
@@ -164,6 +183,11 @@ namespace GRandomizer.Util.Lifepod
             if (_doorToUnlock.Exists())
             {
                 _doorToUnlock.UnlockDoors();
+            }
+
+            if (_ladderTrigger.Exists())
+            {
+                _ladderTrigger.gameObject.SetActive(true);
             }
 
             KeepPositionAndRotation keepPosRot = _cyclops.GetComponent<KeepPositionAndRotation>();
