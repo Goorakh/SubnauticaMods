@@ -145,13 +145,13 @@ namespace GRandomizer.Util.Lifepod
 
                 _cyclops.StartCoroutine(waitThenAddPowerCells());
 
-                GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _cyclops.transform, new Vector3(-2.0f, 0.5f, -15.8f), new Vector3(0f, 180f, 0f), Vector3.one);
+                GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _cyclops.transform, new Vector3(-2.0f, 0.5f, -15.8f), new Vector3(0f, 180f, 0f));
 
-                GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _cyclops.transform, new Vector3(2.7f, 0.7f, -21.8f), new Vector3(0f, 269.1f, 0f), Vector3.one);
+                GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _cyclops.transform, new Vector3(2.7f, 0.7f, -21.8f), new Vector3(0f, 269.1f, 0f));
 
-                GameObject radio = spawnStaticBuildable(TechType.Radio, _cyclops.transform, new Vector3(1.9f, 0.4f, -15.8f), new Vector3(0f, 180f, 0f), Vector3.one);
+                GameObject radio = spawnStaticBuildable(TechType.Radio, _cyclops.transform, new Vector3(1.9f, 0.4f, -15.8f), new Vector3(0f, 180f, 0f));
 
-                GameObject smallLocker = spawnStaticBuildable(TechType.SmallLocker, _cyclops.transform, new Vector3(-2.6f, 0.6f, -17.3f), new Vector3(0f, 89.1f, 0f), Vector3.one);
+                GameObject smallLocker = spawnStaticBuildable(TechType.SmallLocker, _cyclops.transform, new Vector3(-2.6f, 0.6f, -17.3f), new Vector3(0f, 89.1f, 0f));
 
                 ItemsContainer container = smallLocker.GetComponent<StorageContainer>()?.container;
                 if (container != null)
@@ -172,10 +172,6 @@ namespace GRandomizer.Util.Lifepod
 
             foreach (Rigidbody rb in _rigidbodiesToEnable)
             {
-#if VERBOSE
-                Utils.DebugLog($"Enabling cyclops rigidbody {rb.name}");
-#endif
-
                 rb.isKinematic = false;
             }
 

@@ -165,5 +165,15 @@ namespace GRandomizer.Util.Lifepod
 
             return obj;
         }
+
+        protected GameObject spawnStaticBuildable(TechType type, Transform parent, Vector3 localPos, Vector3 localEuler)
+        {
+            return spawnStaticBuildable(type, parent, localPos, localEuler, Vector3.one);
+        }
+
+        public virtual Vector3 GetOverrideLifepodPosition(Vector3 originalPos)
+        {
+            return originalPos;
+        }
     }
 }

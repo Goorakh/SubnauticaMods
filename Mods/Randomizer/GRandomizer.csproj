@@ -138,6 +138,7 @@
     <Compile Include="Util\Lifepod\LifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\LifepodModelType.cs" />
     <Compile Include="Util\Lifepod\LifepodModelTypeAttribute.cs" />
+    <Compile Include="Util\Lifepod\NeptuneRocketLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\PrawnSuitLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\SeamothLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\VehicleLifepodModelInfo.cs" />

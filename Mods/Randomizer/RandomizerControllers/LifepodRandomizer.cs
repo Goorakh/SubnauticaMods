@@ -50,6 +50,14 @@ namespace GRandomizer.RandomizerControllers
                 return SymbolExtensions.GetMethodInfo<EscapePod>(_ => _.StartAtPosition(default));
             }
 
+            static void Prefix(ref Vector3 position)
+            {
+                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
+                {
+                    position = _overrideModel.Get.GetOverrideLifepodPosition(position);
+                }
+            }
+
             static void Postfix()
             {
                 if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
