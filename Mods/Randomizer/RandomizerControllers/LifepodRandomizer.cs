@@ -128,6 +128,14 @@ namespace GRandomizer.RandomizerControllers
 
                 return true;
             }
+
+            static void Postfix(bool __result)
+            {
+                if (!__result && IsEnabled())
+                {
+                    _overrideModel.Get.TutorialFinished();
+                }
+            }
         }
     }
 }
