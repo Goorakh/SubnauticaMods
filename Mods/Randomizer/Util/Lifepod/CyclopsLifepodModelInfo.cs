@@ -135,7 +135,8 @@ namespace GRandomizer.Util.Lifepod
                 _behavioursToEnable = new Behaviour[]
                 {
                     _cyclops.worldForces,
-                    _cyclops.GetComponent<Stabilizer>()
+                    _cyclops.GetComponent<Stabilizer>(),
+                    _cyclops.GetComponentInChildren<PilotingChair>()
                 };
 
                 foreach (Behaviour behaviour in _behavioursToEnable)
