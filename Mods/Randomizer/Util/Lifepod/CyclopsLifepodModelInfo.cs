@@ -45,7 +45,7 @@ namespace GRandomizer.Util.Lifepod
             if (frontExtinguisherRoot.Exists())
             {
                 FireExtinguisherHolder fireExtinguisherHolder = frontExtinguisherRoot.GetComponent<FireExtinguisherHolder>();
-                if (frontExtinguisherRoot.Exists())
+                if (fireExtinguisherHolder.Exists())
                 {
                     fireExtinguisherHolder.hasTank = false;
                     fireExtinguisherHolder.tankObject.SetActive(false);
