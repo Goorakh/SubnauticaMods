@@ -23,6 +23,10 @@ namespace GRandomizer.Util.Lifepod
         Openable _doorToUnlock;
         Transform _ladderTrigger;
 
+        public CyclopsLifepodModelInfo(LifepodModelType type) : base(type)
+        {
+        }
+
         protected override void prepareForIntro()
         {
             base.prepareForIntro();

@@ -35,7 +35,10 @@ namespace GRandomizer.RandomizerControllers
                 if (!IsEnabled())
                     return;
 
-                _overrideModel.Get.Replace(__instance);
+                if (_overrideModel.Get.Type != LifepodModelType.Default)
+                {
+                    _overrideModel.Get.Replace(__instance);
+                }
             }
         }
 
@@ -49,7 +52,7 @@ namespace GRandomizer.RandomizerControllers
 
             static void Postfix()
             {
-                if (IsEnabled())
+                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
                 {
                     _overrideModel.Get.OnLifepodPositioned();
                 }
@@ -66,7 +69,7 @@ namespace GRandomizer.RandomizerControllers
 
             static void Prefix(bool isInterrupted)
             {
-                if (IsEnabled())
+                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
                 {
                     _overrideModel.Get.EndIntro(isInterrupted);
                 }
@@ -102,7 +105,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo ShouldPlayIntro_Postfix_MI = SymbolExtensions.GetMethodInfo(() => ShouldPlayIntro_Postfix(default));
                 static void ShouldPlayIntro_Postfix(bool __result)
                 {
-                    if (IsEnabled() && !__result)
+                    if (IsEnabled() && !__result && _overrideModel.Get.Type != LifepodModelType.Default)
                     {
                         _overrideModel.Get.EndIntro(true);
                     }
@@ -120,7 +123,7 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix(ref bool __result)
             {
-                if (IsEnabled() && _overrideModel.Get.DisableTutorial)
+                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default && _overrideModel.Get.DisableTutorial)
                 {
                     __result = false;
                     return false;
@@ -131,7 +134,7 @@ namespace GRandomizer.RandomizerControllers
 
             static void Postfix(bool __result)
             {
-                if (!__result && IsEnabled())
+                if (!__result && IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
                 {
                     _overrideModel.Get.TutorialFinished();
                 }

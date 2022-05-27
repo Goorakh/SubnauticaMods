@@ -10,6 +10,13 @@ namespace GRandomizer.Util.Lifepod
 {
     public abstract class LifepodModelInfo
     {
+        public readonly LifepodModelType Type;
+
+        public LifepodModelInfo(LifepodModelType type)
+        {
+            Type = type;
+        }
+
         static Dictionary<LifepodModelType, LifepodModelInfo> _modelInfoByType;
         public static void InitializeModelInfoByTypeDictionary()
         {
@@ -18,7 +25,7 @@ namespace GRandomizer.Util.Lifepod
 
             _modelInfoByType = (from type in TypeCollection.GetAllTypes(TypeFlags.ThisAssembly | TypeFlags.Class)
                                 where !type.IsAbstract && typeof(LifepodModelInfo).IsAssignableFrom(type)
-                                select new { type, ModelType = type.GetCustomAttribute<LifepodModelTypeAttribute>().Type }).ToDictionary(a => a.ModelType, a => (LifepodModelInfo)Activator.CreateInstance(a.type));
+                                select new { type, ModelType = type.GetCustomAttribute<LifepodModelTypeAttribute>().Type }).ToDictionary(a => a.ModelType, a => (LifepodModelInfo)Activator.CreateInstance(a.type, new object[] { a.ModelType }));
         }
 
         public static LifepodModelInfo GetByType(LifepodModelType lifepodModelType)

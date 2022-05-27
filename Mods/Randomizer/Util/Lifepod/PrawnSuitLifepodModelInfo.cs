@@ -10,6 +10,10 @@ namespace GRandomizer.Util.Lifepod
     [LifepodModelType(LifepodModelType.PrawnSuit)]
     public sealed class PrawnSuitLifepodModelInfo : VehicleLifepodModelInfo
     {
+        public PrawnSuitLifepodModelInfo(LifepodModelType type) : base(type)
+        {
+        }
+
         public override bool DisableTutorial => true;
 
         public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.87f, 0.35f, -1.65f), new Vector3(0f, 355f, 0f));

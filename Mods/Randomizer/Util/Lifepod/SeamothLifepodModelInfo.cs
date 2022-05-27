@@ -8,6 +8,10 @@ namespace GRandomizer.Util.Lifepod
     [LifepodModelType(LifepodModelType.Seamoth)]
     public sealed class SeamothLifepodModelInfo : VehicleLifepodModelInfo
     {
+        public SeamothLifepodModelInfo(LifepodModelType type) : base(type)
+        {
+        }
+
         public override bool DisableTutorial => true;
 
         public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.8f, 1.5f, -1.3f), new Vector3(0f, 355f, 0f));

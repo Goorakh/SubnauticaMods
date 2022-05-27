@@ -8,6 +8,10 @@ namespace GRandomizer.Util.Lifepod
         protected Vehicle _vehicle;
         protected Transform _vehicleParent;
 
+        protected VehicleLifepodModelInfo(LifepodModelType type) : base(type)
+        {
+        }
+
         protected override void prepareForIntro()
         {
             base.prepareForIntro();

@@ -6,15 +6,7 @@ namespace GRandomizer.Util.Lifepod
     [LifepodModelType(LifepodModelType.Default)]
     public sealed class DefaultLifepodModelInfoStub : LifepodModelInfo
     {
-        protected override void prepareForIntro()
-        {
-        }
-
-        public override void EndIntro(bool skipped)
-        {
-        }
-
-        public override void OnLifepodPositioned()
+        public DefaultLifepodModelInfoStub(LifepodModelType type) : base(type)
         {
         }
 
