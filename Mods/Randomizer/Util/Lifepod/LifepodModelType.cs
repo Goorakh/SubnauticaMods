@@ -8,6 +8,7 @@
         Cyclops,
         NeptuneRocket,
         CrashfishHome,
-        Habitat
+        Habitat,
+        JellyShroom
     }
 }

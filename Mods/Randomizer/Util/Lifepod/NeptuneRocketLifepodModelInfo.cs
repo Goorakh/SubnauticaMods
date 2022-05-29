@@ -26,13 +26,6 @@ namespace GRandomizer.Util.Lifepod
         {
             base.prepareForIntro();
 
-            Transform interiorModelRoot = _escapePod.transform.Find("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
-            if (interiorModelRoot.Exists())
-            {
-                interiorModelRoot.gameObject.SetActive(true);
-                interiorModelRoot.DisableAllChildrenExcept("fire_extinguisher_01_tp");
-            }
-
             _rocket.elevatorState = Rocket.RocketElevatorStates.AtTop;
             _rocket.elevatorPosition = 1f;
             _rocket.SetElevatorPosition();

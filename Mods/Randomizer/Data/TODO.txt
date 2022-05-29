@@ -9,7 +9,7 @@
 		Figure out how to handle the case of your vehicle getting destroyed.
 			Repair it slowly overtime?
 			Make it invincible?
-		Somehow play the intro with override model
+		Add a minimum depth check for big models (cyclops & rocket) to avoid clipping into terrain
 
 Done/Ready to test:
 	Randomize gas pods

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -10,6 +11,17 @@ namespace GRandomizer.Util.Lifepod
 {
     public abstract class LifepodModelInfo
     {
+        [Flags]
+        public enum InteriorObjectFlags : byte
+        {
+            None,
+            FireExtinguisher = 1 << 0,
+            SeatL = 1 << 1,
+            Storage = 1 << 2,
+            Ladder = 1 << 3,
+            FlyingPanel = 1 << 4
+        }
+
         public readonly LifepodModelType Type;
 
         public LifepodModelInfo(LifepodModelType type)
@@ -39,6 +51,8 @@ namespace GRandomizer.Util.Lifepod
         }
 
         public virtual bool DisableTutorial => false;
+
+        public virtual InteriorObjectFlags ShowInteriorObjects => DisableTutorial ? InteriorObjectFlags.None : InteriorObjectFlags.FireExtinguisher;
 
         public virtual FakeParentData FakeParentData => null;
 
@@ -91,14 +105,53 @@ namespace GRandomizer.Util.Lifepod
             });
         }
 
+        IEnumerator waitThenDisableMedicalCabinet()
+        {
+            yield return new WaitForSeconds(1f);
+
+            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01");
+            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01_base");
+        }
+
         protected virtual void prepareForIntro()
         {
             _escapePod.gameObject.DisableAllCollidersOfType<Collider>();
 
             _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_LOD1");
-            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
             _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/root/UISpawn");
             _escapePod.transform.TryDisableChild("ModulesRoot");
+
+            Transform interiorModelRoot = _escapePod.transform.Find("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
+            if (interiorModelRoot.Exists())
+            {
+                InteriorObjectFlags interiorFlags = ShowInteriorObjects;
+                if (interiorFlags == InteriorObjectFlags.None)
+                {
+                    interiorModelRoot.gameObject.SetActive(false);
+                }
+                else
+                {
+                    List<string> showChildren = new List<string>();
+
+                    if ((interiorFlags & InteriorObjectFlags.FireExtinguisher) != 0)
+                        showChildren.Add("fire_extinguisher_01_tp");
+
+                    if ((interiorFlags & InteriorObjectFlags.SeatL) != 0)
+                        showChildren.Add("life_pod_seat_01_L");
+
+                    if ((interiorFlags & InteriorObjectFlags.Storage) != 0)
+                    {
+                        showChildren.Add("life_pod_storage_01");
+                        showChildren.Add("life_pod_storage_01_door");
+                    }
+
+                    if ((interiorFlags & InteriorObjectFlags.FlyingPanel) != 0)
+                        showChildren.Add("life_pod_wall_panel_01_door");
+
+                    interiorModelRoot.DisableAllChildrenExcept(showChildren.ToArray());
+                    _escapePod.StartCoroutine(waitThenDisableMedicalCabinet());
+                }
+            }
         }
 
         protected virtual void updateModelTransform()
@@ -109,7 +162,7 @@ namespace GRandomizer.Util.Lifepod
                 ModelObject.transform.rotation = _escapePod.transform.rotation * fakeParentData.LocalRotation;
                 ModelObject.transform.position = _escapePod.transform.TransformPoint(fakeParentData.LocalPosition);
             }
-            else
+            else if (!ModelObject.transform.IsChildOf(_escapePod.transform))
             {
                 ModelObject.transform.position = _escapePod.transform.position;
                 ModelObject.transform.rotation = _escapePod.transform.rotation;

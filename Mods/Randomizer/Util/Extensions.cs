@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using static RootMotion.FinalIK.RagdollUtility;
 
 namespace GRandomizer.Util
 {
@@ -71,6 +72,27 @@ namespace GRandomizer.Util
             return obj.GetComponentInChildren(componentType, includeInactive).Exists();
         }
 
+        [MethodImpl(MethodImplAttributes.AggressiveInlining)]
+        public static bool RemoveComponent<T>(this GameObject obj, float delay = 0f) where T : UnityEngine.Object
+        {
+            T component = obj.GetComponent<T>();
+            if (component.Exists())
+            {
+                if (delay > 0f)
+                {
+                    GameObject.Destroy(component, 0f);
+                }
+                else
+                {
+                    GameObject.Destroy(component);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         public static Rigidbody[] SetRigidbodiesKinematic(this GameObject obj, bool kinematic)
         {
             List<Rigidbody> rigidbodies = new List<Rigidbody>();
@@ -112,6 +134,14 @@ namespace GRandomizer.Util
             }
 
             return colliders.ToArray();
+        }
+
+        public static void DisableAllRenderersOfType<T>(this GameObject obj) where T : Renderer
+        {
+            foreach (T rend in obj.GetComponentsInChildren<T>())
+            {
+                rend.enabled = false;
+            }
         }
 
         public static void RemoveAllComponentsNotIn(this GameObject obj, GameObject other)
@@ -438,22 +468,86 @@ namespace GRandomizer.Util
 
         public static Transform[] DisableAllChildrenExcept(this Transform root, params string[] exclude)
         {
-            List<Transform> nonDisabledChildren = new List<Transform>();
-
-            for (int i = 0; i < root.childCount; i++)
+            IEnumerable<Transform> disableAllChildrenExceptExclude(Transform tr)
             {
-                Transform child = root.GetChild(i);
-                if (exclude.Contains(value: child.name))
+                if (exclude.Contains(value: tr.name))
+                    yield break;
+
+                int enabledChildCount = 0;
+                for (int i = 0; i < tr.childCount; i++)
                 {
-                    nonDisabledChildren.Add(child);
+                    Transform child = tr.GetChild(i);
+
+                    IEnumerable<Transform> enabledChildren = disableAllChildrenExceptExclude(child);
+                    if (!enabledChildren.Any())
+                    {
+                        if (!exclude.Contains(value: child.name))
+                        {
+                            child.gameObject.SetActive(false);
+                        }
+                        else
+                        {
+                            enabledChildCount++;
+                        }
+                    }
+                    else
+                    {
+                        enabledChildCount++;
+
+                        foreach (Transform enabledChild in enabledChildren)
+                        {
+                            enabledChildCount++;
+                            yield return enabledChild;
+                        }
+                    }
+                }
+
+                if (enabledChildCount == 0 && !exclude.Contains(value: tr.name))
+                {
+                    tr.gameObject.SetActive(false);
                 }
                 else
                 {
-                    child.gameObject.SetActive(false);
+                    yield return tr;
                 }
             }
 
-            return nonDisabledChildren.ToArray();
+            /*
+            List<Transform> nonDisabledChildren = new List<Transform>();
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+
+                Transform[] enabledChildren = child.DisableAllChildrenExcept(exclude);
+                if (enabledChildren.Length == 0)
+                {
+                    if (!exclude.Contains(value: child.name))
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                }
+                else
+                {
+                    nonDisabledChildren.AddRange(enabledChildren);
+                }
+            }
+
+            if (nonDisabledChildren.Count == 0)
+            {
+                if (!exclude.Contains(value: root.name))
+                {
+                    root.gameObject.SetActive(false);
+                }
+            }
+            else
+            {
+                return nonDisabledChildren.ToArray();
+            }
+
+            return Array.Empty<Transform>();
+            */
+
+            return disableAllChildrenExceptExclude(root).ToArray();
         }
     }
 }

@@ -14,14 +14,13 @@ namespace GRandomizer.Util.Lifepod
     {
         SubRoot _cyclops;
 
-        Transform _life_pod_seat_01_L;
-        Transform _fire_extinguisher_01_tp;
-
         Rigidbody[] _rigidbodiesToEnable;
         Behaviour[] _behavioursToEnable;
 
         Openable _doorToUnlock;
         Transform _ladderTrigger;
+
+        public override InteriorObjectFlags ShowInteriorObjects => base.ShowInteriorObjects | InteriorObjectFlags.SeatL;
 
         public CyclopsLifepodModelInfo(LifepodModelType type) : base(type)
         {
@@ -30,20 +29,6 @@ namespace GRandomizer.Util.Lifepod
         protected override void prepareForIntro()
         {
             base.prepareForIntro();
-
-            Transform interiorModelRoot = _escapePod.transform.Find("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
-            if (interiorModelRoot.Exists())
-            {
-                interiorModelRoot.gameObject.SetActive(true);
-
-                const string LIFE_POD_SEAT_01_L = "life_pod_seat_01_L";
-                const string FIRE_EXTINGUISHER_01_TP = "fire_extinguisher_01_tp";
-                
-                Transform[] enabledChildren = interiorModelRoot.DisableAllChildrenExcept(LIFE_POD_SEAT_01_L, FIRE_EXTINGUISHER_01_TP);
-
-                _life_pod_seat_01_L = enabledChildren.FirstOrDefault(t => t.name == LIFE_POD_SEAT_01_L);
-                _fire_extinguisher_01_tp = enabledChildren.FirstOrDefault(t => t.name == FIRE_EXTINGUISHER_01_TP);
-            }
 
             Transform frontExtinguisherRoot = _cyclops.transform.Find("FireExtinguisherHolder_Fore");
             if (frontExtinguisherRoot.Exists())

@@ -95,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MiscPatches\AddPickupableComponentIfMissing.cs" />
+    <Compile Include="MiscPatches\CrashHome_Spawn_Patch.cs" />
     <Compile Include="MiscPatches\EggPatch.cs" />
     <Compile Include="MiscPatches\EnsurePickupableHasCollider_Patch.cs" />
     <Compile Include="MiscPatches\EnsurePickupable_Patch.cs" />
@@ -123,6 +124,7 @@
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Util\ColliderFlags.cs" />
+    <Compile Include="Util\DisableSpawn.cs" />
     <Compile Include="Util\Discard.cs" />
     <Compile Include="Util\DualDictionary.cs" />
     <Compile Include="Util\ConfigReader.cs" />
@@ -134,6 +136,7 @@
     <Compile Include="Util\InitializeOnAccessDictionary.cs" />
     <Compile Include="Util\InitializeOnAccess.cs" />
     <Compile Include="Util\KeepPositionAndRotation.cs" />
+    <Compile Include="Util\Lifepod\CrashfishHomeLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\CyclopsLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\DefaultLifepodModelInfoStub.cs" />
     <Compile Include="Util\Lifepod\FakeParentData.cs" />
