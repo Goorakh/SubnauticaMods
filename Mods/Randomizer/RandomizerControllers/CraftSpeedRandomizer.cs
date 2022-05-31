@@ -15,13 +15,14 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.RandomCraftDuration;
         }
 
+        const float CRAFT_TIME_EXP = 6f; // Controls the bias of the value, higher values means shorter craft durations are more likely
+        const float CRAFT_TIME_MIN_VALUE = 0.75f; // The minimum possible craft duration
+        const float CRAFT_TIME_MAX_VALUE = 60f; // The maximum possible craft duration
+        static readonly float _minimumValueModifier = Mathf.Pow(CRAFT_TIME_MIN_VALUE / CRAFT_TIME_MAX_VALUE, 1f / CRAFT_TIME_EXP);
+
         static readonly InitializeOnAccessDictionary<TechType, float> _craftTimes = new InitializeOnAccessDictionary<TechType, float>(key =>
         {
-            const float pow = 6f;
-            const float mult = 60f;
-            const float min = 0.450266661567f; // (0.5/mult)^(1/pow) => minimum value is 0.5
-
-            return (float)Math.Round(Mathf.Pow(((1f - min) * UnityEngine.Random.value) + min, pow) * mult, 1);
+            return (float)Math.Round(Mathf.Pow(((1f - _minimumValueModifier) * UnityEngine.Random.value) + _minimumValueModifier, CRAFT_TIME_EXP) * CRAFT_TIME_MAX_VALUE, 1);
         });
 
         [HarmonyPatch]
@@ -41,7 +42,6 @@ namespace GRandomizer.RandomizerControllers
                 {
                     if (instruction.opcode == OpCodes.Ret)
                     {
-                        yield return new CodeInstruction(OpCodes.Dup); // Dup return value
                         yield return new CodeInstruction(OpCodes.Ldarg, techTypeArgIndex);
                         yield return new CodeInstruction(OpCodes.Ldarg, resultArgIndex);
                         yield return new CodeInstruction(OpCodes.Call, Hooks.Postfix_MI);
@@ -54,12 +54,15 @@ namespace GRandomizer.RandomizerControllers
             static class Hooks
             {
                 public static readonly MethodInfo Postfix_MI = SymbolExtensions.GetMethodInfo(() => Postfix(default, default, ref Discard<float>.Value));
-                static void Postfix(bool __result, TechType techType, ref float result)
+                static bool Postfix(bool __result, TechType techType, ref float result)
                 {
-                    if (__result && IsEnabled())
+                    if (IsEnabled())
                     {
                         result = _craftTimes[techType];
+                        return true;
                     }
+
+                    return __result;
                 }
             }
         }
