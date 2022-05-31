@@ -1,7 +1,6 @@
 ﻿using GRandomizer.Util;
 using GRandomizer.Util.Lifepod;
 using HarmonyLib;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;

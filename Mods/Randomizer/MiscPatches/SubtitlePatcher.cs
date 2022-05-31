@@ -6,8 +6,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GRandomizer.MiscPatches
 {
@@ -25,7 +23,7 @@ namespace GRandomizer.MiscPatches
             {
                 SoundID = soundID;
                 LocalizationKey = LOCALIZATION_KEY_PREFIX + Guid.NewGuid();
-                
+
                 Text = (startDelay != 0 ? Language.delayHintSequence + startDelay : string.Empty) + text;
             }
         }

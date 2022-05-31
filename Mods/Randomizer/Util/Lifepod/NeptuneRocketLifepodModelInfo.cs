@@ -1,10 +1,5 @@
-﻿using GRandomizer.MiscPatches;
-using GRandomizer.Util.FabricatorPower;
+﻿using GRandomizer.Util.FabricatorPower;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod

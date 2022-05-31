@@ -1,7 +1,5 @@
 ﻿using GRandomizer.Util;
-using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;

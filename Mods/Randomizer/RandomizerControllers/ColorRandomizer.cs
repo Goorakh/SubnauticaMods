@@ -1,7 +1,6 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -954,13 +953,13 @@ namespace GRandomizer.RandomizerControllers
 
 #if VERBOSE
                     foreach (KeyValuePair<FieldInfo, object> original in originalFieldValues)
-	                {
+                    {
                         object newValue = original.Key.GetValue(__instance);
                         if (!Equals(original.Value, newValue))
                         {
                             Utils.DebugLog($"uSkyManager.{original.Key.Name}: {original.Value} -> {newValue}");
                         }
-	                }
+                    }
 #endif
                 }
             }
@@ -1077,7 +1076,7 @@ namespace GRandomizer.RandomizerControllers
                 __instance.pixelStrideZCutoff *= UnityEngine.Random.Range(1f / 2f, 2f);
                 __instance.pixelZSizeOffset *= UnityEngine.Random.Range(1f / 2f, 2f);
                 __instance.maxRayDistance *= UnityEngine.Random.Range(1f / 2f, 2f);
-                
+
                 __instance.screenEdgeFadeStart = UnityEngine.Random.Range(0f, 1f);
                 __instance.eyeFadeStart = UnityEngine.Random.Range(0f, 1f);
                 __instance.eyeFadeEnd = UnityEngine.Random.Range(0f, 1f);

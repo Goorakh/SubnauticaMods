@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using Oculus.Newtonsoft.Json;
 using Oculus.Newtonsoft.Json.Linq;
 using QModManager.API;
 using System;
@@ -7,12 +6,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static RootMotion.FinalIK.RagdollUtility;
 
 namespace GRandomizer.Util
 {
@@ -287,7 +282,7 @@ namespace GRandomizer.Util
 
             return dictionary;
         }
-        
+
         public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> valuePairs)
         {
             return valuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);

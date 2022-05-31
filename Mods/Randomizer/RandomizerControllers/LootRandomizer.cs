@@ -3,9 +3,7 @@ using GRandomizer.Util;
 using HarmonyLib;
 using QModManager.Utility;
 using Story;
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -156,7 +154,7 @@ namespace GRandomizer.RandomizerControllers
 
             if (_itemReplacementsDictionary.Get.F2S_TryGetValue(discoveredEgg, out TechType replacementType))
                 return EggPatch.CorrectEggType(replacementType);
-            
+
             Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType, discoveredEgg));
             return techType;
         }

@@ -1,7 +1,5 @@
 ﻿using GRandomizer.Util.FabricatorPower;
 using System;
-using System.Collections.ObjectModel;
-using System.Reflection;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod

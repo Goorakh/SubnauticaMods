@@ -53,7 +53,7 @@ namespace GRandomizer.Util
             {
                 if (_syncRoot == null)
                     Interlocked.CompareExchange<object>(ref _syncRoot, new object(), null);
-                
+
                 return _syncRoot;
             }
         }
