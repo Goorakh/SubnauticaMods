@@ -1,6 +1,10 @@
 ﻿Not done:
 	Make a config tool instead of making users edit json files (possibly in-game? SMLHelper is great but unfortunately doesn't seem to have all the functionaliy needed)
 	Make randomization seed-based, save seed in the save slots, read it back upon loading, also give users the option to specify a seed when starting a new game
+		Save LootRandomizer replacement dictionary
+		Save randomized item sizes
+		Save most of everything else while I'm at it?
+	Fix lifepod location randomizer spawning player inside the Aurora (& radiation zone)
 	Rework creature randomizer to hook the deserialization process instead of Creature.Start
 	Randomize crashfish powder
 	Replace creepvine seed cluster model
