@@ -16,7 +16,7 @@ namespace GRandomizer.RandomizerControllers
         }
 
 #if DEBUG
-        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(LifepodModelType.CrashfishHome));
+        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(LifepodModelType.NeptuneRocket));
 #else
         static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(Utils.Random.EnumValue<LifepodModelType>()));
 #endif
@@ -34,9 +34,10 @@ namespace GRandomizer.RandomizerControllers
                 if (!IsEnabled())
                     return;
 
-                if (_overrideModel.Get.Type != LifepodModelType.Default)
+                LifepodModelInfo model = _overrideModel.Get;
+                if (model.Type != LifepodModelType.Default)
                 {
-                    _overrideModel.Get.Replace(__instance);
+                    model.Replace(__instance);
                 }
             }
         }
@@ -55,17 +56,25 @@ namespace GRandomizer.RandomizerControllers
             {
                 IsSettingPosition = true;
 
-                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
+                if (IsEnabled())
                 {
-                    position = _overrideModel.Get.GetOverrideLifepodPosition(position);
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default)
+                    {
+                        position = model.GetOverrideLifepodPosition(position);
+                    }
                 }
             }
 
             static void Postfix()
             {
-                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
+                if (IsEnabled())
                 {
-                    _overrideModel.Get.OnLifepodPositioned();
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default)
+                    {
+                        model.OnLifepodPositioned();
+                    }
                 }
 
                 IsSettingPosition = false;
@@ -82,9 +91,13 @@ namespace GRandomizer.RandomizerControllers
 
             static void Prefix(bool isInterrupted)
             {
-                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
+                if (IsEnabled())
                 {
-                    _overrideModel.Get.EndIntro(isInterrupted);
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default)
+                    {
+                        model.EndIntro(isInterrupted);
+                    }
                 }
             }
         }
@@ -118,9 +131,13 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo ShouldPlayIntro_Postfix_MI = SymbolExtensions.GetMethodInfo(() => ShouldPlayIntro_Postfix(default));
                 static void ShouldPlayIntro_Postfix(bool __result)
                 {
-                    if (IsEnabled() && !__result && _overrideModel.Get.Type != LifepodModelType.Default)
+                    if (IsEnabled() && !__result)
                     {
-                        _overrideModel.Get.EndIntro(true);
+                        LifepodModelInfo model = _overrideModel.Get;
+                        if (model.Type != LifepodModelType.Default)
+                        {
+                            model.EndIntro(true);
+                        }
                     }
                 }
             }
@@ -136,10 +153,14 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix(ref bool __result)
             {
-                if (IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default && _overrideModel.Get.DisableTutorial)
+                if (IsEnabled())
                 {
-                    __result = false;
-                    return false;
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default && model.DisableTutorial)
+                    {
+                        __result = false;
+                        return false;
+                    }
                 }
 
                 return true;
@@ -147,9 +168,13 @@ namespace GRandomizer.RandomizerControllers
 
             static void Postfix(bool __result)
             {
-                if (!__result && IsEnabled() && _overrideModel.Get.Type != LifepodModelType.Default)
+                if (!__result && IsEnabled())
                 {
-                    _overrideModel.Get.TutorialFinished();
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default)
+                    {
+                        model.TutorialFinished();
+                    }
                 }
             }
         }
@@ -204,13 +229,73 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix()
             {
-                if (IsEnabled() && !EscapePod_StartAtPosition_Patch.IsSettingPosition && _overrideModel.Get.Type != LifepodModelType.Default)
+                if (IsEnabled() && !EscapePod_StartAtPosition_Patch.IsSettingPosition)
                 {
-                    _overrideModel.Get.RespawnPlayer(Player.main);
-                    return false;
+                    LifepodModelInfo model = _overrideModel.Get;
+                    if (model.Type != LifepodModelType.Default)
+                    {
+                        model.RespawnPlayer(Player.main);
+                        return false;
+                    }
                 }
 
                 return true;
+            }
+        }
+
+        [HarmonyPatch]
+        static class IntroLifepodDirector_ToggleActiveObjects_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<IntroLifepodDirector>(_ => _.ToggleActiveObjects(default));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original, ILGenerator generator)
+            {
+                LocalGenerator localGen = new LocalGenerator(generator);
+
+                int objectsStateParameterIndex = original.FindArgumentIndex(typeof(bool), "on");
+
+                MethodInfo GameObject_SetActive_MI = SymbolExtensions.GetMethodInfo<GameObject>(_ => _.SetActive(default));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.Calls(GameObject_SetActive_MI))
+                    {
+                        LocalBuilder on_tempLocal = localGen.GetLocal(typeof(bool), false);
+                        yield return new CodeInstruction(OpCodes.Stloc, on_tempLocal);
+
+                        yield return new CodeInstruction(OpCodes.Dup); // Dup instance (GameObject)
+                        yield return new CodeInstruction(OpCodes.Ldloc, on_tempLocal);
+                        localGen.ReleaseLocal(on_tempLocal);
+
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.Ldarg_on_MI);
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo Ldarg_on_MI = SymbolExtensions.GetMethodInfo(() => Ldarg_on(default, default));
+                static bool Ldarg_on(GameObject obj, bool on)
+                {
+                    if (IsEnabled())
+                    {
+                        if (EscapePod.main.Exists())
+                        {
+                            LifepodModelInfo model = _overrideModel.Get;
+                            if (model != null && model.TryGetIntroLifepodDirectorActiveObjectOverrideState(obj.transform.GetRelativePath(EscapePod.main.transform), out bool overrideState))
+                            {
+                                return overrideState;
+                            }
+                        }
+                    }
+
+                    return on;
+                }
             }
         }
     }

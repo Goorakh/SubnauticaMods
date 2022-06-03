@@ -1,6 +1,7 @@
 ﻿using GRandomizer.Util;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
@@ -12,50 +13,70 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.RandomItemSize;
         }
 
-        static readonly InitializeOnAccessDictionary<TechType, int> _recipeReferenceCount = new InitializeOnAccessDictionary<TechType, int>(type =>
+        static readonly InitializeOnAccessDictionary<TechType, int> _maxIngredientCount = new InitializeOnAccessDictionary<TechType, int>(type =>
         {
-            int refCount = 0;
+            return CraftData.techData.Values.Max((ITechData t) => t.GetIngredients().Sum(i => i.techType == type ? i.amount : 0));
+        });
 
-            foreach (KeyValuePair<TechType, CraftData.TechData> data in CraftData.techData)
+        static readonly InitializeOnAccessDictionary<TechType, float> _maxIngredientFraction = new InitializeOnAccessDictionary<TechType, float>(type =>
+        {
+            return CraftData.techData.Values.Max((ITechData t) =>
             {
-                if (data.Key == type)
-                {
-                    refCount++;
-                }
-                else
-                {
-                    if (data.Value._linkedItems != null)
-                    {
-                        foreach (TechType linked in data.Value._linkedItems)
-                        {
-                            if (linked == type)
-                                refCount++;
-                        }
-                    }
+                int totalIngredientCount = 0;
+                int thisItemIngredientCount = 0;
 
-                    if (data.Value._ingredients != null)
-                    {
-                        foreach (CraftData.Ingredient ingredient in data.Value._ingredients)
-                        {
-                            if (ingredient.techType == type)
-                                refCount += ingredient.amount;
-                        }
-                    }
-                }
-            }
+                for (int i = 0; i < t.ingredientCount; i++)
+                {
+                    IIngredient ingredient = t.GetIngredient(i);
+                    int amount = ingredient.amount;
 
-            return refCount;
+                    totalIngredientCount += amount;
+
+                    if (ingredient.techType == type)
+                        thisItemIngredientCount += amount;
+                }
+
+                return thisItemIngredientCount / (float)totalIngredientCount;
+            });
         });
 
         static readonly InitializeOnAccessDictionary<TechType, Vector2int> _itemSizes = new InitializeOnAccessDictionary<TechType, Vector2int>(type =>
         {
-            int randomSize()
+            Vector2int inventorySize;
+            if (Inventory.main.Exists() && Inventory.main.container != null)
             {
-                int refCount = _recipeReferenceCount[type];
-                return Mathf.FloorToInt(((refCount > 200 ? 0f : (refCount > 100 ? 1f : (refCount > 50 ? 2f : 3f))) * Mathf.Pow(UnityEngine.Random.value, 3f)) + 1f);
+                ItemsContainer container = Inventory.main.container;
+                inventorySize = new Vector2int(container.sizeX, container.sizeY);
+            }
+            else
+            {
+                inventorySize = new Vector2int(6, 8);
             }
 
-            return new Vector2int(randomSize(), randomSize());
+            float fraction = _maxIngredientFraction[type];
+            bool fits(int x, int y)
+            {
+                return fraction == 0f || (x <= inventorySize.x && y <= inventorySize.y && Mathf.CeilToInt(_maxIngredientCount[type] / (float)(inventorySize.x / x)) * y <= inventorySize.y * fraction);
+            }
+
+            if (!fits(1, 1))
+            {
+                Utils.LogError($"{type} might not fit in inventory in certain recipes! This is BAD (probably)");
+                return new Vector2int(1, 1);
+            }
+
+            Vector2int itemSize;
+            do
+            {
+                int randomSize()
+                {
+                    return Mathf.RoundToInt(1f + (Mathf.Pow(UnityEngine.Random.value, 2f) * 3f));
+                }
+
+                itemSize = new Vector2int(randomSize(), randomSize());
+            } while (!fits(itemSize.x, itemSize.y));
+
+            return itemSize;
         });
 
         [HarmonyPatch(typeof(CraftData), nameof(CraftData.GetItemSize))]

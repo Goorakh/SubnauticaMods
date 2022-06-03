@@ -9,24 +9,6 @@ namespace GRandomizer.Util.Lifepod
 {
     public abstract class LifepodModelInfo
     {
-        [Flags]
-        public enum InteriorObjectFlags : byte
-        {
-            None,
-            FireExtinguisher = 1 << 0,
-            SeatL = 1 << 1,
-            Storage = 1 << 2,
-            Ladder = 1 << 3,
-            FlyingPanel = 1 << 4
-        }
-
-        public readonly LifepodModelType Type;
-
-        public LifepodModelInfo(LifepodModelType type)
-        {
-            Type = type;
-        }
-
         static Dictionary<LifepodModelType, LifepodModelInfo> _modelInfoByType;
         public static void InitializeModelInfoByTypeDictionary()
         {
@@ -48,13 +30,33 @@ namespace GRandomizer.Util.Lifepod
             throw new KeyNotFoundException(string.Format(nameof(LifepodModelType) + ".{0} is not implemented", lifepodModelType));
         }
 
+        [Flags]
+        public enum InteriorObjectFlags : byte
+        {
+            None,
+            FireExtinguisher = 1 << 0,
+            SeatL = 1 << 1,
+            Storage = 1 << 2,
+            Ladder = 1 << 3,
+            FlyingPanel = 1 << 4
+        }
+
+        public readonly LifepodModelType Type;
+
+        protected EscapePod _escapePod;
+
+        protected Dictionary<string, bool> _overrideIntroLifepodDirectorActiveObjectStates = new Dictionary<string, bool>();
+
+        public LifepodModelInfo(LifepodModelType type)
+        {
+            Type = type;
+        }
+
         public virtual bool DisableTutorial => false;
 
         public virtual InteriorObjectFlags ShowInteriorObjects => DisableTutorial ? InteriorObjectFlags.None : InteriorObjectFlags.FireExtinguisher;
 
         public virtual FakeParentData FakeParentData => null;
-
-        protected EscapePod _escapePod;
 
         public GameObject ModelObject { get; private set; }
 
@@ -103,14 +105,6 @@ namespace GRandomizer.Util.Lifepod
             });
         }
 
-        IEnumerator waitThenDisableMedicalCabinet()
-        {
-            yield return new WaitForSeconds(1f);
-
-            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01");
-            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01_base");
-        }
-
         protected virtual void prepareForIntro()
         {
             _escapePod.gameObject.DisableAllCollidersOfType<Collider>();
@@ -147,7 +141,9 @@ namespace GRandomizer.Util.Lifepod
                         showChildren.Add("life_pod_wall_panel_01_door");
 
                     interiorModelRoot.DisableAllChildrenExcept(showChildren.ToArray());
-                    _escapePod.StartCoroutine(waitThenDisableMedicalCabinet());
+
+                    _overrideIntroLifepodDirectorActiveObjectStates["models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01"] = false;
+                    _overrideIntroLifepodDirectorActiveObjectStates["models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01_base"] = false;
                 }
             }
         }
@@ -230,6 +226,11 @@ namespace GRandomizer.Util.Lifepod
         public virtual void RespawnPlayer(Player player)
         {
             Utils.LogError($"Not implemented for {GetType().Name}");
+        }
+
+        public bool TryGetIntroLifepodDirectorActiveObjectOverrideState(string relativePath, out bool state)
+        {
+            return _overrideIntroLifepodDirectorActiveObjectStates.TryGetValue(relativePath, out state);
         }
     }
 }

@@ -344,6 +344,10 @@ namespace GRandomizer.Util
         {
             return mb.FindArgumentIndex(p => p.ParameterType == parameterType);
         }
+        public static int FindArgumentIndex(this MethodBase mb, Type parameterType, string parameterName, StringComparison nameComparison = StringComparison.OrdinalIgnoreCase)
+        {
+            return mb.FindArgumentIndex(p => p.ParameterType == parameterType && string.Equals(p.Name, parameterName, nameComparison));
+        }
 
         public static Dictionary<T, T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable)
         {
@@ -507,42 +511,34 @@ namespace GRandomizer.Util
                 }
             }
 
-            /*
-            List<Transform> nonDisabledChildren = new List<Transform>();
-            for (int i = 0; i < root.childCount; i++)
-            {
-                Transform child = root.GetChild(i);
-
-                Transform[] enabledChildren = child.DisableAllChildrenExcept(exclude);
-                if (enabledChildren.Length == 0)
-                {
-                    if (!exclude.Contains(value: child.name))
-                    {
-                        child.gameObject.SetActive(false);
-                    }
-                }
-                else
-                {
-                    nonDisabledChildren.AddRange(enabledChildren);
-                }
-            }
-
-            if (nonDisabledChildren.Count == 0)
-            {
-                if (!exclude.Contains(value: root.name))
-                {
-                    root.gameObject.SetActive(false);
-                }
-            }
-            else
-            {
-                return nonDisabledChildren.ToArray();
-            }
-
-            return Array.Empty<Transform>();
-            */
-
             return disableAllChildrenExceptExclude(root).ToArray();
+        }
+
+        public static string GetRelativePath(this Transform child, Transform root)
+        {
+            string path = string.Empty;
+            while (!child.IsChildOf(root) && root != null)
+            {
+                path += "../";
+                root = root.parent;
+            }
+
+            List<string> names = new List<string>();
+            while (child != root && child != null)
+            {
+                names.Add(child.name);
+                child = child.parent;
+            }
+
+            return path + string.Join("/", names.Reverse<string>());
+        }
+
+        public static IEnumerable<IIngredient> GetIngredients(this ITechData techData)
+        {
+            for (int i = 0; i < techData.ingredientCount; i++)
+            {
+                yield return techData.GetIngredient(i);
+            }
         }
     }
 }
