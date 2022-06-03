@@ -25,9 +25,8 @@ namespace GRandomizer.RandomizerControllers
                 int totalIngredientCount = 0;
                 int thisItemIngredientCount = 0;
 
-                for (int i = 0; i < t.ingredientCount; i++)
+                foreach (IIngredient ingredient in t.GetIngredients())
                 {
-                    IIngredient ingredient = t.GetIngredient(i);
                     int amount = ingredient.amount;
 
                     totalIngredientCount += amount;
