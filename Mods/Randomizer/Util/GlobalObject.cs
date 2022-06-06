@@ -23,8 +23,8 @@ namespace GRandomizer.Util
         }
         static readonly List<ScheduledAction> _scheduledActions = new List<ScheduledAction>();
 
-        static GameObject _instance;
-        public static GameObject Instance
+        static GlobalObject _instance;
+        public static GlobalObject Instance
         {
             get
             {
@@ -37,12 +37,12 @@ namespace GRandomizer.Util
         {
             if (!_instance.Exists())
             {
-                _instance = new GameObject("GRandomizer_GlobalObject");
-                _instance.AddComponent<GlobalObject>();
+                GameObject obj = new GameObject("GRandomizer_GlobalObject");
+                _instance = obj.AddComponent<GlobalObject>();
 #if DEBUG
-                _instance.AddComponent<DebugController>();
+                obj.AddComponent<DebugController>();
 #endif
-                GameObject.DontDestroyOnLoad(_instance);
+                GameObject.DontDestroyOnLoad(obj);
             }
         }
 

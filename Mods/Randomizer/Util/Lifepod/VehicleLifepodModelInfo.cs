@@ -12,13 +12,36 @@ namespace GRandomizer.Util.Lifepod
         {
         }
 
+        protected override void reset()
+        {
+            base.reset();
+
+            _vehicle = null;
+            _vehicleParent = null;
+        }
+
+        protected override void prepareModel()
+        {
+            base.prepareModel();
+
+            if (!_vehicle.Exists())
+            {
+                _vehicle = ModelObject.GetComponent<Vehicle>();
+            }
+
+            _vehicle.gameObject.AddComponent<VehicleLifepod>();
+
+            if (!LoadedFromSaveFile)
+            {
+                _vehicle.subName.SetName(LIFEPOD_NAME);
+            }
+        }
+
         protected override void prepareForIntro()
         {
             base.prepareForIntro();
 
             _vehicle.useRigidbody.isKinematic = true;
-
-            _vehicle.gameObject.AddComponent<VehicleLifepod>();
         }
 
         public override void EndIntro(bool skipped)

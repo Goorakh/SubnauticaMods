@@ -1,9 +1,11 @@
-﻿using HarmonyLib;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class SpawnLocationRandomizer
     {
         static bool IsEnabled()

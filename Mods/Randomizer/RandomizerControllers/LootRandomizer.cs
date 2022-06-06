@@ -1,9 +1,12 @@
 ﻿using GRandomizer.MiscPatches;
+using GRandomizer.RandomizerControllers.Callbacks;
 using GRandomizer.Util;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using QModManager.Utility;
 using Story;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -11,8 +14,36 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class LootRandomizer
     {
+        static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
+        public static bool IsEnabled()
+        {
+            return Mod.Config.RandomLoot;
+        }
+
+        static void Reset()
+        {
+            _itemReplacementsDictionary.Reset();
+        }
+
+        public static void Serialize(BinaryWriter writer)
+        {
+            if (writer.WriteAndReturn(_itemReplacementsDictionary.IsInitialized))
+            {
+                writer.Write(_itemReplacementsDictionary.Get);
+            }
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            if (reader.ReadBoolean()) // _itemReplacementsDictionary.IsInitialized
+            {
+                _itemReplacementsDictionary.SetValue(reader.ReadReplacementDictionary<TechType>());
+            }
+        }
+
         static readonly InitializeOnAccess<TechType[]> _itemTypes = new InitializeOnAccess<TechType[]>(() =>
         {
             IEnumerable<TechType> getObtainableItems()
@@ -101,9 +132,9 @@ namespace GRandomizer.RandomizerControllers
             return obtainableTypes.ToArray();
         });
 
-        static readonly InitializeOnAccess<DualDictionary<TechType, TechType>> _itemReplacementsDictionary = new InitializeOnAccess<DualDictionary<TechType, TechType>>(() =>
+        static readonly InitializeOnAccess<ReplacementDictionary<TechType>> _itemReplacementsDictionary = new InitializeOnAccess<ReplacementDictionary<TechType>>(() =>
         {
-            return new DualDictionary<TechType, TechType>(_itemTypes.Get.ToRandomizedReplacementDictionary());
+            return _itemTypes.Get.ToRandomizedReplacementDictionary();
         });
 
 #if DEBUG
@@ -152,7 +183,7 @@ namespace GRandomizer.RandomizerControllers
 
             TechType discoveredEgg = EggPatch.ToDiscoveredEggType(techType);
 
-            if (_itemReplacementsDictionary.Get.F2S_TryGetValue(discoveredEgg, out TechType replacementType))
+            if (_itemReplacementsDictionary.Get.TryGetReplacement(discoveredEgg, out TechType replacementType))
                 return EggPatch.CorrectEggType(replacementType);
 
             Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, techType, discoveredEgg));
@@ -166,7 +197,7 @@ namespace GRandomizer.RandomizerControllers
 
             TechType discoveredEgg = EggPatch.ToDiscoveredEggType(replaced);
 
-            if (_itemReplacementsDictionary.Get.S2F_TryGetValue(discoveredEgg, out TechType originalType))
+            if (_itemReplacementsDictionary.Get.TryGetOriginal(discoveredEgg, out TechType originalType))
                 return EggPatch.CorrectEggType(originalType);
 
             Utils.LogWarning(string.Format(NOT_IN_ITEM_DICT_LOG, replaced, discoveredEgg));
@@ -177,12 +208,6 @@ namespace GRandomizer.RandomizerControllers
         public static void TryReplaceItem(ref TechType techType)
         {
             techType = TryGetItemReplacement(techType);
-        }
-
-        static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
-        public static bool IsEnabled()
-        {
-            return Mod.Config.RandomLoot;
         }
 
         [HarmonyPatch]

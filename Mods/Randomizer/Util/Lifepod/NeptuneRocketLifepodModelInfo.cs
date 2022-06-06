@@ -17,6 +17,14 @@ namespace GRandomizer.Util.Lifepod
         {
         }
 
+        protected override void reset()
+        {
+            base.reset();
+
+            _rocket = null;
+            _objectsToDisableDuringIntro = null;
+        }
+
         protected override void prepareForIntro()
         {
             base.prepareForIntro();
@@ -64,11 +72,21 @@ namespace GRandomizer.Util.Lifepod
             }
         }
 
+        protected override void prepareModel()
+        {
+            base.prepareModel();
+
+            if (!_rocket.Exists())
+            {
+                _rocket = ModelObject.GetComponent<Rocket>();
+            }
+        }
+
         public override void OnLifepodPositioned()
         {
             base.OnLifepodPositioned();
 
-            _escapePod.gameObject.EnsureComponent<KeepPositionAndRotation>().Initialize(false);
+            EscapePod.main.gameObject.EnsureComponent<KeepPositionAndRotation>().Initialize(false);
             _rocket.gameObject.EnsureComponent<KeepPositionAndRotation>().Initialize(false);
         }
 
@@ -80,6 +98,8 @@ namespace GRandomizer.Util.Lifepod
             GameObject rocketBase = CraftData.InstantiateFromPrefab(TechType.RocketBase);
 
             _rocket = rocketBase.GetComponent<Rocket>();
+
+            _rocket.subName.SetName(LIFEPOD_NAME);
 
             foreach (GameObject stage in _rocket.stageObjects)
             {

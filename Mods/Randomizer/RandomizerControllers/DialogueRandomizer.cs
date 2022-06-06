@@ -1,18 +1,48 @@
 ﻿using GRandomizer.MiscPatches;
+using GRandomizer.RandomizerControllers.Callbacks;
 using GRandomizer.Util;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using Oculus.Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class DialogueRandomizer
     {
         static RandomDialogueMode mode => Mod.Config.RandomDialogue;
+
+        static bool IsEnabled()
+        {
+            return mode > RandomDialogueMode.Off;
+        }
+
+        static void Reset()
+        {
+            _lineReplacements.Reset();
+        }
+
+        public static void Serialize(BinaryWriter writer)
+        {
+            if (writer.WriteAndReturn(_lineReplacements.IsInitialized))
+            {
+                writer.Write(_lineReplacements.Get);
+            }
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            if (reader.ReadBoolean()) // _lineReplacements.IsInitialized
+            {
+                _lineReplacements.SetValue(reader.ReadReplacementDictionary<string>());
+            }
+        }
 
         struct SpeechSequence
         {
@@ -73,7 +103,7 @@ namespace GRandomizer.RandomizerControllers
             return sequences;
         });
 
-        static readonly InitializeOnAccess<Dictionary<string, string>> _lineReplacements = new InitializeOnAccess<Dictionary<string, string>>(() =>
+        static readonly InitializeOnAccess<ReplacementDictionary<string>> _lineReplacements = new InitializeOnAccess<ReplacementDictionary<string>>(() =>
         {
             HashSet<string> excludeSpeakers = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeSpeakers");
             HashSet<string> excludeLines = ConfigReader.ReadFromFile<HashSet<string>>("Configs/DialogueRandomizer::DontRandomizeLines");
@@ -86,10 +116,10 @@ namespace GRandomizer.RandomizerControllers
             switch (mode)
             {
                 case RandomDialogueMode.SameSpeaker:
-                    return (from sequence in filteredSequences
-                            group sequence.SoundEventPath by sequence.SpeakerID into gr
-                            from replacementPair in gr.ToRandomizedReplacementDictionary()
-                            select replacementPair).ToDictionary();
+                    return new ReplacementDictionary<string>((from sequence in filteredSequences
+                                                              group sequence.SoundEventPath by sequence.SpeakerID into gr
+                                                              from replacementPair in gr.ToRandomizedReplacementDictionary()
+                                                              select replacementPair).ToDictionary());
                 case RandomDialogueMode.Random:
                     return filteredSequences.Select(s => s.SoundEventPath).ToRandomizedReplacementDictionary();
                 default:
@@ -98,7 +128,7 @@ namespace GRandomizer.RandomizerControllers
         });
 
         static bool _isInitialized = false;
-        public static void Initialize()
+        static void Initialize()
         {
             SoundPatcher.AddMutator(tryGetReplacementLine);
             SoundPatcher.OnSoundPlayed += onSoundPlayed;
@@ -108,10 +138,10 @@ namespace GRandomizer.RandomizerControllers
 
         static string tryGetReplacementLine(string original)
         {
-            if (!_isInitialized || mode == RandomDialogueMode.Off) // Deliberately including the events that activate during the loading screen, since they might get cached, it could be the only chance to replace them
+            if (!_isInitialized || !IsEnabled()) // Deliberately including the events that activate during the loading screen, since they might get cached, it could be the only chance to replace them
                 return original;
 
-            if (_lineReplacements.Get.TryGetValue(original, out string replacement))
+            if (_lineReplacements.Get.TryGetReplacement(original, out string replacement))
                 return replacement;
 
             return original;
@@ -119,10 +149,10 @@ namespace GRandomizer.RandomizerControllers
 
         static void onSoundPlayed(string playedPath)
         {
-            if (!_isInitialized || mode == RandomDialogueMode.Off || uGUI.isLoading) // For some reason certain audio events are triggered during the loading screen, ignore these.
+            if (!_isInitialized || !IsEnabled() || uGUI.isLoading) // For some reason certain audio events are triggered during the loading screen, ignore these.
                 return;
 
-            if (_lineReplacements.Get.ContainsValue(playedPath))
+            if (_lineReplacements.Get.TryGetOriginal(playedPath, out string orignial))
             {
                 if (_sequences.Get.TryGetValue(playedPath, out SpeechSequence playedSequence) && playedSequence.HasSubtitles)
                 {
@@ -130,7 +160,7 @@ namespace GRandomizer.RandomizerControllers
                 }
 
 #if VERBOSE
-                Utils.DebugLog($"{_lineReplacements.Get.Single(kvp => kvp.Value == playedPath).Key} -> {playedPath}");
+                Utils.DebugLog($"{orignial} -> {playedPath}");
 #endif
             }
         }
@@ -163,7 +193,7 @@ namespace GRandomizer.RandomizerControllers
 
             static bool Prefix(string key)
             {
-                if (_isInitialized && mode > RandomDialogueMode.Off && _lineReplacements.Get.Keys.Any(line => _sequences.Get[line].SubtitleKey == key))
+                if (_isInitialized && IsEnabled() && _lineReplacements.Get.Any(kvp => _sequences.Get[kvp.Key].SubtitleKey == key))
                 {
 #if VERBOSE
                     Utils.DebugLog($"key: {key}, IsCorrectedSubtitle: {IsCorrectedSubtitle}");
@@ -190,9 +220,9 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo EntryData_getkey_Hook_MI = SymbolExtensions.GetMethodInfo(() => EntryData_getkey_Hook(default, default));
                 static string EntryData_getkey_Hook(PDALog.EntryData entryData, string key)
                 {
-                    if (_isInitialized && mode > RandomDialogueMode.Off && entryData != null && entryData.sound.Exists())
+                    if (_isInitialized && IsEnabled() && entryData != null && entryData.sound.Exists())
                     {
-                        if (_lineReplacements.Get.TryGetValue(entryData.sound.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
+                        if (_lineReplacements.Get.TryGetReplacement(entryData.sound.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
                         {
                             return sequence.SubtitleKey;
                         }
@@ -270,9 +300,9 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo GetDescriptionText_Hook_MI = SymbolExtensions.GetMethodInfo(() => GetDescriptionText_Hook(default, default));
                 static string GetDescriptionText_Hook(string original, PDAEncyclopedia.EntryData entry)
                 {
-                    if (_isInitialized && mode > RandomDialogueMode.Off && entry != null && entry.audio.Exists())
+                    if (_isInitialized && IsEnabled() && entry != null && entry.audio.Exists())
                     {
-                        if (_lineReplacements.Get.TryGetValue(entry.audio.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
+                        if (_lineReplacements.Get.TryGetReplacement(entry.audio.path, out string replacementPath) && _sequences.Get.TryGetValue(replacementPath, out SpeechSequence sequence))
                         {
                             if (sequence.HasSubtitles)
                             {

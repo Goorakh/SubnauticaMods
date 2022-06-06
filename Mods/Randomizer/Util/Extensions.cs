@@ -349,7 +349,7 @@ namespace GRandomizer.Util
             return mb.FindArgumentIndex(p => p.ParameterType == parameterType && string.Equals(p.Name, parameterName, nameComparison));
         }
 
-        public static Dictionary<T, T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable)
+        public static ReplacementDictionary<T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable)
         {
             Dictionary<T, T> result = new Dictionary<T, T>();
 
@@ -363,7 +363,7 @@ namespace GRandomizer.Util
                 result.Add(key, itemsList.GetAndRemoveRandom());
             }
 
-            return result;
+            return new ReplacementDictionary<T>(result);
         }
 
         public static MethodInfo FindMethod(this IEnumerable<MethodInfo> methods, Type returnType, Type[] parameters)
@@ -539,6 +539,34 @@ namespace GRandomizer.Util
             {
                 yield return techData.GetIngredient(i);
             }
+        }
+
+        public static BoxCollider AddBoxCollider(this GameObject obj, Vector3 center, Vector3 size)
+        {
+            BoxCollider collider = obj.AddComponent<BoxCollider>();
+
+            collider.center = center;
+            collider.size = size;
+
+            return collider;
+        }
+
+        public static void RegisterLargeWorldEntityOnceStreamerInitialized(this GameObject obj)
+        {
+            IEnumerator waitForInitThenRegister()
+            {
+                while (!LargeWorldStreamer.main.Exists() || !LargeWorldStreamer.main.IsReady() || LargeWorldStreamer.main.cellManager == null || !LargeWorld.main.Exists() || !LargeWorld.main.worldMounted)
+                {
+                    yield return new WaitForSecondsRealtime(0.1f);
+                }
+
+                if (obj.Exists())
+                {
+                    LargeWorldEntity.Register(obj);
+                }
+            }
+
+            GlobalObject.Instance.StartCoroutine(waitForInitThenRegister());
         }
     }
 }

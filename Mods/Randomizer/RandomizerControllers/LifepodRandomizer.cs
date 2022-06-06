@@ -1,13 +1,17 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
 using GRandomizer.Util.Lifepod;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class LifepodRandomizer
     {
         static bool IsEnabled()
@@ -15,10 +19,31 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.LifepodRandomizer;
         }
 
+        static void Reset()
+        {
+            _overrideModel.Reset();
+        }
+
+        public static void Serialize(BinaryWriter writer)
+        {
+            if (writer.WriteAndReturn(_overrideModel.IsInitialized))
+            {
+                _overrideModel.Get.Serialize(writer);
+            }
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            if (reader.ReadBoolean()) // _overrideModel.IsInitialized
+            {
+                _overrideModel.SetValue(LifepodModelInfo.Deserialize(reader, version));
+            }
+        }
+
 #if DEBUG
-        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(LifepodModelType.NeptuneRocket));
+        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(LifepodModelType.PrawnSuit));
 #else
-        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetByType(Utils.Random.EnumValue<LifepodModelType>()));
+        static readonly InitializeOnAccess<LifepodModelInfo> _overrideModel = new InitializeOnAccess<LifepodModelInfo>(() => LifepodModelInfo.GetRandomModelInfo());
 #endif
 
         [HarmonyPatch]
@@ -29,7 +54,7 @@ namespace GRandomizer.RandomizerControllers
                 return SymbolExtensions.GetMethodInfo<EscapePod>(_ => _.Awake());
             }
 
-            static void Prefix(EscapePod __instance)
+            static void Postfix(EscapePod __instance)
             {
                 if (!IsEnabled())
                     return;
@@ -37,7 +62,7 @@ namespace GRandomizer.RandomizerControllers
                 LifepodModelInfo model = _overrideModel.Get;
                 if (model.Type != LifepodModelType.Default)
                 {
-                    model.Replace(__instance);
+                    model.Replace();
                 }
             }
         }
@@ -131,12 +156,20 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo ShouldPlayIntro_Postfix_MI = SymbolExtensions.GetMethodInfo(() => ShouldPlayIntro_Postfix(default));
                 static void ShouldPlayIntro_Postfix(bool __result)
                 {
-                    if (IsEnabled() && !__result)
+                    if (IsEnabled())
                     {
                         LifepodModelInfo model = _overrideModel.Get;
+
                         if (model.Type != LifepodModelType.Default)
                         {
-                            model.EndIntro(true);
+                            if (model.LoadedFromSaveFile || global::Utils.continueMode)
+                            {
+                                model.FindLifepodModelAfterLoad();
+                            }
+                            else if (__result == false)
+                            {
+                                model.EndIntro(true);
+                            }
                         }
                     }
                 }

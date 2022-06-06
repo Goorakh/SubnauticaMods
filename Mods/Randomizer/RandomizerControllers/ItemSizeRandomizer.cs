@@ -1,16 +1,35 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class ItemSizeRandomizer
     {
         static bool IsEnabled()
         {
             return Mod.Config.RandomItemSize;
+        }
+
+        static void Reset()
+        {
+            _itemSizes.Clear();
+        }
+
+        public static void Serialize(BinaryWriter writer)
+        {
+            writer.Write(_itemSizes);
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            _itemSizes.SetTo(reader.ReadDictionary<TechType, Vector2int>());
         }
 
         static readonly InitializeOnAccessDictionary<TechType, int> _maxIngredientCount = new InitializeOnAccessDictionary<TechType, int>(type =>
@@ -52,10 +71,25 @@ namespace GRandomizer.RandomizerControllers
                 inventorySize = new Vector2int(6, 8);
             }
 
+            int maxIngredientCount = _maxIngredientCount[type];
             float fraction = _maxIngredientFraction[type];
             bool fits(int x, int y)
             {
-                return fraction == 0f || (x <= inventorySize.x && y <= inventorySize.y && Mathf.CeilToInt(_maxIngredientCount[type] / (float)(inventorySize.x / x)) * y <= inventorySize.y * fraction);
+                if (x > inventorySize.x || y > inventorySize.y)
+                {
+                    return false;
+                }
+
+                if (maxIngredientCount == 0) // Item is not used in any recipe -> Allow any size as long as it fits in the inventory on its own
+                {
+                    return true;
+                }
+                else
+                {
+                    int maxItemsX = inventorySize.x / x;
+
+                    return Mathf.CeilToInt(maxIngredientCount / (float)maxItemsX) * y <= inventorySize.y * fraction;
+                }
             }
 
             if (!fits(1, 1))
@@ -69,7 +103,7 @@ namespace GRandomizer.RandomizerControllers
             {
                 int randomSize()
                 {
-                    return Mathf.RoundToInt(1f + (Mathf.Pow(UnityEngine.Random.value, 2f) * 3f));
+                    return Mathf.RoundToInt(1f + (Mathf.Pow(UnityEngine.Random.value, 3f) * 3f));
                 }
 
                 itemSize = new Vector2int(randomSize(), randomSize());

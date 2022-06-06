@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace GRandomizer.Util
 {
-    class DualDictionary<TFirst, TSecond> : IEnumerable<KeyValuePair<TFirst, TSecond>>
+    public class DualDictionary<TFirst, TSecond> : IEnumerable<KeyValuePair<TFirst, TSecond>>
     {
         readonly Dictionary<TFirst, TSecond> _firstToSecond;
         readonly Dictionary<TSecond, TFirst> _secondToFirst;
@@ -60,10 +60,18 @@ namespace GRandomizer.Util
         {
             return _firstToSecond.TryGetValue(key, out value);
         }
-
         public bool S2F_TryGetValue(TSecond key, out TFirst value)
         {
             return _secondToFirst.TryGetValue(key, out value);
+        }
+
+        public bool F2S_ContainsKey(TFirst key)
+        {
+            return _firstToSecond.ContainsKey(key);
+        }
+        public bool S2F_ContainsKey(TSecond key)
+        {
+            return _secondToFirst.ContainsKey(key);
         }
     }
 }

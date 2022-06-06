@@ -21,6 +21,17 @@ namespace GRandomizer.Util.Lifepod
         {
         }
 
+        protected override void reset()
+        {
+            base.reset();
+
+            _cyclops = null;
+            _rigidbodiesToEnable = null;
+            _behavioursToEnable = null;
+            _doorToUnlock = null;
+            _ladderTrigger = null;
+        }
+
         protected override void prepareForIntro()
         {
             base.prepareForIntro();
@@ -43,6 +54,16 @@ namespace GRandomizer.Util.Lifepod
             }
 
             _cyclops.StartCoroutine(waitThenCloseDoor());
+        }
+
+        protected override void prepareModel()
+        {
+            base.prepareModel();
+
+            if (!_cyclops.Exists())
+            {
+                _cyclops = ModelObject.GetComponent<SubRoot>();
+            }
         }
 
         protected override void updateModelTransform()
@@ -107,6 +128,8 @@ namespace GRandomizer.Util.Lifepod
                 cyclopsObj.SetActive(true);
 
                 _cyclops = cyclopsObj.GetComponent<SubRoot>();
+
+                _cyclops.GetComponentInChildren<SubName>(true)?.SetName(LIFEPOD_NAME);
 
                 Player.main.SetCurrentSub(_cyclops);
 

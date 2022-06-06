@@ -5,23 +5,24 @@ namespace GRandomizer.Util
     public class InitializeOnAccess<T>
     {
         readonly Func<T> _initializeFunc;
-
-        bool _isInitialized;
         T _value;
 
         public InitializeOnAccess(Func<T> initializeFunc)
         {
             _initializeFunc = initializeFunc;
+            IsInitialized = false;
         }
+
+        public bool IsInitialized { get; private set; }
 
         public T Get
         {
             get
             {
-                if (!_isInitialized)
+                if (!IsInitialized)
                 {
                     _value = _initializeFunc();
-                    _isInitialized = true;
+                    IsInitialized = true;
                 }
 
                 return _value;
@@ -30,8 +31,14 @@ namespace GRandomizer.Util
 
         public void Reset()
         {
-            _isInitialized = false;
+            IsInitialized = false;
             _value = default;
+        }
+
+        public void SetValue(T value)
+        {
+            _value = value;
+            IsInitialized = true;
         }
 
         public static implicit operator T(InitializeOnAccess<T> initOnAccess)

@@ -9,7 +9,7 @@ namespace GRandomizer.Util
     {
         public delegate bool ValueSelectorTryGet(TKey key, out TValue value);
 
-        readonly Dictionary<TKey, TValue> _internalDict;
+        Dictionary<TKey, TValue> _internalDict;
         readonly ValueSelectorTryGet _valueSelector;
 
         object _syncRoot;
@@ -148,6 +148,11 @@ namespace GRandomizer.Util
         void ICollection.CopyTo(Array array, int index)
         {
             throw new NotImplementedException();
+        }
+
+        public void SetTo(IDictionary<TKey, TValue> dict)
+        {
+            _internalDict = new Dictionary<TKey, TValue>(dict);
         }
 
         public static implicit operator Dictionary<TKey, TValue>(InitializeOnAccessDictionary<TKey, TValue> initOnAccessDictionary)

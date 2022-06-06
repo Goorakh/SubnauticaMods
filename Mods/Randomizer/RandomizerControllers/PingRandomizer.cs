@@ -1,11 +1,15 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class PingRandomizer
     {
         static bool IsEnabled()
@@ -13,7 +17,23 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.PingRandomizer;
         }
 
-        static readonly InitializeOnAccess<Dictionary<PingType, PingType>> _pingTypeReplacements = new InitializeOnAccess<Dictionary<PingType, PingType>>(() =>
+        public static void Serialize(BinaryWriter writer)
+        {
+            if (writer.WriteAndReturn(_pingTypeReplacements.IsInitialized))
+            {
+                writer.Write(_pingTypeReplacements.Get);
+            }
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            if (reader.ReadBoolean()) // _pingTypeReplacements.IsInitialized
+            {
+                _pingTypeReplacements.SetValue(reader.ReadReplacementDictionary<PingType>());
+            }
+        }
+
+        static readonly InitializeOnAccess<ReplacementDictionary<PingType>> _pingTypeReplacements = new InitializeOnAccess<ReplacementDictionary<PingType>>(() =>
         {
             return ((PingType[])Enum.GetValues(typeof(PingType))).ToRandomizedReplacementDictionary();
         });
@@ -36,7 +56,7 @@ namespace GRandomizer.RandomizerControllers
                 public static readonly MethodInfo Ldfld_pingType_MI = SymbolExtensions.GetMethodInfo(() => Ldfld_pingType(default));
                 static PingType Ldfld_pingType(PingType original)
                 {
-                    return IsEnabled() && _pingTypeReplacements.Get.TryGetValue(original, out PingType replacement) ? replacement : original;
+                    return IsEnabled() && _pingTypeReplacements.Get.TryGetReplacement(original, out PingType replacement) ? replacement : original;
                 }
             }
         }

@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
 using HarmonyLib;
 using Oculus.Newtonsoft.Json.Linq;
 using System.Linq;
@@ -6,6 +7,7 @@ using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class CreatureRandomizer
     {
         static readonly InitializeOnAccess<WeightedSet<TechType>> _weightedCreaturesSet = new InitializeOnAccess<WeightedSet<TechType>>(() =>

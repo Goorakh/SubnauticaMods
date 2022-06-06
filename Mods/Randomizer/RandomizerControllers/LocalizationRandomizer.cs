@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
@@ -6,6 +7,7 @@ using System.Reflection.Emit;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class LocalizationRandomizer
     {
         static bool IsEnabled()

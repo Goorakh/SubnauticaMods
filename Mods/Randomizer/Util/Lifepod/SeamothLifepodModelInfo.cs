@@ -15,7 +15,6 @@ namespace GRandomizer.Util.Lifepod
 
         public override FakeParentData FakeParentData => new FakeParentData(new Vector3(0.8f, 1.5f, -1.3f), new Vector3(0f, 355f, 0f));
 
-        // TODO: This is run every time the lifepod is initialized, meaning nothing about the seamoth gets saved. Figure out how to serialize this object in the save data to avoid creating it every time.
         protected override void spawnModel(Action<LifepodModelData> onComplete)
         {
             GameObject seamothObj = CraftData.InstantiateFromPrefab(TechType.Seamoth);
@@ -35,22 +34,6 @@ namespace GRandomizer.Util.Lifepod
             {
                 if (seamoth.TryFindSeamothStorageForSlotID(storageModuleSlotID, out ItemsContainer container))
                 {
-                    int width, height;
-
-                    StorageContainer lifepodStorage = _escapePod.storageContainer;
-                    if (lifepodStorage.Exists())
-                    {
-                        width = lifepodStorage.width;
-                        height = lifepodStorage.height;
-                    }
-                    else
-                    {
-                        width = 4;
-                        height = 8;
-                    }
-
-                    container.Resize(width, height);
-
                     foreach (TechType itemType in LootSpawner.main.GetEscapePodStorageTechTypes())
                     {
                         container.AddItem(CraftData.InstantiateFromPrefab(itemType).EnsureComponent<Pickupable>().Pickup(false));

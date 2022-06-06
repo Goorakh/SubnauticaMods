@@ -1,18 +1,37 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
+using GRandomizer.Util.Serialization;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class CraftSpeedRandomizer
     {
         static bool IsEnabled()
         {
             return Mod.Config.RandomCraftDuration;
+        }
+
+        static void Reset()
+        {
+            _craftTimes.Clear();
+        }
+
+        public static void Serialize(BinaryWriter writer)
+        {
+            writer.Write(_craftTimes);
+        }
+
+        public static void Deserialize(BinaryReader reader, ushort version)
+        {
+            _craftTimes.SetTo(reader.ReadDictionary<TechType, float>());
         }
 
         const float CRAFT_TIME_EXP = 6f; // Controls the bias of the value, higher values means shorter craft durations are more likely
@@ -63,6 +82,85 @@ namespace GRandomizer.RandomizerControllers
                     }
 
                     return __result;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class ConstructorInput_Craft_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return AccessTools.DeclaredMethod(typeof(ConstructorInput), nameof(ConstructorInput.Craft));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
+            {
+                int durationParameterIndex = original.FindArgumentIndex(typeof(float), "duration");
+                int techTypeParameterIndex = original.FindArgumentIndex(typeof(TechType), "techType");
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.IsStarg(durationParameterIndex))
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldarg, techTypeParameterIndex);
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.GetDuration_MI);
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo GetDuration_MI = SymbolExtensions.GetMethodInfo(() => GetDuration(default, default));
+                static float GetDuration(float original, TechType techType)
+                {
+                    if (IsEnabled())
+                    {
+                        return _craftTimes[techType];
+                    }
+
+                    return original;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class Rocket_StartRocketConstruction_Patch
+        {
+            static MethodInfo TargetMethod()
+            {
+                return SymbolExtensions.GetMethodInfo<Rocket>(_ => _.StartRocketConstruction());
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                FieldInfo VFXConstructing_timeToConstruct_FI = AccessTools.DeclaredField(typeof(VFXConstructing), nameof(VFXConstructing.timeToConstruct));
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    if (instruction.StoresField(VFXConstructing_timeToConstruct_FI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldarg_0);
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.GetDuration_MI);
+                    }
+
+                    yield return instruction;
+                }
+            }
+
+            static class Hooks
+            {
+                public static MethodInfo GetDuration_MI = SymbolExtensions.GetMethodInfo(() => GetDuration(default, default));
+                static float GetDuration(float original, Rocket __instance)
+                {
+                    if (IsEnabled() && __instance.Exists())
+                    {
+                        return _craftTimes[__instance.GetCurrentStageTech()];
+                    }
+
+                    return original;
                 }
             }
         }

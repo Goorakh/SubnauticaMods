@@ -1,4 +1,5 @@
-﻿using GRandomizer.Util;
+﻿using GRandomizer.RandomizerControllers.Callbacks;
+using GRandomizer.Util;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using uSky;
 
 namespace GRandomizer.RandomizerControllers
 {
+    [RandomizerController]
     static class ColorRandomizer
     {
         static readonly MethodInfo IsEnabled_MI = SymbolExtensions.GetMethodInfo(() => IsEnabled());
@@ -22,9 +24,14 @@ namespace GRandomizer.RandomizerControllers
             return Mod.Config.RandomColors;
         }
 
+        static void Reset()
+        {
+            ColorReplacer.Reset();
+        }
+
         class ColorReplacer : MonoBehaviour
         {
-            static readonly Vector3 _globalColorOffset = new Vector3(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f));
+            static Vector3 _globalColorOffset;
             readonly Vector3 _colorOffset = new Vector3(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f));
 
             Behaviour _component;
@@ -42,6 +49,11 @@ namespace GRandomizer.RandomizerControllers
                 {
                     Destroy(this);
                 }
+            }
+
+            static void SetGlobalColorOffset()
+            {
+                _globalColorOffset = new Vector3(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f));
             }
 
             static ColorReplacer getOrAddComponent(Behaviour component)
@@ -176,11 +188,22 @@ namespace GRandomizer.RandomizerControllers
             {
                 return IsEnabled() ? GetGlobalReplacement(original) : original;
             }
+
+            public static void Reset()
+            {
+                SetGlobalColorOffset();
+            }
+
+            public static void Initialize()
+            {
+                SetGlobalColorOffset();
+            }
         }
 
-        public static void Initialize()
+        static void Initialize()
         {
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
+            ColorReplacer.Initialize();
         }
 
         static void SceneManager_sceneLoaded(Scene arg0, LoadSceneMode arg1)

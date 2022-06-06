@@ -1,6 +1,7 @@
-﻿using System;
-using System.Collections;
+﻿using GRandomizer.Util.Serialization;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -9,6 +10,8 @@ namespace GRandomizer.Util.Lifepod
 {
     public abstract class LifepodModelInfo
     {
+        protected const string LIFEPOD_NAME = "LIFEPOD 5";
+
         static Dictionary<LifepodModelType, LifepodModelInfo> _modelInfoByType;
         public static void InitializeModelInfoByTypeDictionary()
         {
@@ -17,7 +20,14 @@ namespace GRandomizer.Util.Lifepod
 
             _modelInfoByType = (from type in TypeCollection.GetAllTypes(TypeFlags.ThisAssembly | TypeFlags.Class)
                                 where !type.IsAbstract && typeof(LifepodModelInfo).IsAssignableFrom(type)
-                                select new { type, ModelType = type.GetCustomAttribute<LifepodModelTypeAttribute>().Type }).ToDictionary(a => a.ModelType, a => (LifepodModelInfo)Activator.CreateInstance(a.type, new object[] { a.ModelType }));
+                                let attr = type.GetCustomAttribute<LifepodModelTypeAttribute>()
+                                where attr != null
+                                select new KeyValuePair<LifepodModelType, LifepodModelInfo>(attr.Type, (LifepodModelInfo)Activator.CreateInstance(type, attr.Type))).ToDictionary();
+        }
+
+        public static LifepodModelInfo GetRandomModelInfo()
+        {
+            return _modelInfoByType.Values.GetRandomOrDefault();
         }
 
         public static LifepodModelInfo GetByType(LifepodModelType lifepodModelType)
@@ -28,6 +38,11 @@ namespace GRandomizer.Util.Lifepod
             }
 
             throw new KeyNotFoundException(string.Format(nameof(LifepodModelType) + ".{0} is not implemented", lifepodModelType));
+        }
+
+        public static void ResetInstances()
+        {
+            _modelInfoByType.Values.ForEach(lmi => lmi.reset());
         }
 
         [Flags]
@@ -43,9 +58,9 @@ namespace GRandomizer.Util.Lifepod
 
         public readonly LifepodModelType Type;
 
-        protected EscapePod _escapePod;
-
         protected Dictionary<string, bool> _overrideIntroLifepodDirectorActiveObjectStates = new Dictionary<string, bool>();
+
+        protected string _modelObjectPrefabIdentifier;
 
         public LifepodModelInfo(LifepodModelType type)
         {
@@ -59,6 +74,58 @@ namespace GRandomizer.Util.Lifepod
         public virtual FakeParentData FakeParentData => null;
 
         public GameObject ModelObject { get; private set; }
+
+        public bool LoadedFromSaveFile { get; private set; } = false;
+
+        protected virtual void reset()
+        {
+            _overrideIntroLifepodDirectorActiveObjectStates.Clear();
+            ModelObject = null;
+            LoadedFromSaveFile = false;
+        }
+
+        public virtual void Serialize(BinaryWriter writer)
+        {
+            writer.WriteGeneric(Type);
+            writer.WriteGeneric(_modelObjectPrefabIdentifier);
+        }
+
+        protected virtual void deserialize(BinaryReader reader, ushort version)
+        {
+            // LifepodModelType is already read at this point
+
+            _modelObjectPrefabIdentifier = reader.ReadGeneric<string>();
+        }
+
+        public static LifepodModelInfo Deserialize(BinaryReader reader, ushort version)
+        {
+            LifepodModelInfo modelInfo = GetByType(reader.ReadGeneric<LifepodModelType>());
+            modelInfo.LoadedFromSaveFile = true;
+            modelInfo.deserialize(reader, version);
+            return modelInfo;
+        }
+
+        public void FindLifepodModelAfterLoad()
+        {
+            if (_modelObjectPrefabIdentifier == null)
+            {
+                Utils.LogError($"Could not locate lifepod model object for {GetType().Name}: null ID");
+                return;
+            }
+
+            if (UniqueIdentifier.TryGetIdentifier(_modelObjectPrefabIdentifier, out UniqueIdentifier identifier))
+            {
+#if VERBOSE
+                Utils.DebugLog($"Found lifepod model object with id {_modelObjectPrefabIdentifier} for {GetType().Name}: {identifier.gameObject}");
+#endif
+                ModelObject = identifier.gameObject;
+                prepareModel();
+            }
+            else
+            {
+                Utils.LogError($"Could not locate lifepod model object with id {_modelObjectPrefabIdentifier} for {GetType().Name}");
+            }
+        }
 
         public virtual void OnLifepodPositioned()
         {
@@ -74,46 +141,56 @@ namespace GRandomizer.Util.Lifepod
 
         protected abstract void spawnModel(Action<LifepodModelData> onComplete);
 
-        public void Replace(EscapePod escapePod)
+        public void Replace()
         {
-            _escapePod = escapePod;
-
-            spawnModel(modelData =>
+            if (!LoadedFromSaveFile)
             {
-                ModelObject = modelData.MainModel;
-
-                const bool DEBUG_DAMAGE = false;
-                if (GameModeUtils.RequiresSurvival() || DEBUG_DAMAGE)
+                spawnModel(modelData =>
                 {
-                    if (modelData.Radio.Exists())
+                    ModelObject = modelData.MainModel;
+                    ModelObject.RegisterLargeWorldEntityOnceStreamerInitialized();
+
+                    UniqueIdentifier identifier = ModelObject.GetComponent<UniqueIdentifier>();
+                    if (identifier.Exists())
                     {
-                        LiveMixin radioLiveMixin = modelData.Radio.liveMixin;
-                        if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
+                        _modelObjectPrefabIdentifier = identifier.Id;
+                    }
+
+                    if (GameModeUtils.RequiresSurvival())
+                    {
+                        if (modelData.Radio.Exists())
                         {
-                            radioLiveMixin.TakeDamage(80f);
+                            LiveMixin radioLiveMixin = modelData.Radio.liveMixin;
+                            if (radioLiveMixin.Exists() && radioLiveMixin.IsFullHealth())
+                            {
+                                radioLiveMixin.TakeDamage(80f);
+                            }
+                        }
+
+                        LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
+                        if (playerLiveMixin.Exists() && playerLiveMixin.IsFullHealth())
+                        {
+                            playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
                         }
                     }
 
-                    LiveMixin playerLiveMixin = Player.main.GetComponent<LiveMixin>();
-                    if (playerLiveMixin.Exists() && playerLiveMixin.IsFullHealth())
-                    {
-                        playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
-                    }
-                }
-
-                prepareForIntro();
-            });
+                    prepareModel();
+                    prepareForIntro();
+                });
+            }
         }
 
         protected virtual void prepareForIntro()
         {
-            _escapePod.gameObject.DisableAllCollidersOfType<Collider>();
+            EscapePod escapePod = EscapePod.main;
 
-            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_LOD1");
-            _escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/root/UISpawn");
-            _escapePod.transform.TryDisableChild("ModulesRoot");
+            escapePod.gameObject.DisableAllCollidersOfType<Collider>();
 
-            Transform interiorModelRoot = _escapePod.transform.Find("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
+            escapePod.transform.TryDisableChild("models/Life_Pod_damaged_LOD1");
+            escapePod.transform.TryDisableChild("models/Life_Pod_damaged_03/root/UISpawn");
+            escapePod.transform.TryDisableChild("ModulesRoot");
+
+            Transform interiorModelRoot = escapePod.transform.Find("models/Life_Pod_damaged_03/lifepod_damaged_03_geo");
             if (interiorModelRoot.Exists())
             {
                 InteriorObjectFlags interiorFlags = ShowInteriorObjects;
@@ -148,18 +225,23 @@ namespace GRandomizer.Util.Lifepod
             }
         }
 
+        protected virtual void prepareModel()
+        {
+        }
+
         protected virtual void updateModelTransform()
         {
+            EscapePod escapePod = EscapePod.main;
             FakeParentData fakeParentData = FakeParentData;
             if (fakeParentData != null)
             {
-                ModelObject.transform.rotation = _escapePod.transform.rotation * fakeParentData.LocalRotation;
-                ModelObject.transform.position = _escapePod.transform.TransformPoint(fakeParentData.LocalPosition);
+                ModelObject.transform.rotation = escapePod.transform.rotation * fakeParentData.LocalRotation;
+                ModelObject.transform.position = escapePod.transform.TransformPoint(fakeParentData.LocalPosition);
             }
-            else if (!ModelObject.transform.IsChildOf(_escapePod.transform))
+            else if (!ModelObject.transform.IsChildOf(escapePod.transform))
             {
-                ModelObject.transform.position = _escapePod.transform.position;
-                ModelObject.transform.rotation = _escapePod.transform.rotation;
+                ModelObject.transform.position = escapePod.transform.position;
+                ModelObject.transform.rotation = escapePod.transform.rotation;
             }
         }
 
@@ -167,7 +249,7 @@ namespace GRandomizer.Util.Lifepod
         {
             if (DisableTutorial || skipped)
             {
-                _escapePod.gameObject.SetActive(false);
+                EscapePod.main.gameObject.SetActive(false);
 
                 if (!skipped)
                 {
@@ -184,7 +266,7 @@ namespace GRandomizer.Util.Lifepod
         {
             if (!DisableTutorial)
             {
-                _escapePod.gameObject.SetActive(false);
+                EscapePod.main.gameObject.SetActive(false);
                 cleanup();
             }
         }

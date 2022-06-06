@@ -1,4 +1,5 @@
 ﻿using GRandomizer.RandomizerControllers;
+using GRandomizer.RandomizerControllers.Callbacks;
 using GRandomizer.Util;
 using GRandomizer.Util.Lifepod;
 using HarmonyLib;
@@ -53,8 +54,7 @@ namespace GRandomizer
 
             GlobalObject.CreateIfMissing();
 
-            DialogueRandomizer.Initialize();
-            ColorRandomizer.Initialize();
+            RandomizerControllerCallbacks.Initialize();
 
             string modName = ($"gorakh_{assembly.GetName().Name}");
             Utils.LogInfo($"Patching {modName}");
