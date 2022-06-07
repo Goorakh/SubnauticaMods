@@ -22,9 +22,11 @@ Hello! Thank you for downloading the GRandomizer.
 	Randomizes all in-game dialogue, can be configured to either be completely random or keeping the same speaker
 - Ping randomizer:
 	Randomizes beacon icons (lifepod, vehicles, signals, etc.)
+- Lifepod randomizer:
+	Randomizes your starting lifepod, can be seamoth, cyclops, prawnsuit, rocket, or normal lifepod.
 
-Due to this being the first ever public release, do not expect anything close to being finished, it is still a big work in progress.
-If you have any feedback or bug reports, please DM me on discord (Gorakh#0821), along with your log file (qmodmanager_log-Subnautica.txt) and all other relevant information (screenshots, video, etc)
+Due to this being a beta version, do not expect anything close to being finished, it is still a big work in progress.
+If you have any feedback or bug reports, please DM me (or ping in the Subnautica Modding discord, I don't mind which) on discord (Gorakh#0821), along with your log file (qmodmanager_log-Subnautica.txt) and all other relevant information (screenshots, video, etc)
 
 # Installation instructions: #
 - Install QModManager (https://www.nexusmods.com/subnautica/mods/201)
