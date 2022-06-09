@@ -93,6 +93,11 @@ namespace GRandomizer.Util
                 LootRandomizer.SetDebugIndex(int.Parse((string)n.data[0]));
             }
 
+            void OnConsoleCommand_spas(NotificationCenter.Notification n)
+            {
+                Player.main.armsController.animator.SetBool((string)n.data[0], bool.Parse((string)n.data[1]));
+            }
+
             bool banksLoading = false;
             string lastPath;
             string lastBank;
@@ -113,6 +118,7 @@ namespace GRandomizer.Util
                 {
                     DevConsole.RegisterConsoleCommand(this, "r_play", true, true);
                     DevConsole.RegisterConsoleCommand(this, "sdi");
+                    DevConsole.RegisterConsoleCommand(this, "spas");
                 }
                 else if (Input.GetKeyDown(KeyCode.Keypad0))
                 {
