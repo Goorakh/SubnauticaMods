@@ -112,6 +112,7 @@
     </Compile>
     <Compile Include="RandomDialogueMode.cs" />
     <Compile Include="RandomizerConfig.cs" />
+    <Compile Include="RandomizerControllers\AnimationRandomizer.cs" />
     <Compile Include="RandomizerControllers\Callbacks\RandomizerControllerAttribute.cs" />
     <Compile Include="RandomizerControllers\ColorRandomizer.cs" />
     <Compile Include="RandomizerControllers\CraftSpeedRandomizer.cs" />
@@ -125,6 +126,9 @@
     <Compile Include="RandomizerControllers\Callbacks\RandomizerControllerCallbacks.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="Util\AsyncOperationState.cs" />
+    <Compile Include="Util\InitializeAsync.cs" />
+    <Compile Include="Util\ManagedPool.cs" />
     <Compile Include="Util\ReplacementDictionary.cs" />
     <Compile Include="Util\Serialization\BinaryExtensions.cs" />
     <Compile Include="Util\ColliderFlags.cs" />

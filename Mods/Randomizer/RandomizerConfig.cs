@@ -54,5 +54,8 @@ namespace GRandomizer
 
         [Toggle("Lifepod Randomizer")]
         public bool LifepodRandomizer = true;
+
+        [Toggle("Animation Randomizer")]
+        public bool AnimationRandomizer = true;
     }
 }

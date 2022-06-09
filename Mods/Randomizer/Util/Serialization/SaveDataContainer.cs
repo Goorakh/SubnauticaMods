@@ -7,7 +7,7 @@ namespace GRandomizer.Util.Serialization
 {
     public struct SaveDataContainer
     {
-        const ushort NEWEST_SAVE_DATA_VERSION = 0;
+        const ushort NEWEST_SAVE_DATA_VERSION = 1;
 
         public readonly ushort Version;
 
@@ -23,6 +23,11 @@ namespace GRandomizer.Util.Serialization
                 LifepodRandomizer.Deserialize(reader, Version);
                 LootRandomizer.Deserialize(reader, Version);
                 PingRandomizer.Deserialize(reader, Version);
+
+                if (Version > 0)
+                {
+                    AnimationRandomizer.Deserialize(reader, Version);
+                }
 
                 if (Version > NEWEST_SAVE_DATA_VERSION)
                 {
@@ -45,6 +50,7 @@ namespace GRandomizer.Util.Serialization
             LifepodRandomizer.Serialize(writer);
             LootRandomizer.Serialize(writer);
             PingRandomizer.Serialize(writer);
+            AnimationRandomizer.Serialize(writer);
         }
     }
 }

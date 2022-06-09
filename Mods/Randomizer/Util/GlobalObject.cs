@@ -23,6 +23,8 @@ namespace GRandomizer.Util
         }
         static readonly List<ScheduledAction> _scheduledActions = new List<ScheduledAction>();
 
+        static readonly ManagedPool<Action> _updateFunctions = new ManagedPool<Action>(5, 1);
+
         static GlobalObject _instance;
         public static GlobalObject Instance
         {
@@ -57,6 +59,15 @@ namespace GRandomizer.Util
             _scheduledActions.Add(new ScheduledAction(callback, Time.time + waitTime));
         }
 
+        public static int RegisterUpdateCallback(Action callback)
+        {
+            return _updateFunctions.Store(callback);
+        }
+        public static void UnregisterUpdateCallback(int id)
+        {
+            _updateFunctions.Clear(id);
+        }
+
         void Update()
         {
             for (int i = _scheduledActions.Count - 1; i >= 0; i--)
@@ -66,6 +77,11 @@ namespace GRandomizer.Util
                     _scheduledActions[i].Callback();
                     _scheduledActions.RemoveAt(i);
                 }
+            }
+
+            foreach (Action updateCallback in _updateFunctions)
+            {
+                updateCallback();
             }
         }
 

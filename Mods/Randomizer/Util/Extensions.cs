@@ -349,7 +349,7 @@ namespace GRandomizer.Util
             return mb.FindArgumentIndex(p => p.ParameterType == parameterType && string.Equals(p.Name, parameterName, nameComparison));
         }
 
-        public static ReplacementDictionary<T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable)
+        public static ReplacementDictionary<T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable, bool debugPrint = false)
         {
             Dictionary<T, T> result = new Dictionary<T, T>();
 
@@ -360,7 +360,14 @@ namespace GRandomizer.Util
 
             foreach (T key in keys)
             {
-                result.Add(key, itemsList.GetAndRemoveRandom());
+                T replacement = itemsList.GetAndRemoveRandom();
+#if VERBOSE
+                if (debugPrint)
+                {
+                    Utils.DebugLog($"Replace {key} -> {replacement}", false, 1);
+                }
+#endif
+                result.Add(key, replacement);
             }
 
             return new ReplacementDictionary<T>(result);
@@ -567,6 +574,11 @@ namespace GRandomizer.Util
             }
 
             GlobalObject.Instance.StartCoroutine(waitForInitThenRegister());
+        }
+
+        public static IEnumerable<T> Subset<T>(this IEnumerable<T> values, int startIndex, int count)
+        {
+            return values.Skip(startIndex).Take(count);
         }
     }
 }
