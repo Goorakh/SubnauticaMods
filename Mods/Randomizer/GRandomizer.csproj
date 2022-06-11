@@ -128,6 +128,7 @@
     <Compile Include="Utils.cs" />
     <Compile Include="Util\AsyncOperationState.cs" />
     <Compile Include="Util\InitializeAsync.cs" />
+    <Compile Include="Util\InitializeOnAccessDictionaryArg.cs" />
     <Compile Include="Util\ManagedPool.cs" />
     <Compile Include="Util\ReplacementDictionary.cs" />
     <Compile Include="Util\Serialization\BinaryExtensions.cs" />
@@ -164,6 +165,7 @@
     <Compile Include="Util\Fabricator\VehicleFabricatorPowerSource.cs" />
     <Compile Include="Util\Serialization\SaveDataContainer.cs" />
     <Compile Include="Util\Serialization\SaveDataManager.cs" />
+    <Compile Include="Util\Serialization\SaveVersion.cs" />
     <Compile Include="Util\Serialization\VersionedBinaryReader.cs" />
     <Compile Include="Util\Singleton.cs" />
     <Compile Include="Util\SoundPatcher.cs" />

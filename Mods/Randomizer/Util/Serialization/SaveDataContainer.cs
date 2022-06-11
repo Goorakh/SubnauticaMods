@@ -7,7 +7,7 @@ namespace GRandomizer.Util.Serialization
 {
     public struct SaveDataContainer
     {
-        const ushort NEWEST_SAVE_DATA_VERSION = 2;
+        const SaveVersion NEWEST_SAVE_DATA_VERSION = SaveVersion.v0_0_2_0c;
 
         public SaveDataContainer(VersionedBinaryReader reader)
         {
@@ -20,7 +20,7 @@ namespace GRandomizer.Util.Serialization
                 LootRandomizer.Deserialize(reader);
                 PingRandomizer.Deserialize(reader);
 
-                if (reader.Version > 0)
+                if (reader.Version >= SaveVersion.v0_0_2_0b)
                 {
                     AnimationRandomizer.Deserialize(reader);
                 }
@@ -34,7 +34,7 @@ namespace GRandomizer.Util.Serialization
 
         public void Serialize(BinaryWriter writer)
         {
-            writer.Write(NEWEST_SAVE_DATA_VERSION);
+            writer.WriteGeneric(NEWEST_SAVE_DATA_VERSION);
 
             CraftSpeedRandomizer.Serialize(writer);
             DialogueRandomizer.Serialize(writer);

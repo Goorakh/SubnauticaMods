@@ -108,7 +108,7 @@ namespace GRandomizer.Util.Serialization
         {
             Type type = typeof(T);
 
-            if (reader.Version > 1)
+            if (reader.Version >= SaveVersion.v0_0_2_0c)
             {
                 if (type.IsClass || (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
                 {

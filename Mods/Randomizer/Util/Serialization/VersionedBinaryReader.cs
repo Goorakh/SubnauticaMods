@@ -9,7 +9,7 @@ namespace GRandomizer.Util.Serialization
 {
     public class VersionedBinaryReader : BinaryReader
     {
-        public ushort Version { get; private set; }
+        public SaveVersion Version { get; private set; }
 
         public VersionedBinaryReader(Stream input) : base(input)
         {
@@ -25,7 +25,7 @@ namespace GRandomizer.Util.Serialization
 
         public void Initialize()
         {
-            Version = ReadUInt16();
+            Version = this.ReadGeneric<SaveVersion>();
         }
     }
 }

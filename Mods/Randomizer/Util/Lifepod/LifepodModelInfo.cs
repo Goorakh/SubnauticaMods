@@ -109,7 +109,7 @@ namespace GRandomizer.Util.Lifepod
 
             _modelObjectPrefabIdentifier = reader.ReadGeneric<string>();
 
-            if (reader.Version > 1)
+            if (reader.Version >= SaveVersion.v0_0_2_0c)
             {
                 _fabricatorPrefabIdentifier = reader.ReadGeneric<string>();
                 _medicalCabinetPrefabIdentifier = reader.ReadGeneric<string>();
