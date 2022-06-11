@@ -5,41 +5,46 @@ using System.Threading;
 
 namespace GRandomizer.Util
 {
-    public class InitializeOnAccessDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
+    public class InitializeOnAccessDictionaryArg<TKey, TValue, TArg> : IDictionary<TKey, TValue>, IDictionary
     {
-        public delegate bool ValueSelectorTryGet(TKey key, out TValue value);
+        public delegate bool ValueSelectorTryGet(TKey key, TArg arg, out TValue value);
 
         Dictionary<TKey, TValue> _internalDict;
         readonly ValueSelectorTryGet _valueSelector;
 
         object _syncRoot;
 
-        public InitializeOnAccessDictionary(ValueSelectorTryGet selector)
+        public InitializeOnAccessDictionaryArg(ValueSelectorTryGet selector)
         {
             _valueSelector = selector;
             _internalDict = new Dictionary<TKey, TValue>();
         }
 
-        public InitializeOnAccessDictionary(Func<TKey, TValue> selector) : this((TKey key, out TValue value) => { value = selector(key); return true; })
+        public InitializeOnAccessDictionaryArg(Func<TKey, TArg, TValue> selector) : this((TKey key, TArg arg, out TValue value) => { value = selector(key, arg); return true; })
         {
         }
 
-        public InitializeOnAccessDictionary(Func<TValue> selector) : this((TKey key, out TValue value) => { value = selector(); return true; })
+        public InitializeOnAccessDictionaryArg(Func<TArg, TValue> selector) : this((TKey key, TArg arg, out TValue value) => { value = selector(arg); return true; })
         {
         }
 
         public TValue this[TKey key]
         {
-            get
-            {
-                if (TryGetValue(key, out TValue value))
-                    return value;
-
-                throw new KeyNotFoundException($"Key {key} is not in the dictionary and no value was decided");
-            }
+            get => throw new NotImplementedException();
             set
             {
                 _internalDict[key] = value;
+            }
+        }
+
+        public TValue this[TKey key, TArg arg]
+        {
+            get
+            {
+                if (TryGetValue(key, arg, out TValue value))
+                    return value;
+
+                throw new KeyNotFoundException($"Key {key} is not in the dictionary and no value was decided");
             }
         }
 
@@ -90,12 +95,17 @@ namespace GRandomizer.Util
             return _internalDict.Remove(key);
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        bool IDictionary<TKey, TValue>.TryGetValue(TKey key, out TValue value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetValue(TKey key, TArg arg, out TValue value)
         {
             if (_internalDict.TryGetValue(key, out value))
                 return true;
 
-            if (_valueSelector(key, out value))
+            if (_valueSelector(key, arg, out value))
             {
                 _internalDict.Add(key, value);
                 return true;
@@ -159,7 +169,7 @@ namespace GRandomizer.Util
             _internalDict = new Dictionary<TKey, TValue>(dict);
         }
 
-        public static implicit operator Dictionary<TKey, TValue>(InitializeOnAccessDictionary<TKey, TValue> initOnAccessDictionary)
+        public static implicit operator Dictionary<TKey, TValue>(InitializeOnAccessDictionaryArg<TKey, TValue, TArg> initOnAccessDictionary)
         {
             return initOnAccessDictionary._internalDict;
         }

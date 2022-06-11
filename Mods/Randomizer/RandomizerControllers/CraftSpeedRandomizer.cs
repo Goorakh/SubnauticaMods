@@ -21,28 +21,47 @@ namespace GRandomizer.RandomizerControllers
 
         static void Reset()
         {
-            _craftTimes.Clear();
+            _craftDurations.Clear();
         }
 
         public static void Serialize(BinaryWriter writer)
         {
-            writer.Write(_craftTimes);
+            writer.Write(_craftDurations);
         }
 
         public static void Deserialize(VersionedBinaryReader reader)
         {
-            _craftTimes.SetTo(reader.ReadDictionary<TechType, float>());
+            _craftDurations.SetTo(reader.ReadDictionary<TechType, float>());
         }
 
-        const float CRAFT_TIME_EXP = 6f; // Controls the bias of the value, higher values means shorter craft durations are more likely
-        const float CRAFT_TIME_MIN_VALUE = 0.75f; // The minimum possible craft duration
-        const float CRAFT_TIME_MAX_VALUE = 60f; // The maximum possible craft duration
-        static readonly float _minimumValueModifier = Mathf.Pow(CRAFT_TIME_MIN_VALUE / CRAFT_TIME_MAX_VALUE, 1f / CRAFT_TIME_EXP);
-
-        static readonly InitializeOnAccessDictionary<TechType, float> _craftTimes = new InitializeOnAccessDictionary<TechType, float>(key =>
+        struct RandomCraftDurationData
         {
-            return (float)Math.Round(Mathf.Pow(((1f - _minimumValueModifier) * UnityEngine.Random.value) + _minimumValueModifier, CRAFT_TIME_EXP) * CRAFT_TIME_MAX_VALUE, 1);
-        });
+            public readonly float Exponent; // Controls the bias of the value, higher values means shorter craft durations are more likely
+            public readonly float MinValue; // The minimum possible craft duration
+            public readonly float MaxValue; // The maximum possible craft duration
+
+            public readonly float MinimumValueModifier;
+
+            public RandomCraftDurationData(float exponent, float minValue, float maxValue) : this()
+            {
+                Exponent = exponent;
+                MinValue = minValue;
+                MaxValue = maxValue;
+
+                MinimumValueModifier = Mathf.Pow(minValue / maxValue, 1f / exponent);
+            }
+
+            public float GetRandomValue()
+            {
+                return (float)Math.Round(Mathf.Pow(((1f - MinimumValueModifier) * UnityEngine.Random.value) + MinimumValueModifier, Exponent) * MaxValue, 1);
+            }
+        }
+
+        static readonly RandomCraftDurationData _itemDuration = new RandomCraftDurationData(6f, 0.75f, 60f);
+        static readonly RandomCraftDurationData _vehicleDuration = new RandomCraftDurationData(2f, 5f, 30f);
+        static readonly RandomCraftDurationData _basePieceDuration = new RandomCraftDurationData(2f, 0.01f, 5f);
+
+        static readonly InitializeOnAccessDictionaryArg<TechType, float, RandomCraftDurationData> _craftDurations = new InitializeOnAccessDictionaryArg<TechType, float, RandomCraftDurationData>(durationData => durationData.GetRandomValue());
 
         [HarmonyPatch]
         static class CraftData_GetCraftTime_Patch
@@ -77,7 +96,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     if (IsEnabled())
                     {
-                        result = _craftTimes[techType];
+                        result = _craftDurations[techType, _itemDuration];
                         return true;
                     }
 
@@ -118,7 +137,7 @@ namespace GRandomizer.RandomizerControllers
                 {
                     if (IsEnabled())
                     {
-                        return _craftTimes[techType];
+                        return _craftDurations[techType, _vehicleDuration];
                     }
 
                     return original;
@@ -157,10 +176,50 @@ namespace GRandomizer.RandomizerControllers
                 {
                     if (IsEnabled() && __instance.Exists())
                     {
-                        return _craftTimes[__instance.GetCurrentStageTech()];
+                        return _craftDurations[__instance.GetCurrentStageTech(), _vehicleDuration];
                     }
 
                     return original;
+                }
+            }
+        }
+
+        [HarmonyPatch]
+        static class Constructable_GetConstructionInterval_Patch
+        {
+            static IEnumerable<MethodInfo> TargetMethods()
+            {
+                yield return AccessTools.DeclaredMethod(typeof(Constructable), nameof(Constructable.Construct));
+                yield return AccessTools.DeclaredMethod(typeof(Constructable), nameof(Constructable.Deconstruct));
+            }
+
+            static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+            {
+                MethodInfo Constructable_GetConstructInterval_MI = SymbolExtensions.GetMethodInfo(() => Constructable.GetConstructInterval());
+
+                foreach (CodeInstruction instruction in instructions)
+                {
+                    yield return instruction;
+
+                    if (instruction.Calls(Constructable_GetConstructInterval_MI))
+                    {
+                        yield return new CodeInstruction(OpCodes.Ldarg_0);
+                        yield return new CodeInstruction(OpCodes.Call, Hooks.GetConstructInterval_MI);
+                    }
+                }
+            }
+
+            static class Hooks
+            {
+                public static readonly MethodInfo GetConstructInterval_MI = SymbolExtensions.GetMethodInfo(() => GetConstructInterval(default, default));
+                static float GetConstructInterval(float constructInterval, Constructable __instance)
+                {
+                    if (IsEnabled())
+                    {
+                        return constructInterval * _craftDurations[__instance.techType, _basePieceDuration];
+                    }
+
+                    return constructInterval;
                 }
             }
         }
