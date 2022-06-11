@@ -233,9 +233,15 @@ namespace GRandomizer.MiscPatches
                 }
             }
 
-            [HarmonyPatch(typeof(uGUI_CraftNode), nameof(uGUI_CraftNode.CreateIcon))]
-            static class uGUI_CraftNode_CreateIcon_Patch
+            [HarmonyPatch]
+            static class SpriteManager_Get_Patch
             {
+                static IEnumerable<MethodInfo> TargetMethods()
+                {
+                    yield return SymbolExtensions.GetMethodInfo<uGUI_CraftNode>(_ => _.CreateIcon());
+                    yield return SymbolExtensions.GetMethodInfo<uGUI_BlueprintEntry>(_ => _.SetIcon(default));
+                }
+
                 static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
                 {
                     MethodInfo SpriteManager_Get_MI = SymbolExtensions.GetMethodInfo(() => SpriteManager.Get(default));
@@ -249,6 +255,20 @@ namespace GRandomizer.MiscPatches
 
                         yield return instruction;
                     }
+                }
+            }
+
+            [HarmonyPatch]
+            static class uGUI_BlueprintsTab_SetEntryText_Patch
+            {
+                static MethodInfo TargetMethod()
+                {
+                    return SymbolExtensions.GetMethodInfo<uGUI_BlueprintsTab>(_ => _.SetEntryText(default, default));
+                }
+
+                static void Prefix(ref TechType techType)
+                {
+                    techType = Hooks.GetReplacementTechType(techType);
                 }
             }
 
