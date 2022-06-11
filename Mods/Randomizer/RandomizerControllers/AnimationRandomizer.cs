@@ -68,7 +68,7 @@ namespace GRandomizer.RandomizerControllers
                     {
                         string animToolName = tool.animToolName;
 #if VERBOSE
-                        Utils.DebugLog($"Found PlayerTool {techType}: [hasAnimations: {tool.hasAnimations}, animToolName: {animToolName ?? "null"}]", true);
+                        Utils.DebugLog($"Found PlayerTool {techType}: [hasAnimations: {tool.hasAnimations}, animToolName: {animToolName ?? "null"}]");
 #endif
                         if (tool.hasAnimations && !string.IsNullOrEmpty(animToolName))
                         {
@@ -85,7 +85,7 @@ namespace GRandomizer.RandomizerControllers
 
 #if VERBOSE
             stopwatch.Stop();
-            Utils.DebugLog($"Finished loading tool names (took {stopwatch.Elapsed.TotalSeconds:F1}s)", true);
+            Utils.DebugLog($"Finished loading tool names (took {stopwatch.Elapsed.TotalSeconds:F1}s)");
 #endif
 
             result.Set(toolNames);
