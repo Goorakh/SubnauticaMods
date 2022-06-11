@@ -169,11 +169,14 @@ namespace GRandomizer.Util.Lifepod
                 }
                 else
                 {
+                    Utils.LogWarning($"LifepodModel {Type} has no lifepod component ids, using GetComponentInChildren. This is probably fine, but should only ever happen when migrating save data from v0.0.2.0");
+
                     Fabricator = ModelObject.GetComponentInChildren<Fabricator>();
                     MedicalCabinet = ModelObject.GetComponentInChildren<MedicalCabinet>();
                     Radio = ModelObject.GetComponentInChildren<Radio>();
                 }
 
+                updateComponentIDs();
                 prepareModel();
             }
             else
@@ -229,24 +232,10 @@ namespace GRandomizer.Util.Lifepod
                         }
                     }
 
-                    void tryGetPrefabIdentifier(MonoBehaviour component, ref string id)
-                    {
-                        if (component.Exists())
-                        {
-                            UniqueIdentifier fabricatorId = component.GetComponent<UniqueIdentifier>();
-                            if (fabricatorId.Exists())
-                            {
-                                id = fabricatorId.Id;
-                                return;
-                            }
-                        }
-
-                        id = null;
-                    }
-
-                    tryGetPrefabIdentifier(Fabricator = modelData.Fabricator, ref _fabricatorPrefabIdentifier);
-                    tryGetPrefabIdentifier(MedicalCabinet = modelData.MedicalCabinet, ref _medicalCabinetPrefabIdentifier);
-                    tryGetPrefabIdentifier(Radio = modelData.Radio, ref _radioPrefabIdentifier);
+                    Fabricator = modelData.Fabricator;
+                    MedicalCabinet = modelData.MedicalCabinet;
+                    Radio = modelData.Radio;
+                    updateComponentIDs();
 
                     prepareModel();
                     prepareForIntro();
@@ -297,6 +286,28 @@ namespace GRandomizer.Util.Lifepod
                     _overrideIntroLifepodDirectorActiveObjectStates["models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_aid_box_01_base"] = false;
                 }
             }
+        }
+
+        void updateComponentIDs()
+        {
+            void trySetIdentifier(MonoBehaviour component, ref string id)
+            {
+                if (component.Exists())
+                {
+                    UniqueIdentifier fabricatorId = component.GetComponent<UniqueIdentifier>();
+                    if (fabricatorId.Exists())
+                    {
+                        id = fabricatorId.Id;
+                        return;
+                    }
+                }
+
+                id = null;
+            }
+
+            trySetIdentifier(Fabricator, ref _fabricatorPrefabIdentifier);
+            trySetIdentifier(MedicalCabinet, ref _medicalCabinetPrefabIdentifier);
+            trySetIdentifier(Radio, ref _radioPrefabIdentifier);
         }
 
         protected virtual void prepareModel()
