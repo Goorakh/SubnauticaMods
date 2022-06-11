@@ -322,6 +322,10 @@ namespace GRandomizer.RandomizerControllers
 
         static void randomizeParticleSystem(ParticleSystem ps)
         {
+#if !DEBUG
+            return;
+#endif
+
             ParticleSystem.MinMaxGradient randomizeMinMaxGradient(ParticleSystem.MinMaxGradient minmax)
             {
                 switch (minmax.m_Mode)
@@ -370,7 +374,7 @@ namespace GRandomizer.RandomizerControllers
                 return minmax;
             }
 
-            #region main
+#region main
             ParticleSystem.MainModule main = ps.main;
 
             main.duration *= UnityEngine.Random.Range(0.75f, 1.25f);
@@ -424,9 +428,9 @@ namespace GRandomizer.RandomizerControllers
             main.gravityModifierMultiplier *= UnityEngine.Random.Range(0.25f, 1.75f);
 
             main.simulationSpeed *= UnityEngine.Random.Range(0.3f, 1.7f);
-            #endregion
+#endregion
 
-            #region emission
+#region emission
             ParticleSystem.EmissionModule emission = ps.emission;
             if (emission.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -436,9 +440,9 @@ namespace GRandomizer.RandomizerControllers
                 emission.rateOverDistance = randomizeMinMaxCurve(emission.rateOverDistance);
                 emission.rateOverDistanceMultiplier *= UnityEngine.Random.Range(0.75f, 1.25f);
             }
-            #endregion
+#endregion
 
-            #region shape
+#region shape
             ParticleSystem.ShapeModule shape = ps.shape;
             bool shapeWasEnabled = shape.enabled;
             if (shape.enabled ^= Utils.Random.Boolean(0.2f))
@@ -521,9 +525,9 @@ namespace GRandomizer.RandomizerControllers
                     shape.textureClipThreshold = UnityEngine.Random.value;
                 }
             }
-            #endregion
+#endregion
 
-            #region velocityOverLifetime
+#region velocityOverLifetime
             ParticleSystem.VelocityOverLifetimeModule velocityOverLifetime = ps.velocityOverLifetime;
             bool velocityOverLifetimeWasEnabled = velocityOverLifetime.enabled;
             if (velocityOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
@@ -563,9 +567,9 @@ namespace GRandomizer.RandomizerControllers
                 velocityOverLifetime.speedModifier = randomizeMinMaxCurve(velocityOverLifetime.speedModifier);
                 velocityOverLifetime.speedModifierMultiplier = UnityEngine.Random.Range(0f, 3f);
             }
-            #endregion
+#endregion
 
-            #region limitVelocityOverLifetime
+#region limitVelocityOverLifetime
             ParticleSystem.LimitVelocityOverLifetimeModule limitVelocityOverLifetime = ps.limitVelocityOverLifetime;
             bool limitVelocityOverLifetimeWasEnabled = limitVelocityOverLifetime.enabled;
             if (limitVelocityOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
@@ -597,9 +601,9 @@ namespace GRandomizer.RandomizerControllers
                 limitVelocityOverLifetime.drag = randomizeMinMaxCurve(limitVelocityOverLifetime.drag);
                 limitVelocityOverLifetime.dragMultiplier = UnityEngine.Random.Range(0f, 3f);
             }
-            #endregion
+#endregion
 
-            #region inheritVelocity
+#region inheritVelocity
             ParticleSystem.InheritVelocityModule inheritVelocity = ps.inheritVelocity;
             if (inheritVelocity.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -608,9 +612,9 @@ namespace GRandomizer.RandomizerControllers
                 inheritVelocity.curve = randomizeMinMaxCurve(inheritVelocity.curve);
                 inheritVelocity.curveMultiplier = UnityEngine.Random.Range(0f, 3f);
             }
-            #endregion
+#endregion
 
-            #region forceOverLifetime
+#region forceOverLifetime
             ParticleSystem.ForceOverLifetimeModule forceOverLifetime = ps.forceOverLifetime;
             bool forceOverLifetimeWasEnabled = forceOverLifetime.enabled;
             if (forceOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
@@ -628,17 +632,17 @@ namespace GRandomizer.RandomizerControllers
                 forceOverLifetime.yMultiplier = UnityEngine.Random.Range(0f, 2f);
                 forceOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 2f);
             }
-            #endregion
+#endregion
 
-            #region colorOverLifetime
+#region colorOverLifetime
             ParticleSystem.ColorOverLifetimeModule colorOverLifetime = ps.colorOverLifetime;
             if (colorOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
             {
                 colorOverLifetime.color = randomizeMinMaxGradient(colorOverLifetime.color);
             }
-            #endregion
+#endregion
 
-            #region colorBySpeed
+#region colorBySpeed
             ParticleSystem.ColorBySpeedModule colorBySpeed = ps.colorBySpeed;
             bool colorBySpeedWasEnabled = colorBySpeed.enabled;
             if (colorBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
@@ -651,9 +655,9 @@ namespace GRandomizer.RandomizerControllers
                     colorBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
                 }
             }
-            #endregion
+#endregion
 
-            #region sizeOverLifetime
+#region sizeOverLifetime
             ParticleSystem.SizeOverLifetimeModule sizeOverLifetime = ps.sizeOverLifetime;
             if (sizeOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -674,9 +678,9 @@ namespace GRandomizer.RandomizerControllers
                     sizeOverLifetime.sizeMultiplier = UnityEngine.Random.Range(0f, 2f);
                 }
             }
-            #endregion
+#endregion
 
-            #region sizeBySpeed
+#region sizeBySpeed
             ParticleSystem.SizeBySpeedModule sizeBySpeed = ps.sizeBySpeed;
             bool sizeBySpeedWasEnabled = sizeBySpeed.enabled;
             if (sizeBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
@@ -704,9 +708,9 @@ namespace GRandomizer.RandomizerControllers
                     sizeBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
                 }
             }
-            #endregion
+#endregion
 
-            #region rotationOverLifetime
+#region rotationOverLifetime
             ParticleSystem.RotationOverLifetimeModule rotationOverLifetime = ps.rotationOverLifetime;
             if (rotationOverLifetime.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -722,9 +726,9 @@ namespace GRandomizer.RandomizerControllers
                     rotationOverLifetime.zMultiplier = UnityEngine.Random.Range(0f, 2f);
                 }
             }
-            #endregion
+#endregion
 
-            #region rotationBySpeed
+#region rotationBySpeed
             ParticleSystem.RotationBySpeedModule rotationBySpeed = ps.rotationBySpeed;
             bool rotationBySpeedWasEnabled = rotationBySpeed.enabled;
             if (rotationBySpeed.enabled ^= Utils.Random.Boolean(0.2f))
@@ -747,13 +751,13 @@ namespace GRandomizer.RandomizerControllers
                     rotationBySpeed.range = new Vector2(min, min + UnityEngine.Random.Range(0f, 5f));
                 }
             }
-            #endregion
+#endregion
 
-            #region externalForces
+#region externalForces
             // TODO (maybe?)
-            #endregion
+#endregion
 
-            #region noise
+#region noise
             ParticleSystem.NoiseModule noise = ps.noise;
             if (noise.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -800,21 +804,21 @@ namespace GRandomizer.RandomizerControllers
                 noise.rotationAmount = randomizeMinMaxCurve(noise.rotationAmount);
                 noise.sizeAmount = randomizeMinMaxCurve(noise.sizeAmount);
             }
-            #endregion
+#endregion
 
-            #region collision
+#region collision
             // TODO (maybe?)
-            #endregion
+#endregion
 
-            #region trigger
+#region trigger
             // TODO (maybe?)
-            #endregion
+#endregion
 
-            #region subEmitters
+#region subEmitters
             // TODO (maybe?)
-            #endregion
+#endregion
 
-            #region textureSheetAnimation
+#region textureSheetAnimation
             ParticleSystem.TextureSheetAnimationModule textureSheetAnimation = ps.textureSheetAnimation;
             if (textureSheetAnimation.enabled)
             {
@@ -832,9 +836,9 @@ namespace GRandomizer.RandomizerControllers
 
                 textureSheetAnimation.uvChannelMask = Utils.Random.EnumFlag<UVChannelFlags>();
             }
-            #endregion
+#endregion
 
-            #region lights
+#region lights
             ParticleSystem.LightsModule lights = ps.lights;
             if (lights.enabled && lights.light.Exists())
             {
@@ -855,9 +859,9 @@ namespace GRandomizer.RandomizerControllers
 
                 lights.maxLights = UnityEngine.Random.Range(0, 100);
             }
-            #endregion
+#endregion
 
-            #region trails
+#region trails
             ParticleSystem.TrailModule trails = ps.trails;
             if (trails.enabled ^= Utils.Random.Boolean(0.2f))
             {
@@ -894,7 +898,7 @@ namespace GRandomizer.RandomizerControllers
 
                 trails.attachRibbonsToTransform = Utils.Random.Boolean();
             }
-            #endregion
+#endregion
         }
 
         [HarmonyPatch(typeof(uSkyManager), nameof(uSkyManager.Awake))]
