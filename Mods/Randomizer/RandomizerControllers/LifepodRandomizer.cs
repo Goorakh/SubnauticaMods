@@ -32,11 +32,11 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        public static void Deserialize(BinaryReader reader, ushort version)
+        public static void Deserialize(VersionedBinaryReader reader)
         {
             if (reader.ReadBoolean()) // _overrideModel.IsInitialized
             {
-                _overrideModel.SetValue(LifepodModelInfo.Deserialize(reader, version));
+                _overrideModel.SetValue(LifepodModelInfo.Deserialize(reader));
             }
         }
 

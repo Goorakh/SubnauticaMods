@@ -62,6 +62,11 @@ namespace GRandomizer.Util.Lifepod
 
         protected string _modelObjectPrefabIdentifier;
 
+        protected bool _hasLifepodComponentsPrefabIdentifiers;
+        protected string _fabricatorPrefabIdentifier;
+        protected string _medicalCabinetPrefabIdentifier;
+        protected string _radioPrefabIdentifier;
+
         public LifepodModelInfo(LifepodModelType type)
         {
             Type = type;
@@ -75,6 +80,10 @@ namespace GRandomizer.Util.Lifepod
 
         public GameObject ModelObject { get; private set; }
 
+        public Fabricator Fabricator { get; private set; }
+        public MedicalCabinet MedicalCabinet { get; private set; }
+        public Radio Radio { get; private set; }
+
         public bool LoadedFromSaveFile { get; private set; } = false;
 
         protected virtual void reset()
@@ -87,21 +96,38 @@ namespace GRandomizer.Util.Lifepod
         public virtual void Serialize(BinaryWriter writer)
         {
             writer.WriteGeneric(Type);
+
             writer.WriteGeneric(_modelObjectPrefabIdentifier);
+            writer.WriteGeneric(_fabricatorPrefabIdentifier);
+            writer.WriteGeneric(_medicalCabinetPrefabIdentifier);
+            writer.WriteGeneric(_radioPrefabIdentifier);
         }
 
-        protected virtual void deserialize(BinaryReader reader, ushort version)
+        protected virtual void deserialize(VersionedBinaryReader reader)
         {
             // LifepodModelType is already read at this point
 
             _modelObjectPrefabIdentifier = reader.ReadGeneric<string>();
+
+            if (reader.Version > 1)
+            {
+                _fabricatorPrefabIdentifier = reader.ReadGeneric<string>();
+                _medicalCabinetPrefabIdentifier = reader.ReadGeneric<string>();
+                _radioPrefabIdentifier = reader.ReadGeneric<string>();
+
+                _hasLifepodComponentsPrefabIdentifiers = true;
+            }
+            else
+            {
+                _hasLifepodComponentsPrefabIdentifiers = false;
+            }
         }
 
-        public static LifepodModelInfo Deserialize(BinaryReader reader, ushort version)
+        public static LifepodModelInfo Deserialize(VersionedBinaryReader reader)
         {
             LifepodModelInfo modelInfo = GetByType(reader.ReadGeneric<LifepodModelType>());
             modelInfo.LoadedFromSaveFile = true;
-            modelInfo.deserialize(reader, version);
+            modelInfo.deserialize(reader);
             return modelInfo;
         }
 
@@ -119,6 +145,35 @@ namespace GRandomizer.Util.Lifepod
                 Utils.DebugLog($"Found lifepod model object with id {_modelObjectPrefabIdentifier} for {GetType().Name}: {identifier.gameObject}");
 #endif
                 ModelObject = identifier.gameObject;
+
+                if (_hasLifepodComponentsPrefabIdentifiers)
+                {
+                    T findChildComponent<T>(string id) where T : MonoBehaviour
+                    {
+                        if (id == null)
+                            return null;
+
+                        foreach (T component in ModelObject.GetComponentsInChildren<T>())
+                        {
+                            UniqueIdentifier uniqueIdentifier = component.GetComponent<UniqueIdentifier>();
+                            if (uniqueIdentifier.Exists() && uniqueIdentifier.Id == id)
+                                return component;
+                        }
+
+                        return null;
+                    }
+
+                    Fabricator = findChildComponent<Fabricator>(_fabricatorPrefabIdentifier);
+                    MedicalCabinet = findChildComponent<MedicalCabinet>(_medicalCabinetPrefabIdentifier);
+                    Radio = findChildComponent<Radio>(_radioPrefabIdentifier);
+                }
+                else
+                {
+                    Fabricator = ModelObject.GetComponentInChildren<Fabricator>();
+                    MedicalCabinet = ModelObject.GetComponentInChildren<MedicalCabinet>();
+                    Radio = ModelObject.GetComponentInChildren<Radio>();
+                }
+
                 prepareModel();
             }
             else
@@ -173,6 +228,25 @@ namespace GRandomizer.Util.Lifepod
                             playerLiveMixin.TakeDamage(20f, default(Vector3), DamageType.Normal, null);
                         }
                     }
+
+                    void tryGetPrefabIdentifier(MonoBehaviour component, ref string id)
+                    {
+                        if (component.Exists())
+                        {
+                            UniqueIdentifier fabricatorId = component.GetComponent<UniqueIdentifier>();
+                            if (fabricatorId.Exists())
+                            {
+                                id = fabricatorId.Id;
+                                return;
+                            }
+                        }
+
+                        id = null;
+                    }
+
+                    tryGetPrefabIdentifier(Fabricator = modelData.Fabricator, ref _fabricatorPrefabIdentifier);
+                    tryGetPrefabIdentifier(MedicalCabinet = modelData.MedicalCabinet, ref _medicalCabinetPrefabIdentifier);
+                    tryGetPrefabIdentifier(Radio = modelData.Radio, ref _radioPrefabIdentifier);
 
                     prepareModel();
                     prepareForIntro();

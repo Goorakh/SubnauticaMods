@@ -39,9 +39,6 @@ namespace GRandomizer.Util.Lifepod
 
             GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _vehicle.transform, new Vector3(0f, 0.1f, -0.6f), new Vector3(0f, 180f, 0f));
 
-            // Used by patches to make fabricator draw from the prawn's energy since it has no PowerRelay component
-            fabricator.AddComponent<VehicleFabricatorPowerSource>();
-
             GameObject radio = spawnStaticBuildable(TechType.Radio, _vehicle.transform, new Vector3(-1.25f, 1f, -0.1f), new Vector3(0f, 270f, 0f));
 
             GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _vehicle.transform, new Vector3(1.25f, 1.2f, -0.15f), new Vector3(0f, 90f, 0f));

@@ -64,7 +64,7 @@ namespace GRandomizer.Util.Serialization
                     if (extensionMethod.Name.StartsWith("Read") && extensionMethod.ReturnType == type)
                     {
                         ParameterInfo[] parameters = extensionMethod.GetParameters();
-                        if (parameters.Length == 1 && parameters[0].ParameterType == typeof(BinaryReader))
+                        if (parameters.Length == 1 && typeof(BinaryReader).IsAssignableFrom(parameters[0].ParameterType))
                         {
                             return extensionMethod;
                         }
@@ -104,15 +104,18 @@ namespace GRandomizer.Util.Serialization
                 writeMethod.Invoke(writer, new object[] { value });
             }
         }
-        public static T ReadGeneric<T>(this BinaryReader reader)
+        public static T ReadGeneric<T>(this VersionedBinaryReader reader)
         {
             Type type = typeof(T);
 
-            if (type.IsClass || (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
+            if (reader.Version > 1)
             {
-                if (!reader.ReadBoolean())
+                if (type.IsClass || (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>)))
                 {
-                    return default(T);
+                    if (!reader.ReadBoolean())
+                    {
+                        return default(T);
+                    }
                 }
             }
 
@@ -152,7 +155,7 @@ namespace GRandomizer.Util.Serialization
 #endif
             }
         }
-        public static Dictionary<TKey, TValue> ReadDictionary<TKey, TValue>(this BinaryReader reader)
+        public static Dictionary<TKey, TValue> ReadDictionary<TKey, TValue>(this VersionedBinaryReader reader)
         {
             IEnumerable<KeyValuePair<TKey, TValue>> read()
             {
@@ -179,7 +182,7 @@ namespace GRandomizer.Util.Serialization
             return read().ToDictionary();
         }
 
-        public static ReplacementDictionary<T> ReadReplacementDictionary<T>(this BinaryReader reader)
+        public static ReplacementDictionary<T> ReadReplacementDictionary<T>(this VersionedBinaryReader reader)
         {
             return new ReplacementDictionary<T>(reader.ReadDictionary<T, T>());
         }
@@ -189,7 +192,7 @@ namespace GRandomizer.Util.Serialization
             writer.Write(vector2int.x);
             writer.Write(vector2int.y);
         }
-        public static Vector2int ReadVector2int(this BinaryReader reader)
+        public static Vector2int ReadVector2int(this VersionedBinaryReader reader)
         {
             return new Vector2int(reader.ReadInt32(), reader.ReadInt32());
         }
@@ -203,7 +206,7 @@ namespace GRandomizer.Util.Serialization
                 writer.WriteGeneric(item);
             }
         }
-        public static T[] ReadArray<T>(this BinaryReader reader)
+        public static T[] ReadArray<T>(this VersionedBinaryReader reader)
         {
             int length = reader.ReadInt32();
             T[] array = new T[length];

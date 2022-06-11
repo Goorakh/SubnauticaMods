@@ -7,36 +7,28 @@ namespace GRandomizer.Util.Serialization
 {
     public struct SaveDataContainer
     {
-        const ushort NEWEST_SAVE_DATA_VERSION = 1;
+        const ushort NEWEST_SAVE_DATA_VERSION = 2;
 
-        public readonly ushort Version;
-
-        public SaveDataContainer(BinaryReader reader)
+        public SaveDataContainer(VersionedBinaryReader reader)
         {
             if (reader != null)
             {
-                Version = reader.ReadUInt16();
+                CraftSpeedRandomizer.Deserialize(reader);
+                DialogueRandomizer.Deserialize(reader);
+                ItemSizeRandomizer.Deserialize(reader);
+                LifepodRandomizer.Deserialize(reader);
+                LootRandomizer.Deserialize(reader);
+                PingRandomizer.Deserialize(reader);
 
-                CraftSpeedRandomizer.Deserialize(reader, Version);
-                DialogueRandomizer.Deserialize(reader, Version);
-                ItemSizeRandomizer.Deserialize(reader, Version);
-                LifepodRandomizer.Deserialize(reader, Version);
-                LootRandomizer.Deserialize(reader, Version);
-                PingRandomizer.Deserialize(reader, Version);
-
-                if (Version > 0)
+                if (reader.Version > 0)
                 {
-                    AnimationRandomizer.Deserialize(reader, Version);
+                    AnimationRandomizer.Deserialize(reader);
                 }
 
-                if (Version > NEWEST_SAVE_DATA_VERSION)
+                if (reader.Version > NEWEST_SAVE_DATA_VERSION)
                 {
-                    throw new NotImplementedException($"Save data version {Version} is not implemented");
+                    throw new NotImplementedException($"Save data version {reader.Version} is not implemented");
                 }
-            }
-            else
-            {
-                Version = NEWEST_SAVE_DATA_VERSION;
             }
         }
 

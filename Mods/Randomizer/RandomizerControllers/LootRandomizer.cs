@@ -36,7 +36,7 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        public static void Deserialize(BinaryReader reader, ushort version)
+        public static void Deserialize(VersionedBinaryReader reader)
         {
             if (reader.ReadBoolean()) // _itemReplacementsDictionary.IsInitialized
             {

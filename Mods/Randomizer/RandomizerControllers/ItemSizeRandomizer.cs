@@ -27,7 +27,7 @@ namespace GRandomizer.RandomizerControllers
             writer.Write(_itemSizes);
         }
 
-        public static void Deserialize(BinaryReader reader, ushort version)
+        public static void Deserialize(VersionedBinaryReader reader)
         {
             _itemSizes.SetTo(reader.ReadDictionary<TechType, Vector2int>());
         }

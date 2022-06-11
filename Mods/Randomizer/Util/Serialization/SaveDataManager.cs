@@ -53,8 +53,9 @@ namespace GRandomizer.Util.Serialization
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
                 {
-                    using (BinaryReader reader = new BinaryReader(fs))
+                    using (VersionedBinaryReader reader = new VersionedBinaryReader(fs))
                     {
+                        reader.Initialize();
                         Container = new SaveDataContainer(reader);
                     }
                 }

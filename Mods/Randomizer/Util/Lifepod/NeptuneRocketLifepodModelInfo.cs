@@ -80,6 +80,11 @@ namespace GRandomizer.Util.Lifepod
             {
                 _rocket = ModelObject.GetComponent<Rocket>();
             }
+
+            if (Fabricator.Exists())
+            {
+                Fabricator.gameObject.AddComponent<InfiniteFabricatorPowerSource>();
+            }
         }
 
         public override void OnLifepodPositioned()
@@ -107,7 +112,6 @@ namespace GRandomizer.Util.Lifepod
             }
 
             GameObject fabricator = spawnStaticBuildable(TechType.Fabricator, _rocket.transform, new Vector3(-2.8f, 38.5f, 2.8f), new Vector3(25f, 135f, 0f));
-            fabricator.AddComponent<InfiniteFabricatorPowerSource>();
 
             GameObject medicalCabinet = spawnStaticBuildable(TechType.MedicalCabinet, _rocket.transform, new Vector3(0f, 38.4f, -1.3f), new Vector3(355f, 180f, 0f));
 

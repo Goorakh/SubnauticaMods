@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using GRandomizer.Util.FabricatorPower;
+using System.Collections;
 using UnityEngine;
 
 namespace GRandomizer.Util.Lifepod
@@ -34,6 +35,11 @@ namespace GRandomizer.Util.Lifepod
             if (!LoadedFromSaveFile)
             {
                 _vehicle.subName.SetName(LIFEPOD_NAME);
+            }
+
+            if (Fabricator.Exists())
+            {
+                Fabricator.gameObject.AddComponent<VehicleFabricatorPowerSource>();
             }
         }
 
