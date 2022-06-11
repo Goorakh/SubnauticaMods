@@ -28,9 +28,10 @@ namespace GRandomizer.Util
         {
             for (int i = 0; i < _slots.Length; i++)
             {
-                if (!_slots[i].Occupied)
+                ref Slot slot = ref _slots[i];
+                if (!slot.Occupied)
                 {
-                    _slots[i].Set(value);
+                    slot.Set(value);
                     return i;
                 }
             }
