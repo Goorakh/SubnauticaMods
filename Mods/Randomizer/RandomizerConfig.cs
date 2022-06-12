@@ -57,5 +57,8 @@ namespace GRandomizer
 
         [Toggle("Animation Randomizer")]
         public bool AnimationRandomizer = true;
+
+        [Choice("Icon Randomizer", new string[] { "Off", "Same Group", "Random" })]
+        public SpriteRandomizer.Mode SpriteRandomizerMode = SpriteRandomizer.Mode.Random;
     }
 }

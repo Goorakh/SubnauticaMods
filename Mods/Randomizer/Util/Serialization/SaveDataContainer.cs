@@ -7,7 +7,7 @@ namespace GRandomizer.Util.Serialization
 {
     public struct SaveDataContainer
     {
-        const SaveVersion NEWEST_SAVE_DATA_VERSION = SaveVersion.v0_0_2_0c;
+        const SaveVersion NEWEST_SAVE_DATA_VERSION = SaveVersion.v0_0_2_0e;
 
         public SaveDataContainer(VersionedBinaryReader reader)
         {
@@ -23,6 +23,11 @@ namespace GRandomizer.Util.Serialization
                 if (reader.Version >= SaveVersion.v0_0_2_0b)
                 {
                     AnimationRandomizer.Deserialize(reader);
+                }
+
+                if (reader.Version >= SaveVersion.v0_0_2_0e)
+                {
+                    SpriteRandomizer.Deserialize(reader);
                 }
 
                 if (reader.Version > NEWEST_SAVE_DATA_VERSION)
@@ -43,6 +48,7 @@ namespace GRandomizer.Util.Serialization
             LootRandomizer.Serialize(writer);
             PingRandomizer.Serialize(writer);
             AnimationRandomizer.Serialize(writer);
+            SpriteRandomizer.Serialize(writer);
         }
     }
 }

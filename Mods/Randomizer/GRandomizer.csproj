@@ -125,6 +125,7 @@
     <Compile Include="RandomizerControllers\PingRandomizer.cs" />
     <Compile Include="RandomizerControllers\Callbacks\RandomizerControllerCallbacks.cs" />
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
+    <Compile Include="RandomizerControllers\SpriteRandomizer.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Util\AsyncOperationState.cs" />
     <Compile Include="Util\InitializeAsync.cs" />
@@ -169,6 +170,7 @@
     <Compile Include="Util\Serialization\VersionedBinaryReader.cs" />
     <Compile Include="Util\Singleton.cs" />
     <Compile Include="Util\SoundPatcher.cs" />
+    <Compile Include="Util\SpriteIdentifier.cs" />
     <Compile Include="Util\TryConvertDelegate.cs" />
     <Compile Include="Util\TypeCollection.cs" />
     <Compile Include="Util\TypeFlags.cs" />

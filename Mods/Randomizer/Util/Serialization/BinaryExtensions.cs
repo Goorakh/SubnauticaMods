@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using GRandomizer.RandomizerControllers;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -222,6 +223,16 @@ namespace GRandomizer.Util.Serialization
         {
             writer.WriteGeneric(value);
             return value;
+        }
+
+        public static void Write(this BinaryWriter writer, SpriteIdentifier spriteIdentifier)
+        {
+            writer.WriteGeneric(spriteIdentifier.Group);
+            writer.Write(spriteIdentifier.Name);
+        }
+        public static SpriteIdentifier ReadSpriteIdentifier(this VersionedBinaryReader reader)
+        {
+            return new SpriteIdentifier(reader);
         }
     }
 }
