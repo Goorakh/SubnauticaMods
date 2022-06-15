@@ -70,24 +70,22 @@ namespace GRandomizer.RandomizerControllers
                     {
                         string animToolName = tool.animToolName;
 #if VERBOSE
-                        Utils.DebugLog($"Found PlayerTool {techType}: [hasAnimations: {tool.hasAnimations}, animToolName: {animToolName ?? "null"}]");
+                        Utils.DebugLog($"Found PlayerTool {techType}: [hasAnimations: {tool.hasAnimations}, animToolName: {animToolName ?? "null"}]", true);
 #endif
                         if (tool.hasAnimations && !string.IsNullOrEmpty(animToolName))
                         {
                             toolNames.Add(animToolName);
                         }
                     }
-                }
 
-                for (int i = 0; i < 3; i++)
-                {
+                    yield return null;
                     yield return null;
                 }
             }
 
 #if VERBOSE
             stopwatch.Stop();
-            Utils.DebugLog($"Finished loading tool names (took {stopwatch.Elapsed.TotalSeconds:F1}s)");
+            Utils.DebugLog($"Finished loading tool names (took {stopwatch.Elapsed.TotalSeconds:F1}s)", true);
 #endif
 
             result.Result = toolNames;
