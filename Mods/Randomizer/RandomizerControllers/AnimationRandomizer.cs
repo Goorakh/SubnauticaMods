@@ -12,6 +12,8 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.RandomizerControllers
 {
@@ -49,7 +51,7 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        static IEnumerator initializeToolNamesAsync(IOut<HashSet<string>> result)
+        static IEnumerator initializeToolNamesAsync(CoroutineOut<HashSet<string>> result)
         {
 #if VERBOSE
             System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
@@ -88,10 +90,10 @@ namespace GRandomizer.RandomizerControllers
             Utils.DebugLog($"Finished loading tool names (took {stopwatch.Elapsed.TotalSeconds:F1}s)");
 #endif
 
-            result.Set(toolNames);
+            result.Result = toolNames;
         }
 
-        static readonly InitializeAsync<HashSet<string>> _toolNames = new InitializeAsync<HashSet<string>>(initializeToolNamesAsync);
+        static readonly InitializeAsync<HashSet<string>> _toolNames = new InitializeAsync<HashSet<string>>(GlobalObject.Instance, initializeToolNamesAsync);
 
         static readonly InitializeOnAccess<ReplacementDictionary<string>> _toolNameReplacements = new InitializeOnAccess<ReplacementDictionary<string>>(() =>
         {

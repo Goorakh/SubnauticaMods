@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.MiscPatches
 {

@@ -2,6 +2,7 @@
 using GRandomizer.Util.Lifepod;
 using HarmonyLib;
 using System.Reflection;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.MiscPatches
 {

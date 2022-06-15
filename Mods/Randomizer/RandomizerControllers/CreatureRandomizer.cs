@@ -4,6 +4,7 @@ using HarmonyLib;
 using Oculus.Newtonsoft.Json.Linq;
 using System.Linq;
 using UnityEngine;
+using UnityModdingUtility;
 
 namespace GRandomizer.RandomizerControllers
 {

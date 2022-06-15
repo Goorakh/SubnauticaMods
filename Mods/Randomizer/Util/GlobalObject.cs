@@ -5,10 +5,12 @@ using GRandomizer.RandomizerControllers;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.Util
 {
-    public class GlobalObject : MonoBehaviour
+    public class GlobalObject : MonoBehaviour, IUnityCallbackProvider
     {
         struct ScheduledAction
         {
@@ -23,7 +25,7 @@ namespace GRandomizer.Util
         }
         static readonly List<ScheduledAction> _scheduledActions = new List<ScheduledAction>();
 
-        static readonly ManagedPool<Action> _updateFunctions = new ManagedPool<Action>(5, 1);
+        static readonly HandledList<Action> _updateFunctions = new HandledList<Action>(5, 1);
 
         static GlobalObject _instance;
         public static GlobalObject Instance
@@ -59,13 +61,14 @@ namespace GRandomizer.Util
             _scheduledActions.Add(new ScheduledAction(callback, Time.time + waitTime));
         }
 
-        public static int RegisterUpdateCallback(Action callback)
+        public int RegisterUpdateCallback(Action update)
         {
-            return _updateFunctions.Store(callback);
+            return _updateFunctions.Store(update);
         }
-        public static void UnregisterUpdateCallback(int id)
+
+        public void UnregisterUpdateCallback(int handle)
         {
-            _updateFunctions.Clear(id);
+            _updateFunctions.Clear(handle);
         }
 
         void Update()
@@ -147,12 +150,14 @@ namespace GRandomizer.Util
                             RuntimeManager.LoadBank(text, settings.AutomaticSampleLoading);
                         }
                     }
+
                     if (settings.AutomaticEventLoading)
                     {
                         foreach (string bankName in settings.Banks)
                         {
                             RuntimeManager.LoadBank(bankName, settings.AutomaticSampleLoading);
                         }
+
                         RuntimeManager.WaitForAllLoads();
                     }
 

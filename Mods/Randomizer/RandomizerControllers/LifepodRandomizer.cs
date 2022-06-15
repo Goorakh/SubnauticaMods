@@ -8,6 +8,8 @@ using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.RandomizerControllers
 {
@@ -54,7 +56,7 @@ namespace GRandomizer.RandomizerControllers
                 return SymbolExtensions.GetMethodInfo<EscapePod>(_ => _.Awake());
             }
 
-            static void Postfix(EscapePod __instance)
+            static void Postfix()
             {
                 if (!IsEnabled())
                     return;

@@ -9,6 +9,8 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.RandomizerControllers
 {

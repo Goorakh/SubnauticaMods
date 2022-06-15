@@ -11,6 +11,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.RandomizerControllers
 {

@@ -2,30 +2,31 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using UnityModdingUtility;
 
 namespace GRandomizer.Util
 {
     static class TypeCollection
     {
-        static InitializeOnAccess<Type[]> _allTypes = new InitializeOnAccess<Type[]>(() =>
+        static readonly InitializeOnAccess<Type[]> _allTypes = new InitializeOnAccess<Type[]>(() =>
         {
             return (from assembly in AppDomain.CurrentDomain.GetAssemblies()
                     from type in assembly.GetTypes()
                     select type).ToArray();
         });
 
-        static InitializeOnAccess<Type[]> _allTypesExceptThisAssembly = new InitializeOnAccess<Type[]>(() =>
+        static readonly InitializeOnAccess<Type[]> _allTypesExceptThisAssembly = new InitializeOnAccess<Type[]>(() =>
         {
             Assembly thisAssembly = Assembly.GetExecutingAssembly();
             return _allTypes.Get.Where(t => t.Assembly != thisAssembly).ToArray();
         });
 
-        static InitializeOnAccess<Type[]> _allTypesThisAssembly = new InitializeOnAccess<Type[]>(() =>
+        static readonly InitializeOnAccess<Type[]> _allTypesThisAssembly = new InitializeOnAccess<Type[]>(() =>
         {
             return Assembly.GetExecutingAssembly().GetTypes();
         });
 
-        static InitializeOnAccessDictionary<TypeFlags, Type[]> _typesByFilter = new InitializeOnAccessDictionary<TypeFlags, Type[]>(flags =>
+        static readonly InitializeOnAccessDictionary<TypeFlags, Type[]> _typesByFilter = new InitializeOnAccessDictionary<TypeFlags, Type[]>(flags =>
         {
             IEnumerable<Type> typesBase;
             if ((flags & TypeFlags.AllAssemblies) != 0)
@@ -64,9 +65,10 @@ namespace GRandomizer.Util
 
         public static void Clear()
         {
-            _allTypes = null;
-            _allTypesExceptThisAssembly = null;
-            _typesByFilter = null;
+            _allTypes.Reset();
+            _allTypesExceptThisAssembly.Reset();
+            _allTypesThisAssembly.Reset();
+            _typesByFilter.Clear();
         }
     }
 }

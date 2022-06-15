@@ -8,17 +8,12 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.Util
 {
     static class Extensions
     {
-        [MethodImpl(MethodImplAttributes.AggressiveInlining)]
-        public static bool Exists(this UnityEngine.Object obj)
-        {
-            return obj && obj != null;
-        }
-
         [MethodImpl(MethodImplAttributes.AggressiveInlining)]
         public static bool HasComponent<T>(this Component component) where T : UnityEngine.Object
         {

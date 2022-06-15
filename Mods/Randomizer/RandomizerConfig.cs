@@ -4,6 +4,7 @@ using SMLHelper.V2.Json;
 using SMLHelper.V2.Options;
 using SMLHelper.V2.Options.Attributes;
 using UnityEngine;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer
 {

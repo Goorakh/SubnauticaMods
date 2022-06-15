@@ -92,6 +92,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AssemblyRefs\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityModdingUtility, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AssemblyRefs\Misc\UnityModdingUtility.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MiscPatches\AddPickupableComponentIfMissing.cs" />
@@ -127,10 +131,6 @@
     <Compile Include="RandomizerControllers\SpawnLocationRandomizer.cs" />
     <Compile Include="RandomizerControllers\SpriteRandomizer.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="Util\AsyncOperationState.cs" />
-    <Compile Include="Util\InitializeAsync.cs" />
-    <Compile Include="Util\InitializeOnAccessDictionaryArg.cs" />
-    <Compile Include="Util\ManagedPool.cs" />
     <Compile Include="Util\ReplacementDictionary.cs" />
     <Compile Include="Util\Serialization\BinaryExtensions.cs" />
     <Compile Include="Util\ColliderFlags.cs" />
@@ -143,8 +143,6 @@
     <Compile Include="Util\Fabricator\InfiniteFabricatorPowerSource.cs" />
     <Compile Include="Util\GRConstants.cs" />
     <Compile Include="Util\HookFieldFlags.cs" />
-    <Compile Include="Util\InitializeOnAccessDictionary.cs" />
-    <Compile Include="Util\InitializeOnAccess.cs" />
     <Compile Include="Util\KeepPositionAndRotation.cs" />
     <Compile Include="Util\Lifepod\CrashfishHomeLifepodModelInfo.cs" />
     <Compile Include="Util\Lifepod\CyclopsLifepodModelInfo.cs" />
@@ -214,6 +212,8 @@
 
 mkdir "%25gamePath%25QMods\$(TargetName)"
 copy /Y "$(TargetPath)" "%25gamePath%25QMods\$(TargetName)"
+copy /Y "$(TargetDir)UnityModdingUtility.dll" "%25gamePath%25QMods\$(TargetName)"
+copy /Y "$(TargetDir)0Harmony.dll" "%25gamePath%25QMods\$(TargetName)"
 copy /Y "$(ProjectDir)\Build\mod.json" "%25gamePath%25QMods\$(TargetName)\mod.json"</PostBuildEvent>
   </PropertyGroup>
 </Project>

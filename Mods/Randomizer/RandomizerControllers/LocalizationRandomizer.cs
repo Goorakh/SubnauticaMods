@@ -4,6 +4,7 @@ using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.RandomizerControllers
 {

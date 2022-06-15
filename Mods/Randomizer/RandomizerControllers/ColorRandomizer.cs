@@ -11,6 +11,8 @@ using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UI.Collections;
+using UnityModdingUtility;
+using UnityModdingUtility.Extensions;
 using uSky;
 
 namespace GRandomizer.RandomizerControllers

@@ -1,6 +1,7 @@
 ﻿using GRandomizer.Util.FabricatorPower;
 using System;
 using UnityEngine;
+using UnityModdingUtility.Extensions;
 
 namespace GRandomizer.Util.Lifepod
 {

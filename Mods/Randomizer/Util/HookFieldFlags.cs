@@ -10,5 +10,4 @@ namespace GRandomizer.Util
         Stfld = 1 << 1,
         IncludeInstance = 1 << 2
     }
-
 }
