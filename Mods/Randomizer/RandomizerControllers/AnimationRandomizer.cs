@@ -159,8 +159,13 @@ namespace GRandomizer.RandomizerControllers
 
                 foreach (AnimationClip animation in __instance.animator.runtimeAnimatorController.animationClips)
                 {
-                    const string USE_TOOL_MESSAGE = "OnToolUseAnim";
-
+#if VERBOSE && DEBUG
+                    Utils.DebugLog($"{animation.name} ({animation.length}): ");
+                    foreach (var evnt in animation.events)
+                    {
+                        Utils.DebugLog($"\t{evnt.time}: {evnt.functionName}({evnt.intParameter} | {evnt.floatParameter} | {evnt.stringParameter ?? "null"} | {evnt.objectReferenceParameter?.name ?? "null"})");
+                    }
+#endif
                     float animationEventFraction;
                     switch (animation.name)
                     {
@@ -177,27 +182,15 @@ namespace GRandomizer.RandomizerControllers
                             animationEventFraction = 1 / 3f;
                             break;
                         default:
-                            animationEventFraction = -1f;
-                            break;
+                            continue;
                     }
 
-                    if (animationEventFraction >= 0f)
+                    animation.AddEvent(new AnimationEvent
                     {
-                        animation.AddEvent(new AnimationEvent
-                        {
-                            m_Time = animation.length * animationEventFraction,
-                            m_FunctionName = "OnToolUseAnim",
-                            messageOptions = SendMessageOptions.DontRequireReceiver
-                        });
-                    }
-
-#if VERBOSE && DEBUG
-                    Utils.DebugLog($"{animation.name} ({animation.length}): ");
-                    foreach (var evnt in animation.events)
-                    {
-                        Utils.DebugLog($"\t{evnt.time}: {evnt.functionName}({evnt.intParameter} | {evnt.floatParameter} | {evnt.stringParameter ?? "null"} | {evnt.objectReferenceParameter?.name ?? "null"})");
-                    }
-#endif
+                        m_Time = animation.length * animationEventFraction,
+                        m_FunctionName = "OnToolUseAnim",
+                        messageOptions = SendMessageOptions.DontRequireReceiver
+                    });
                 }
             }
         }
