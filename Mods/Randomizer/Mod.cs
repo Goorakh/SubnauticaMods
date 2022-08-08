@@ -29,7 +29,7 @@ namespace GRandomizer
 #elif BZ
                                     "BELOW ZERO";
 #else
-            NO GAME!!!
+#error Invalid game build
 #endif
 
             const string VERBOSE_STR =
