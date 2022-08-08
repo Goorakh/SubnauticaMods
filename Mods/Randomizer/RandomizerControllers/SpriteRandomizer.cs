@@ -23,10 +23,17 @@ namespace GRandomizer.RandomizerControllers
             Random
         }
 
-        static Mode mode => Mod.Config.SpriteRandomizerMode;
+        static Mode mode
+        {
+            get
+            {
+                return Mode.Off;
+                //return Mod.Config.SpriteRandomizerMode;
+            }
+        }
 
         static bool IsEnabled() => mode > Mode.Off;
-        
+
         static void Reset()
         {
             _spriteReplacements.Reset();
@@ -87,9 +94,13 @@ namespace GRandomizer.RandomizerControllers
         {
             switch (mode)
             {
-                case Mode.Random:
-                    return _allSprites.Get.ToRandomizedReplacementDictionary();
                 case Mode.SameCategory:
+                    return new ReplacementDictionary<SpriteIdentifier>((from sprite in _allSprites.Get
+                                                                        group sprite by sprite.Group into gr
+                                                                        from replacementPair in gr.ToRandomizedReplacementDictionary(SpriteIdentifier.EqualityComparer.Instance)
+                                                                        select replacementPair).ToDictionary(SpriteIdentifier.EqualityComparer.Instance));
+                case Mode.Random:
+                    return _allSprites.Get.ToRandomizedReplacementDictionary(SpriteIdentifier.EqualityComparer.Instance);
                 default:
                     throw new NotImplementedException($"{mode} is not implemented");
             }
@@ -124,5 +135,11 @@ namespace GRandomizer.RandomizerControllers
                 IsRunning = false;
             }
         }
+
+        //[HarmonyPatch]
+        //static class SpriteManager_GetFromResources_Patch
+        //{
+        //
+        //}
     }
 }
