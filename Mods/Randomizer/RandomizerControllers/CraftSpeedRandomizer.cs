@@ -59,9 +59,9 @@ namespace GRandomizer.RandomizerControllers
             }
         }
 
-        static readonly RandomCraftDurationData _itemDuration = new RandomCraftDurationData(6f, 0.75f, 60f);
+        static readonly RandomCraftDurationData _itemDuration = new RandomCraftDurationData(6f, 0.75f, 30f);
         static readonly RandomCraftDurationData _vehicleDuration = new RandomCraftDurationData(2f, 5f, 30f);
-        static readonly RandomCraftDurationData _basePieceDuration = new RandomCraftDurationData(2f, 0.01f, 5f);
+        static readonly RandomCraftDurationData _basePieceDuration = new RandomCraftDurationData(2f, 0.01f, 10f);
 
         static readonly InitializeOnAccessDictionaryArg<TechType, float, RandomCraftDurationData> _craftDurations = new InitializeOnAccessDictionaryArg<TechType, float, RandomCraftDurationData>(durationData => durationData.GetRandomValue());
 
