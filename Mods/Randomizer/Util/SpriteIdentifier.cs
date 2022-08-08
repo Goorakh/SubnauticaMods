@@ -42,5 +42,21 @@ namespace GRandomizer.Util
             hashCode = (hashCode * -1521134295) + EqualityComparer<string>.Default.GetHashCode(Name);
             return hashCode;
         }
+
+        public class EqualityComparer : IEqualityComparer<SpriteIdentifier>
+        {
+            static EqualityComparer _instance;
+            public static EqualityComparer Instance => _instance ?? (_instance = new EqualityComparer());
+
+            public bool Equals(SpriteIdentifier x, SpriteIdentifier y)
+            {
+                return x.Equals(y);
+            }
+
+            public int GetHashCode(SpriteIdentifier obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
     }
 }

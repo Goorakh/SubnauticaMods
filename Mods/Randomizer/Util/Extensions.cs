@@ -278,9 +278,9 @@ namespace GRandomizer.Util
             return dictionary;
         }
 
-        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> valuePairs)
+        public static Dictionary<TKey, TValue> ToDictionary<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>> valuePairs, IEqualityComparer<TKey> comparer = null)
         {
-            return valuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            return valuePairs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value, comparer);
         }
 
         public static T GetAndRemoveRandom<T>(this IList<T> list)
@@ -344,9 +344,9 @@ namespace GRandomizer.Util
             return mb.FindArgumentIndex(p => p.ParameterType == parameterType && string.Equals(p.Name, parameterName, nameComparison));
         }
 
-        public static ReplacementDictionary<T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable, bool debugPrint = false)
+        public static ReplacementDictionary<T> ToRandomizedReplacementDictionary<T>(this IEnumerable<T> enumerable, IEqualityComparer<T> comparer = null, bool debugPrint = false)
         {
-            Dictionary<T, T> result = new Dictionary<T, T>();
+            Dictionary<T, T> result = new Dictionary<T, T>(comparer);
 
             List<T> itemsList = enumerable.ToList();
 

@@ -77,10 +77,9 @@ namespace GRandomizer.RandomizerControllers
                             toolNames.Add(animToolName);
                         }
                     }
-
-                    yield return null;
-                    yield return null;
                 }
+
+                yield return null;
             }
 
 #if VERBOSE
@@ -95,7 +94,7 @@ namespace GRandomizer.RandomizerControllers
 
         static readonly InitializeOnAccess<ReplacementDictionary<string>> _toolNameReplacements = new InitializeOnAccess<ReplacementDictionary<string>>(() =>
         {
-            return _toolNames.Get.ToRandomizedReplacementDictionary(true);
+            return _toolNames.Get.ToRandomizedReplacementDictionary(null, true);
         });
 
         [HarmonyPatch]
